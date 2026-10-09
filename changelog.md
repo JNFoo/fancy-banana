@@ -1,5 +1,6 @@
 # What's new
 
+- **2026.10.09.1808 (alpha):** The water level is now a no-shooting reflex level: tap to leap over chimp submarines and roped barrels of chimps, dodge the cross seagulls (you can't leap them), and watch whirlpools sink subs and scatter barrels. The sea fades from light teal to deep blue and back as you go. Fancy now flies nose-up in it. After every stage clear he does one celebration roll.
 - **2026.10.09.1748 (alpha):** Smoother play with no stutter when you bump into something. A "Ready, Set, GO!" moment after every stage so you can get your finger or space key ready (Fancy floats by himself until GO). The 3-2-1 is a bit slower and the first obstacle comes sooner. Fancy is smaller, his gloves sit closer and the red cuffs are gone. He no longer opens his mouth when you tap, his scarf flaps more, and the gold bananas spin like real bananas. The jump into the water bonus no longer flashes the beach. "Fancy" on the title has its yellows swapped.
 - **2026.10.09.1711 (alpha):** Obstacles now look like glossy 3D toys like Fancy: gumball machines, swirl lollipops, candy-cane pillars, scoops, cookie sandwiches, copper pots and fruit trees. The Candy Shop backdrop is softer so everything stands out.
 - **2026.10.09.1526 (alpha):** The golden banana coins are now spinning gold bananas (true 3D turn) instead of round coins.
