@@ -1,5 +1,6 @@
 # What's new
 
+- **2026.10.09.1907 (alpha):** In the water level Fancy is now drawn from above: a banana with his red scarf and a big red cape streaming behind, white fists out front, and the whole hero leans into your turns. Barrels and submarines are redrawn as clean 3D-style toys seen from a little above; the new chimp hats stay.
 - **2026.10.09.1855 (alpha):** Fancy has bigger, more cartoony eyes, and he grits his teeth when he falls a long way or gets bumped. He is a slightly different yellow from the banana coins. The title letters are now properly inverted. In the water level the chimps, submarines and barrels look rounder and more 3D, the up arrow no longer makes Fancy leap, and we look down on Fancy from above, so you only see his side on hard turns. Memory use is a little lower on big screens.
 - **2026.10.09.1824 (alpha):** In the water level Fancy can't steer while he is in the air, so time your leaps. Barrels now also come in columns, so a leap that's too early lands on them.
 - **2026.10.09.1816 (alpha):** Fancy keeps his mouth closed while flying. The water level has new chimp submarines and barrels (tied together with a short rope until a whirlpool splits them), and you can steer left and right during a leap.
