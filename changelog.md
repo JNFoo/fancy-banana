@@ -1,5 +1,6 @@
 # What's new
 
+- **2026.10.09.1319 (alpha):** Smoother on slower devices: Fancy and his friends are cheaper to draw. No look changes.
 - **2026.10.09.1242 (alpha):** A new Fancy: a glossy, plump banana with big expressive eyes, a hero mask and a flowing scarf (the cape is gone). A giant loop-de-loop launch with a glowing trail. Golden banana coins, PERFECT streaks and close-call bonuses. Coins and freed friends are your banana credits for upgrades. Stronger sense of speed.
 - **2026.10.09.1112 (alpha):** A new cape with folds that no longer looks like a tongue. A news ticker with the story and banana jokes on the title screen. After stage 4, a water bonus game: drag Fancy over Chimp's Navy, dodge coconuts, logs and rocks, and free friends in bubbles. A new last stage, Chimp's Jungle Kingdom, and a victory ending where you keep your upgrades and credits or start fresh (never harder).
 - **2026.10.09.1024 (alpha):** Smaller Fancy with a thin sideways cape. The first two stages are gentler. A much bigger launch: rev-up, sparks, speed lines, a camera punch and a confetti WHOOSH. Backgrounds now move (balloons, bubbles, butterflies, falling leaves and more). Pick a costume on the title screen. Spend the friends you free on upgrades: Roomy gaps, Gentle fall and a Bonk shield.
