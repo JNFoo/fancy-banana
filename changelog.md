@@ -1,5 +1,6 @@
 # What's new
 
+- **2026.10.09.1112 (alpha):** A new cape with folds that no longer looks like a tongue. A news ticker with the story and banana jokes on the title screen. After stage 4, a water bonus game: drag Fancy over Chimp's Navy, dodge coconuts, logs and rocks, and free friends in bubbles. A new last stage, Chimp's Jungle Kingdom, and a victory ending where you keep your upgrades and credits or start fresh (never harder).
 - **2026.10.09.1024 (alpha):** Smaller Fancy with a thin sideways cape. The first two stages are gentler. A much bigger launch: rev-up, sparks, speed lines, a camera punch and a confetti WHOOSH. Backgrounds now move (balloons, bubbles, butterflies, falling leaves and more). Pick a costume on the title screen. Spend the friends you free on upgrades: Roomy gaps, Gentle fall and a Bonk shield.
 - **2026.10.09.1005 (alpha):** New look! Fancy is a SuperBanana with a cape. Five illustrated stages including a Candy Shop and a Fruit Garden. Every run starts with a loop-de-loop launch. Stage cards now arrive during a calm stretch with no obstacles. You can pop off the top of the screen for a moment. Five banana friends escape Prince Chimp each stage; Records count them. Reach stage 3 to unlock a bow tie.
 - **2026.10.08.2351 (alpha):** Stage cards no longer cover the banana.

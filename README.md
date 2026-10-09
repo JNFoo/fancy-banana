@@ -6,7 +6,8 @@ A cartoony one-tap arcade game: guide a small flying banana through gaps without
 
 - Plays in any modern browser, on a laptop or a phone. One file, works offline, no sign-in, nothing leaves your device.
 - Fancy is a SuperBanana. Evil Prince Chimp has taken the banana friends; clear a stage (ten gates) and five of them escape.
-- Five illustrated stages (Candy Shop, Jam Jar Pantry, Ice Cream Parlor, Silverware Drawer, Fruit Garden); every run starts with a loop-de-loop launch.
+- Six illustrated stages (Candy Shop, Jam Jar Pantry, Ice Cream Parlor, Silverware Drawer, Fruit Garden, Chimp's Jungle Kingdom) with a water shoot-'em-up bonus game after stage 4 (drag to steer, Fancy fires on his own); every run starts with a loop-de-loop launch.
+- Beat Prince Chimp in the jungle, then keep your upgrades and banana credits or start fresh. The game never gets harder.
 - Your best score and stage, your banana friends freed and your costumes are saved on your device. Use Save to copy a save code and move your progress between devices.
 - Spend friends you free on upgrades, and pick a costume on the title screen.
 - A silent game by design: no sound or music.
