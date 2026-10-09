@@ -1,5 +1,6 @@
 # What's new
 
+- **2026.10.09.1406 (alpha):** Fancy is smaller and longer, with white-gloved hands right on his body (no arms). After the launch he spins like a football before you take over. The Fruit Garden now starts on a beach and slowly turns into Prince Chimp's jungle island. Upgrades only show when you can afford one, and there are two new ones: a free bounce off the ground or an obstacle, and an extra heart for the water mini game.
 - **2026.10.09.1334 (alpha):** Fancy now has a little white-gloved fist and eyes that follow the next gap. The launch starts with a 3-2-1 countdown, a swooping camera and a candy-pink track. Coins drift toward Fancy when he is close, and every stage clear pays a coin bonus.
 - **2026.10.09.1319 (alpha):** Smoother on slower devices: Fancy and his friends are cheaper to draw. No look changes.
 - **2026.10.09.1242 (alpha):** A new Fancy: a glossy, plump banana with big expressive eyes, a hero mask and a flowing scarf (the cape is gone). A giant loop-de-loop launch with a glowing trail. Golden banana coins, PERFECT streaks and close-call bonuses. Coins and freed friends are your banana credits for upgrades. Stronger sense of speed.
