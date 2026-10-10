@@ -2006,9 +2006,9 @@ function track(g, x, t, p, th) {
   for (i = 0; i < 10; i++) { g.fillStyle = i % 2 ? '#fff' : '#2b2140'; g.fillRect(cx + 30 + i * 6, ty - 15, 6, 15); g.fillStyle = i % 2 ? '#2b2140' : '#fff'; g.fillRect(cx + 30 + i * 6, ty, 6, 15); }   // checkered start
   g.strokeStyle = '#2b2140'; g.lineWidth = 1.6; g.strokeRect(cx + 30, ty - 15, 60, 30);
   q = g.createLinearGradient(0, ty - 15, 0, ty + 15); q.addColorStop(0, 'rgba(255,255,255,.35)'); q.addColorStop(.5, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(20,10,40,.3)'); g.fillStyle = q; g.fillRect(cx + 30, ty - 15, 60, 30);
-  var fl2 = ((t * .62) % 1) < .13, nb = 22, lvl, bz = 84;
-  g.save(); g.lineCap = 'butt'; g.beginPath(); g.arc(cx, cy, r + 24, 0, PI2); g.lineWidth = 17; g.strokeStyle = '#2b2140'; g.stroke(); g.lineWidth = 13.4; g.strokeStyle = '#4a3a6c'; g.stroke(); g.lineWidth = 2; g.strokeStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.arc(cx, cy, r + 21.5, 0, PI2); g.stroke(); g.restore();   // a dark light strip behind the bulbs so they glow against it
-  g.save(); g.beginPath(); g.moveTo(Math.max(-20, cx - 270), ty - 26); g.lineTo(cx + 36, ty - 26); g.lineWidth = 17; g.lineCap = 'round'; g.strokeStyle = '#2b2140'; g.stroke(); g.lineWidth = 13.4; g.strokeStyle = '#4a3a6c'; g.stroke(); g.restore();   // every 1.6 s the whole string blinks for a moment
+  var fl2 = ((t * .62) % 1) < .13, nb = 22, lvl, bz = 62;
+  g.save(); g.lineCap = 'butt'; g.beginPath(); g.arc(cx, cy, r + 24, 0, PI2); g.lineWidth = 11.5; g.strokeStyle = '#2b2140'; g.stroke(); g.lineWidth = 8.6; g.strokeStyle = '#4a3a6c'; g.stroke(); g.lineWidth = 1.4; g.strokeStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.arc(cx, cy, r + 22, 0, PI2); g.stroke(); g.restore();   // a dark light strip behind the bulbs so they glow against it
+  g.save(); g.beginPath(); g.moveTo(Math.max(-20, cx - 270), ty - 26); g.lineTo(cx + 36, ty - 26); g.lineWidth = 11.5; g.lineCap = 'round'; g.strokeStyle = '#2b2140'; g.stroke(); g.lineWidth = 8.6; g.strokeStyle = '#4a3a6c'; g.stroke(); g.restore();   // every 1.6 s the whole string blinks for a moment
   for (i = 0; i < nb; i++) {                                                                                                    // a chasing ring of glowing bulbs
     a = i / nb * PI2; lvl = tkLv(i, nb, t, fl2); tkDraw(g, lc[i % 3], lvl, cx + Math.cos(a) * (r + 24), cy + Math.sin(a) * (r + 24), bz);
   }
@@ -2155,7 +2155,7 @@ return { get tlast() { return TLAST; }, tbmax: TBMAX, fightWarm: fightWarm, boss
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1719';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1725';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
