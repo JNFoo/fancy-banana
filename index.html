@@ -1803,31 +1803,107 @@ function drawBarrels(g, n, vert) {   // one, two or three barrels seen from a li
     [-1, 1].forEach(function (s) { ell(g, cx + s * 9.6, cy - 1.4, 4.2, 3.3, s * .6); fs(g, rg(g, cx + s * 8.8, cy - 2.4, .5, cx + s * 9.6, cy - 1.4, 4.6, [[0, '#b58558'], [1, '#6a4128']]), '#2b1a10', 1.4); });   // paws gripping the rim
   }
 }
-var SHP = null;
-function SHPALM(g, a, b) { var i, l, x, h; for (i = a; i < b; i++) { x = SHP[i][0]; h = SHP[i][1]; g.strokeStyle = '#7a4a22'; g.lineWidth = 6; g.beginPath(); g.moveTo(x, 150); g.quadraticCurveTo(x + 8, 150 - h * .6, x - 2, 150 - h); g.stroke(); for (l = 0; l < 6; l++) { g.save(); g.translate(x - 2, 150 - h); g.rotate(-1.2 + l * .48); ell(g, 0, -14, 6, 20); fs(g, '#2f9a3a', '#17481f', 1.2); g.restore(); } } }
+var SHP = null, JTL = null, SHH = 300;   // JTL: the jungle wall, a tile that repeats upward; SHH: how tall the beach picture is
+function leafShape(g, len, w) { g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(len * .3, -w, len, 0); g.quadraticCurveTo(len * .3, w, 0, 0); g.closePath(); }
+function jungleLeaves(n, seed) {   // n big leaves of the jungle wall, shaded and veined, wrapping top to bottom so the tile repeats
+  var g = JTL.g, r = rnd(seed), i, o, x, y, a, len, w, c = [['#1f6a32', '#13481f'], ['#2f8a3a', '#1d5f2a'], ['#46b04a', '#2b7f35'], ['#68cc5a', '#3d9a42'], ['#2a7a3a', '#16502a']], cc, k;
+  for (i = 0; i < n; i++) {
+    x = r() * W; y = r() * 160; a = r() * PI2; len = 34 + r() * 30; w = 9 + r() * 8; cc = c[Math.floor(r() * 5)];
+    for (o = -1; o <= 1; o++) {
+      g.save(); g.translate(x, y + o * 160); g.rotate(a); leafShape(g, len, w); g.fillStyle = lg(g, 0, -w, 0, w, [[0, cc[0]], [1, cc[1]]]); g.fill();
+      g.strokeStyle = 'rgba(10,50,25,.45)'; g.lineWidth = 1; g.stroke();
+      g.strokeStyle = 'rgba(210,255,170,.4)'; g.lineWidth = 1.1; g.beginPath(); g.moveTo(2, 0); g.lineTo(len * .92, 0); g.stroke();
+      g.strokeStyle = 'rgba(10,60,25,.25)'; g.lineWidth = .8; for (k = 1; k < 5; k++) { g.beginPath(); g.moveTo(len * k * .18, 0); g.lineTo(len * (k * .18 + .12), -w * .62 * (1 - k * .15)); g.moveTo(len * k * .18, 0); g.lineTo(len * (k * .18 + .12), w * .62 * (1 - k * .15)); g.stroke(); }
+      g.restore();
+    }
+  }
+}
+function palm(g, x, base, h, lean, seed) {   // a shaded palm: a ringed trunk and a crown of veined fronds with a few coconuts
+  var r = rnd(seed), tx = x + lean, ty = base - h, k, a, len, q, ring, t;
+  g.beginPath(); g.moveTo(x - 5, base); g.quadraticCurveTo(x + lean * .2 - 4, base - h * .55, tx - 2.4, ty); g.lineTo(tx + 2.4, ty); g.quadraticCurveTo(x + lean * .2 + 5, base - h * .55, x + 5, base); g.closePath();
+  g.fillStyle = lg(g, x - 6, 0, x + 6, 0, [[0, '#6a4220'], [.35, '#b8824a'], [.7, '#8a5a2c'], [1, '#4f3016']]); g.fill(); g.strokeStyle = '#33200f'; g.lineWidth = 1.4; g.stroke();
+  g.strokeStyle = 'rgba(40,22,8,.4)'; g.lineWidth = 1; for (ring = 1; ring < 9; ring++) { t = ring / 9; g.beginPath(); g.arc(x + lean * t * t * .8, base - h * t, 5 - t * 2.4, 0.2, 2.9); g.stroke(); }   // trunk rings
+  for (k = 0; k < 8; k++) {
+    a = -Math.PI * (k / 7) * 1.02 - .06 + (r() - .5) * .22; len = 32 + r() * 14; g.save(); g.translate(tx, ty); g.rotate(a);
+    g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(len * .5, -len * .38, len, len * .14 + 4); g.quadraticCurveTo(len * .55, -len * .1, 0, 3.6); g.closePath();
+    g.fillStyle = lg(g, 0, -len * .4, 0, 6, [[0, '#7ddc5c'], [.5, '#3da64a'], [1, '#1f6a32']]); g.fill(); g.strokeStyle = '#17501f'; g.lineWidth = 1.2; g.stroke();
+    g.strokeStyle = 'rgba(210,255,170,.55)'; g.lineWidth = 1.1; g.beginPath(); g.moveTo(0, 1); g.quadraticCurveTo(len * .5, -len * .26, len * .96, len * .1 + 3); g.stroke();
+    g.strokeStyle = 'rgba(15,70,28,.5)'; g.lineWidth = .9; for (ring = 1; ring < 6; ring++) { t = ring / 6; g.beginPath(); g.moveTo(len * t, -len * .26 * (1 - Math.pow(2 * t - 1, 2)) * .7); g.lineTo(len * t + 3, len * .05 * t + 3 + 3 * t); g.stroke(); }
+    g.restore();
+  }
+  [[-3, 5], [3, 6], [0, 9]].forEach(function (c) { circ(g, tx + c[0], ty + c[1], 3.6); fs(g, rg(g, tx + c[0] - 1, ty + c[1] - 1, .3, tx + c[0], ty + c[1], 4.2, [[0, '#b0763a'], [1, '#4a2a10']]), '#2b1808', 1); });
+}
+function hibiscus(g, x, y, s) { var k; g.save(); g.translate(x, y); g.scale(s, s); for (k = 0; k < 5; k++) { g.save(); g.rotate(k * 1.2566); ell(g, 0, -4.2, 3.2, 4.4); fs(g, lg(g, 0, -8, 0, 0, [[0, '#ff8aa8'], [1, '#e0245a']]), '#8a0f33', .8); g.restore(); } circ(g, 0, 0, 1.6); fs(g, '#ffe14d', '#a06a00', .6); g.restore(); }
+function bush(g, x, y, s, flowers) { var k, r = rnd(Math.floor(x) + 7); for (k = 0; k < 7; k++) { g.save(); g.translate(x + (k - 3) * 5 * s, y); g.rotate(-1.57 + (k - 3) * .32); leafShape(g, (16 + r() * 8) * s, 4.4 * s); g.fillStyle = lg(g, 0, -5, 0, 5, [[0, k % 2 ? '#5fc454' : '#3da64a'], [1, '#1f6a32']]); g.fill(); g.strokeStyle = '#17501f'; g.lineWidth = .9; g.stroke(); g.restore(); } if (flowers) { hibiscus(g, x - 6 * s, y - 12 * s, .9 * s); hibiscus(g, x + 7 * s, y - 16 * s, .75 * s); } }
+function tiki(g, x, y) {   // a bamboo torch with a bright flame
+  var q = rg(g, x, y - 66, 2, x, y - 66, 34, [[0, 'rgba(255,214,120,.65)'], [1, 'rgba(255,160,60,0)']]); g.fillStyle = q; g.fillRect(x - 34, y - 100, 68, 68);
+  rr(g, x - 4.5, y - 60, 9, 62, 3); fs(g, lg(g, x - 4.5, 0, x + 4.5, 0, [[0, '#9a6a2a'], [.4, '#f0cf84'], [1, '#7a4e1c']]), '#3f2812', 1.3);
+  g.strokeStyle = 'rgba(60,34,10,.6)'; g.lineWidth = 1.3; [-44, -28, -12].forEach(function (d) { g.beginPath(); g.moveTo(x - 4.5, y + d); g.lineTo(x + 4.5, y + d); g.stroke(); });
+  g.beginPath(); g.moveTo(x - 8, y - 62); g.lineTo(x + 8, y - 62); g.lineTo(x + 5, y - 56); g.lineTo(x - 5, y - 56); g.closePath(); fs(g, '#5a3a1a', '#2b1808', 1.2);
+  g.beginPath(); g.moveTo(x, y - 90); g.bezierCurveTo(x + 9, y - 78, x + 8, y - 68, x, y - 62); g.bezierCurveTo(x - 8, y - 68, x - 9, y - 78, x, y - 90); fs(g, lg(g, 0, y - 90, 0, y - 62, [[0, '#ffe87a'], [.5, '#ff9f2a'], [1, '#e03a10']]), '#a02808', 1);
+  g.beginPath(); g.moveTo(x, y - 80); g.bezierCurveTo(x + 4, y - 74, x + 3.4, y - 68, x, y - 65); g.bezierCurveTo(x - 3.4, y - 68, x - 4, y - 74, x, y - 80); fs(g, '#fffbe0', null);
+}
+function wood(g, x, y, w, h, c0, c1, rad) {   // a plank with a frame, grain and a lit top edge
+  rr(g, x, y, w, h, rad); fs(g, lg(g, 0, y, 0, y + h, [[0, c0], [1, c1]]), '#3f2812', 2.6);
+  g.save(); g.clip(); g.strokeStyle = 'rgba(60,32,10,.16)'; g.lineWidth = 1; var r = rnd(Math.floor(x + y * 3)), i, gy;
+  for (i = 0; i < 16; i++) { gy = y + 3 + r() * (h - 6); g.beginPath(); g.moveTo(x + r() * w * .5, gy); g.bezierCurveTo(x + w * .3, gy + (r() - .5) * 3, x + w * .6, gy + (r() - .5) * 3, x + w * (.6 + r() * .4), gy + (r() - .5) * 2); g.stroke(); }
+  g.fillStyle = 'rgba(255,240,200,.35)'; g.fillRect(x + 2, y + 1.6, w - 4, 2); g.fillStyle = 'rgba(40,20,5,.25)'; g.fillRect(x + 2, y + h - 3.6, w - 4, 2); g.restore();
+}
 var SHORE = [   // the beach is painted in small steps (the warm-up runs one per frame, so no single step is a visible stall)
-  function (g) { g.fillStyle = lg(g, 0, 0, 0, 230, [[0, '#2f8a3a'], [.5, '#59c24a'], [1, '#f5e0a0']]); g.fillRect(0, 0, W, 230); var r = rnd(44), i; SHP = []; for (i = 0; i < 9; i++) SHP.push([20 + i * 42 + r() * 14, 70 + r() * 40]); },
-  function (g) { SHPALM(g, 0, 3); }, function (g) { SHPALM(g, 3, 6); }, function (g) { SHPALM(g, 6, 9); },
-  function (g) {
-    var i; g.fillStyle = '#f5e0a0'; g.beginPath(); g.moveTo(0, 150); g.quadraticCurveTo(90, 132, 180, 150); g.quadraticCurveTo(270, 168, 360, 148); g.lineTo(360, 230); g.lineTo(0, 230); g.fill();
-    g.fillStyle = 'rgba(255,255,255,.8)'; g.beginPath(); g.moveTo(0, 214); for (i = 0; i <= 18; i++) g.lineTo(i * 20, 214 + Math.sin(i * 1.7) * 5); g.lineTo(360, 230); g.lineTo(0, 230); g.fill();
+  function (g) { JTL = mk(W, 160); var q = JTL.g; q.fillStyle = '#17502a'; q.fillRect(0, 0, W, 160); var r = rnd(44), i; SHP = []; for (i = 0; i < 7; i++) SHP.push([22 + i * 52 + r() * 14, 80 + r() * 36, (r() - .5) * 18]); jungleLeaves(26, 12); },
+  function (g) { jungleLeaves(30, 13); },
+  function (g) {   // flowers, vines and spots of sunlight on the jungle wall, then the wall itself at the top of the beach picture
+    var q = JTL.g, r = rnd(15), i, x, y, o; for (i = 0; i < 9; i++) { x = r() * W; y = r() * 160; for (o = -1; o <= 1; o++) hibiscus(q, x, y + o * 160, .9 + r() * .4); }
+    q.fillStyle = 'rgba(255,255,200,.1)'; for (i = 0; i < 12; i++) { x = r() * W; y = r() * 160; for (o = -1; o <= 1; o++) { q.beginPath(); q.ellipse(x, y + o * 160, 10 + r() * 14, 6 + r() * 8, r(), 0, PI2); q.fill(); } }
+    g.drawImage(JTL.c, 0, 0, W, 160); g.drawImage(JTL.c, 0, 160, W, 160);
+    var sh = lg(g, 0, 0, 0, 230, [[0, 'rgba(0,30,15,0)'], [.55, 'rgba(10,50,20,.12)'], [1, 'rgba(30,90,40,.45)']]); g.fillStyle = sh; g.fillRect(0, 0, W, 230);
   },
-  function (g) {
-    g.save(); g.translate(180, 66); g.scale(1.2, 1.2); chimpDraw(g, 0); g.restore();   // Prince Chimp himself, crown and cape, big above the gate
-    rr(g, 150, 120, 14, 80, 3); fs(g, '#7a4a22', '#3f2812', 1.6); rr(g, 196, 120, 14, 80, 3); fs(g, '#7a4a22', '#3f2812', 1.6); rr(g, 140, 108, 80, 18, 5); fs(g, '#a24ad8', '#3b1a5c', 1.8);
-    [[34, 'L'], [326, 'R']].forEach(function (p) { rr(g, p[0] - 5, 196, 10, 26, 3); fs(g, '#6a3e1c', '#3f2812', 1.6); });   // the sign's two posts
-    rr(g, 20, 170, 320, 44, 10); fs(g, lg(g, 0, 170, 0, 214, [[0, '#c98a4a'], [.5, '#a86a30'], [1, '#7a4a22']]), '#3f2812', 3);   // the big signboard
-    g.strokeStyle = 'rgba(60,32,10,.35)'; g.lineWidth = 1.2; [184, 198].forEach(function (y) { g.beginPath(); g.moveTo(26, y); g.lineTo(334, y); g.stroke(); });   // planks
-    g.fillStyle = '#3f2812'; [[28, 178], [332, 178], [28, 206], [332, 206]].forEach(function (p) { g.beginPath(); g.arc(p[0], p[1], 2, 0, 7); g.fill(); });   // nails
+  function (g) { var i; for (i = 0; i < 4; i++) palm(g, SHP[i][0], 196, SHP[i][1], SHP[i][2], 30 + i); },
+  function (g) { var i; for (i = 4; i < 7; i++) palm(g, SHP[i][0], 196, SHP[i][1], SHP[i][2], 30 + i); bush(g, 34, 212, 1, true); bush(g, 326, 212, 1, true); bush(g, 110, 206, .8, false); bush(g, 252, 208, .85, true); },
+  function (g) {   // the sand, with a wet edge, shallows and foam
+    var i, x, y, r = rnd(61), q;
+    g.beginPath(); g.moveTo(0, 206); for (x = 0; x <= W; x += 12) g.lineTo(x, 204 + Math.sin(x * .03) * 5 + Math.sin(x * .09 + 1) * 2); g.lineTo(W, SHH); g.lineTo(0, SHH); g.closePath();
+    g.fillStyle = lg(g, 0, 200, 0, 290, [[0, '#f6e6b0'], [.45, '#f9edc2'], [1, '#e9c987']]); g.fill();
+    g.strokeStyle = 'rgba(120,80,20,.35)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(0, 206); for (x = 0; x <= W; x += 12) g.lineTo(x, 204 + Math.sin(x * .03) * 5 + Math.sin(x * .09 + 1) * 2); g.stroke();
+    g.fillStyle = 'rgba(150,100,40,.28)'; for (i = 0; i < 90; i++) { x = r() * W; y = 214 + r() * 70; g.fillRect(x, y, 1.4, 1.4); }
+    g.fillStyle = 'rgba(255,255,255,.45)'; for (i = 0; i < 40; i++) { x = r() * W; y = 214 + r() * 70; g.fillRect(x, y, 1.6, 1.2); }
+    g.beginPath(); g.moveTo(0, 268); for (x = 0; x <= W; x += 10) g.lineTo(x, 268 + Math.sin(x * .05) * 4); g.lineTo(W, SHH); g.lineTo(0, SHH); g.closePath(); g.fillStyle = lg(g, 0, 266, 0, SHH, [[0, 'rgba(150,100,40,.0)'], [.3, 'rgba(150,100,40,.4)'], [1, 'rgba(110,200,190,.55)']]); g.fill();   // wet sand running into the shallows
+    [['rgba(255,255,255,.9)', 3.6, 282], ['rgba(255,255,255,.6)', 2.4, 289], ['rgba(190,255,245,.7)', 1.8, 295]].forEach(function (f, n) { g.strokeStyle = f[0]; g.lineWidth = f[1]; g.lineCap = 'round'; g.beginPath(); for (x = 0; x <= W; x += 6) { y = f[2] + Math.sin(x * .07 + n * 1.7) * 3 + Math.sin(x * .19 + n) * 1.2; if (x === 0) g.moveTo(x, y); else g.lineTo(x, y); } g.stroke(); });   // foam lines
+    q = lg(g, 0, 288, 0, SHH, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,1)']]); g.globalCompositeOperation = 'destination-out'; g.fillStyle = q; g.fillRect(0, 288, W, SHH - 288); g.globalCompositeOperation = 'source-over';   // the bottom fades out so the beach melts into the sea
   },
-  function (g) {
+  function (g) {   // Prince Chimp and the gate
+    tiki(g, 17, 252); tiki(g, 343, 252);
+    g.save(); g.translate(180, 98); g.scale(1.18, 1.18); chimpDraw(g, 0); g.restore();
+    var q;
+    [[143, 'L'], [203, 'R']].forEach(function (p) { rr(g, p[0], 150, 14, 90, 4); fs(g, lg(g, p[0], 0, p[0] + 14, 0, [[0, '#6a3e1c'], [.4, '#d49a58'], [1, '#6a3e1c']]), '#3f2812', 1.8); g.save(); g.clip(); g.strokeStyle = 'rgba(255,225,90,.8)'; g.lineWidth = 2.6; for (var k = -2; k < 9; k++) { g.beginPath(); g.moveTo(p[0] - 2, 150 + k * 12); g.lineTo(p[0] + 16, 160 + k * 12); g.stroke(); } g.restore(); g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(p[0] + 2, 152, 2.4, 84); });
+    rr(g, 132, 140, 96, 22, 7); fs(g, lg(g, 0, 140, 0, 162, [[0, '#d98cff'], [.5, '#a24ad8'], [1, '#6a2a98']]), '#3b1a5c', 2); g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(138, 143, 84, 2.4);
+    g.strokeStyle = '#ffd93b'; g.lineWidth = 2; g.beginPath(); g.moveTo(136, 157); g.lineTo(224, 157); g.stroke(); [140, 160, 180, 200, 220].forEach(function (x) { circ(g, x, 150, 2.2); fs(g, rg(g, x - .6, 149, .3, x, 150, 2.6, [[0, '#fff6b0'], [1, '#e0a010']]), '#8a5a00', .7); });   // gold studs
+    [['#ff6b81', 140], ['#ffd93b', 160], ['#7be07b', 180], ['#7ad8ff', 200], ['#ff9f2a', 220]].forEach(function (f, n) { g.beginPath(); g.moveTo(f[1] - 7, 162); g.lineTo(f[1] + 7, 162); g.lineTo(f[1], 176 + (n % 2) * 4); g.closePath(); fs(g, f[0], '#3a2a4d', 1.2); });   // a little bunting along the lintel
+  },
+  function (g) {   // the big signboard on two posts, with rope, brackets, vines and flowers
+    [60, 300].forEach(function (x) { rr(g, x - 6, 252, 12, 26, 3); fs(g, lg(g, x - 6, 0, x + 6, 0, [[0, '#6a3e1c'], [.4, '#c48a4a'], [1, '#5a3418']]), '#3f2812', 1.6); g.strokeStyle = '#e8d49a'; g.lineWidth = 2; g.beginPath(); g.moveTo(x - 6, 256); g.lineTo(x + 6, 262); g.moveTo(x - 6, 262); g.lineTo(x + 6, 268); g.stroke(); });
+    wood(g, 22, 214, 316, 46, '#d29655', '#8a5428', 9);
+    g.strokeStyle = 'rgba(50,26,8,.4)'; g.lineWidth = 1.3; [229.5, 244.5].forEach(function (y) { g.beginPath(); g.moveTo(24, y); g.lineTo(336, y); g.stroke(); });   // plank seams
+    [[26, 218], [334, 218], [26, 256], [334, 256]].forEach(function (p) { circ(g, p[0], p[1], 3); fs(g, rg(g, p[0] - .8, p[1] - .8, .3, p[0], p[1], 3.4, [[0, '#fff6c0'], [1, '#c08a10']]), '#6a4400', .8); });
+    [[34, 214, 1], [326, 214, -1]].forEach(function (v) { g.strokeStyle = '#2f8a3a'; g.lineWidth = 2.4; g.beginPath(); g.moveTo(v[0], v[1]); g.bezierCurveTo(v[0] + v[2] * 6, v[1] - 14, v[0] + v[2] * 22, v[1] - 8, v[0] + v[2] * 30, v[1] - 20); g.stroke(); [[8, -8], [18, -10], [26, -16]].forEach(function (l) { g.save(); g.translate(v[0] + v[2] * l[0], v[1] + l[1]); g.rotate(-.6 * v[2]); leafShape(g, 9, 3.4); fs(g, '#4fbf4a', '#17501f', .8); g.restore(); }); });
+    hibiscus(g, 24, 210, 1.1); hibiscus(g, 336, 210, 1.1);
+  },
+  function (g) {   // the lettering, and the small sign that hangs from the gate
     g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
-    var t1 = 'Prince Chimp’s Tropical Jungle Island', sz = 17; g.font = '800 17px ' + FONT; sz = Math.min(17, 17 * 296 / g.measureText(t1).width); g.font = '800 ' + sz.toFixed(1) + 'px ' + FONT;
-    g.strokeStyle = '#3a1f0a'; g.lineWidth = 3.6; g.strokeText(t1, 180, 193); g.fillStyle = '#fff3d0'; g.fillText(t1, 180, 193);
-    g.strokeStyle = '#3f2812'; g.lineWidth = 2; g.beginPath(); g.moveTo(158, 126); g.lineTo(162, 134); g.moveTo(202, 126); g.lineTo(198, 134); g.stroke();   // the small sign hangs from the gate
-    rr(g, 118, 134, 124, 26, 8); fs(g, lg(g, 0, 134, 0, 160, [[0, '#e0a864'], [1, '#b87a3a']]), '#3f2812', 2.4);
-    g.font = '800 13px ' + FONT; g.strokeStyle = '#3a1f0a'; g.lineWidth = 3; g.strokeText('AKA Rhode Island', 180, 148); g.fillStyle = '#ffd93b'; g.fillText('AKA Rhode Island', 180, 148);
-    g.textAlign = 'start'; g.textBaseline = 'alphabetic'; 
+    var t1 = 'Prince Chimp’s Tropical Jungle Island', sz = 17; g.font = '800 17px ' + FONT; sz = Math.min(17, 17 * 292 / g.measureText(t1).width); g.font = '800 ' + sz.toFixed(1) + 'px ' + FONT;
+    g.strokeStyle = '#3a2a4d'; g.lineWidth = 4; g.strokeText(t1, 180, 238); g.fillStyle = lg(g, 0, 229, 0, 247, [[0, '#fffbe0'], [.5, '#ffe9a0'], [1, '#ffc94a']]); g.fillText(t1, 180, 238);
+    g.strokeStyle = '#6a4220'; g.lineWidth = 1.6; [[152, 160, 154, 170], [208, 160, 206, 170]].forEach(function (c) { g.beginPath(); g.moveTo(c[0], c[1]); g.lineTo(c[2], c[3]); g.stroke(); });
+    wood(g, 124, 170, 112, 26, '#e8b878', '#b07a3a', 8);
+    [[130, 176], [230, 176]].forEach(function (p) { circ(g, p[0], p[1], 2); fs(g, '#fff0a0', '#6a4400', .7); });
+    g.font = '800 13px ' + FONT; g.strokeStyle = '#3a2a4d'; g.lineWidth = 3.4; g.strokeText('AKA Rhode Island', 180, 184); g.fillStyle = '#ffd93b'; g.fillText('AKA Rhode Island', 180, 184);
+    g.textAlign = 'start'; g.textBaseline = 'alphabetic';
+  },
+  function (g) {   // torches, shells and a starfish on the sand
+    var i;
+    g.save(); g.translate(98, 276); g.rotate(.3); g.beginPath(); for (i = 0; i < 10; i++) { var rr0 = i % 2 ? 4 : 10, a = i / 10 * PI2 - 1.57; g.lineTo(Math.cos(a) * rr0, Math.sin(a) * rr0); } g.closePath(); fs(g, lg(g, -8, -8, 8, 8, [[0, '#ffb067'], [1, '#e0602a']]), '#8a2e10', 1.1); g.fillStyle = 'rgba(255,230,180,.85)'; [[0, -5], [4, -1], [-4, -1], [2.6, 4], [-2.6, 4]].forEach(function (d) { g.fillRect(d[0] - .6, d[1] - .6, 1.4, 1.4); }); g.restore();
+    g.save(); g.translate(262, 270); g.beginPath(); g.moveTo(0, 6); g.quadraticCurveTo(-12, -2, -8, -9); g.quadraticCurveTo(0, -13, 8, -9); g.quadraticCurveTo(12, -2, 0, 6); g.closePath(); fs(g, lg(g, -10, -10, 10, 6, [[0, '#ffe0e8'], [1, '#e89aa8']]), '#9a5a6a', 1); g.strokeStyle = 'rgba(150,80,95,.6)'; g.lineWidth = .9; [-5, 0, 5].forEach(function (d) { g.beginPath(); g.moveTo(0, 6); g.lineTo(d * 1.1, -9); g.stroke(); }); g.restore();
+    circ(g, 215, 280, 4.2); fs(g, rg(g, 214, 279, .3, 215, 280, 5, [[0, '#b0763a'], [1, '#4a2a10']]), '#2b1808', 1);
+    g.fillStyle = 'rgba(150,100,40,.2)'; for (i = 0; i < 7; i++) { ell(g, 150 + i * 9 + (i % 2) * 3, 272 - i * 3.4, 2.6, 4.4, .3); g.fill(); }   // a trail of footprints
   }
 ];
 var MG = {
@@ -1924,7 +2000,7 @@ var MG = {
   }); },
   ripple: function () { return spr(80, 48, function (g) { ell(g, 40, 24, 36, 20); g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2.4; g.stroke(); ell(g, 40, 24, 33, 17.6); g.strokeStyle = 'rgba(130,215,255,.5)'; g.lineWidth = 2.6; g.stroke(); }); },
   heart: function (full) { return spr(24, 22, function (g) { g.beginPath(); g.moveTo(12, 20); g.bezierCurveTo(-4, 9, 4, -2, 12, 5); g.bezierCurveTo(20, -2, 28, 9, 12, 20); g.closePath(); if (full) { fs(g, lg(g, 0, 0, 0, 20, [[0, '#ff7a90'], [1, '#d9254a']]), '#7a0f26', 1.8); g.fillStyle = 'rgba(255,255,255,.55)'; ell(g, 7.5, 6.5, 2.6, 1.6, -.6); g.fill(); } else fs(g, 'rgba(255,255,255,.35)', '#7a0f26', 1.8); }); },
-  shore: function () { var s = mk(W, 230); SHORE.forEach(function (p) { p(s.g); }); return s; }   // Prince Chimp's beach: the finish line of the mini game (built in three parts, see SHORE)
+  shore: function () { var s = mk(W, SHH); SHORE.forEach(function (p) { p(s.g); }); return s; }   // Prince Chimp's beach: the finish line of the mini game (built in three parts, see SHORE)
 };
 var MGC = {};
 function mgs(k, a) { var key = k + (a === undefined ? '' : a); return MGC[key] || (MGC[key] = MG[k](a)); }
@@ -1932,7 +2008,7 @@ function mgs(k, a) { var key = k + (a === undefined ? '' : a); return MGC[key] |
 function mgdraw(g, k, x, y, a) { var s = mgs(k, a); put(g, s.c, x - s.w / 2, y - s.h / 2); }
 var MGW = null;
 var MGQ = [], MGSH = null;
-function mgwarm() { MGQ = [['sub'], ['barrels', 1], ['barrels', 2], ['barrels', 3], ['barrelsV', 2], ['barrelsV', 3], ['gull', 0], ['gull', 1], ['gull', 2], ['gull', 3], ['gullShadow', 0], ['gullShadow', 1], ['gullShadow', 2], ['gullShadow', 3], ['whirl'], ['whirlArms'], ['bubble'], ['wake'], ['ripple'], ['heart', true], ['heart', false], ['wafer']].map(function (a) { return function () { mgs(a[0], a[1]); }; }); MGQ.push(function () { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } }); [0, 1, 2, 3, 4].forEach(function (n) { MGQ.push(function () { if (MGCP === n) mgCausticPart(MGCP++); }); }); SHORE.forEach(function (st, n) { MGQ.push(function () { if (MGC.shore) return; if (n === 0) MGSH = mk(W, 230); if (!MGSH) return; st(MGSH.g); if (n === SHORE.length - 1) { MGC.shore = MGSH; MGSH = null; } }); }); }
+function mgwarm() { MGQ = [['sub'], ['barrels', 1], ['barrels', 2], ['barrels', 3], ['barrelsV', 2], ['barrelsV', 3], ['gull', 0], ['gull', 1], ['gull', 2], ['gull', 3], ['gullShadow', 0], ['gullShadow', 1], ['gullShadow', 2], ['gullShadow', 3], ['whirl'], ['whirlArms'], ['bubble'], ['wake'], ['ripple'], ['heart', true], ['heart', false], ['wafer']].map(function (a) { return function () { mgs(a[0], a[1]); }; }); MGQ.push(function () { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } }); [0, 1, 2, 3, 4].forEach(function (n) { MGQ.push(function () { if (MGCP === n) mgCausticPart(MGCP++); }); }); SHORE.forEach(function (st, n) { MGQ.push(function () { if (MGC.shore) return; if (n === 0) MGSH = mk(W, SHH); if (!MGSH) return; st(MGSH.g); if (n === SHORE.length - 1) { MGC.shore = MGSH; MGSH = null; } }); }); }
 function mgdone() { while (MGQ.length) MGQ.shift()(); }
 function mgcol(a, b, w) { return 'rgb(' + Math.round(a[0] + (b[0] - a[0]) * w) + ',' + Math.round(a[1] + (b[1] - a[1]) * w) + ',' + Math.round(a[2] + (b[2] - a[2]) * w) + ')'; }
 /* The sea is light and teal at the start and the end of the level and deep blue in the middle. The color is a gradient up the screen (what is ahead is at the top), so a change is seen traveling toward Fancy instead of switching in steps. p0 = the level's progress at the bottom, p1 = at the top (0..1). */
@@ -1965,7 +2041,7 @@ function mgglints(g, off, t, p) {   // sun sparkles twinkling on the water
 }
 function mgwater(g, off) { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } var y = ((off % 320) + 320) % 320 - 320; for (; y < 640; y += 320) put(g, MGW.c, 0, y); }
 
-function init(k) { K = k; MGCA = null; MGCP = 0; CRP = null; CHP = {}; BALP = {}; WAFP = null; PARTY = null; BALW = false; SET = {}; PLAN = {}; QUEUE = []; MGQ = []; MGSH = null; TASKQ = []; MGC = {}; MGW = null; COIN = null; initBanana(); coinFrames(); [[.78, 0], [.42, 1], [.56, 2], [1.15, 2]].forEach(function (c) { TASKQ.push(function () { chimpPic(c[0], c[1]); }); }); Object.keys(TEXF).forEach(function (k) { TASKQ.push(function () { tex3(k); }); }); }   // the chimp pictures for the Oops and stage cards are built early, a few ms per frame
+function init(k) { K = k; MGCA = null; MGCP = 0; JTL = null; CRP = null; CHP = {}; BALP = {}; WAFP = null; PARTY = null; BALW = false; SET = {}; PLAN = {}; QUEUE = []; MGQ = []; MGSH = null; TASKQ = []; MGC = {}; MGW = null; COIN = null; initBanana(); coinFrames(); [[.78, 0], [.42, 1], [.56, 2], [1.15, 2]].forEach(function (c) { TASKQ.push(function () { chimpPic(c[0], c[1]); }); }); Object.keys(TEXF).forEach(function (k) { TASKQ.push(function () { tex3(k); }); }); }   // the chimp pictures for the Oops and stage cards are built early, a few ms per frame
 function keep(list) { for (var key in SET) if (list.indexOf(+key) < 0) delete SET[key]; }
 
 /* ---------- the launch track: a huge loop-de-loop, drawn live as vectors (so it is big and sharp, and costs no memory) ----------
@@ -1991,32 +2067,6 @@ function ribbon(g, P) {
   g.save(); g.translate(7.4, 8.6); g.lineWidth = 2; g.strokeStyle = 'rgba(255,255,255,.35)'; g.stroke(); g.restore();   // bounce light on the shade rim
   g.save(); g.translate(8.4, 9.8); g.lineWidth = 1.4; g.strokeStyle = 'rgba(255,255,255,.7)'; g.stroke(); g.restore();   // a crisp rim light on the lower right edge
 }
-var TKB = null;
-function tkBulb(c, lv) {   // a glass bulb in a metal cap at one of 4 brightness levels (0 off and dull, 1 warm, 2 bright, 3 blazing with a white core and a big halo); drawn once per color and level, at 2x, on an 88 px square
-  TKB = TKB || {}; var k = c + lv; if (TKB[k]) return TKB[k];
-  var s = document.createElement('canvas'), sz = lv > 1 ? 128 : 88; s.width = s.height = sz; var g = s.getContext('2d', RF), q;
-  g.translate(sz / 2, sz / 2); g.scale(2, 2);
-  if (lv > 0) { var hr = [0, 13, 22, 30][lv]; q = g.createRadialGradient(0, 0, 3, 0, 0, hr); q.addColorStop(0, lv > 1 ? '#ffffff' : c); q.addColorStop(lv === 3 ? .2 : .28, lv === 3 ? 'rgba(255,255,255,.8)' : c); if (lv === 3) q.addColorStop(.5, c); q.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = [0, .55, .95, 1][lv]; g.fillStyle = q; g.beginPath(); g.arc(0, 0, hr, 0, PI2); g.fill(); g.globalAlpha = 1; }
-  if (lv < 3) {   // (the blazing bulbs have no visible socket: they are a white-hot burst)
-  g.beginPath(); g.arc(0, 0, 6.4, 0, PI2); g.fillStyle = '#2b2140'; g.fill();                                           // socket ring and outline
-  q = g.createLinearGradient(-5, -5, 5, 5); q.addColorStop(0, '#f2f5ff'); q.addColorStop(.5, '#9aa3bd'); q.addColorStop(1, '#4e5470'); g.beginPath(); g.arc(0, 0, 5.8, 0, PI2); g.fillStyle = q; g.fill();   // the metal cap
-  g.beginPath(); g.arc(0, 0, 4.7, 0, PI2); g.fillStyle = lv ? c : mixc2(c); g.fill();
-  q = g.createRadialGradient(-1.2, -1.4, .2, 0, 0, 5);
-  if (lv === 0) { q.addColorStop(0, 'rgba(255,255,255,.55)'); q.addColorStop(.4, 'rgba(255,255,255,.06)'); q.addColorStop(1, 'rgba(20,10,40,.28)'); }
-  else if (lv === 1) { q.addColorStop(0, 'rgba(255,255,255,.7)'); q.addColorStop(.45, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(20,10,40,.1)'); }
-  else { q.addColorStop(0, '#ffffff'); q.addColorStop(lv === 3 ? .8 : .3, '#ffffff'); q.addColorStop(lv === 3 ? 1 : .7, lv === 3 ? '#ffffff' : c); q.addColorStop(1, c); }
-  g.beginPath(); g.arc(0, 0, 4.7, 0, PI2); g.fillStyle = q; g.fill();
-  }
-  if (lv === 3) { q = g.createRadialGradient(0, 0, 0, 0, 0, 6.5); q.addColorStop(0, '#ffffff'); q.addColorStop(.6, '#ffffff'); q.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = q; g.beginPath(); g.arc(0, 0, 6.5, 0, PI2); g.fill(); }
-  else {
-  g.lineWidth = .9; g.strokeStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(0, 0, 3.3, 3.5, 4.9); g.stroke();   // the curved window shine
-  g.beginPath(); g.arc(-1.7, -1.9, 1, 0, PI2); g.fillStyle = 'rgba(255,255,255,.95)'; g.fill();
-  g.beginPath(); g.arc(1.8, 2.1, .55, 0, PI2); g.fillStyle = 'rgba(255,255,255,.55)'; g.fill();
-  }
-  if (lv >= 2) { var L = lv === 3 ? 31 : 18, ray = function (len, w, rot) { g.save(); g.rotate(rot); g.beginPath(); g.moveTo(-len, 0); g.quadraticCurveTo(0, -w, len, 0); g.quadraticCurveTo(0, w, -len, 0); var rg2 = g.createRadialGradient(0, 0, 0, 0, 0, len); rg2.addColorStop(0, 'rgba(255,255,255,1)'); rg2.addColorStop(.6, 'rgba(255,255,255,.75)'); rg2.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg2; g.fill(); g.restore(); }; ray(L, lv === 3 ? 3.4 : 1.8, 0); ray(L, lv === 3 ? 3.4 : 1.8, PI2 / 4); if (lv === 3) { ray(L * .72, 2.4, PI2 / 8); ray(L * .72, 2.4, -PI2 / 8); ray(L * .4, 1.1, PI2 / 16); ray(L * .4, 1.1, -PI2 / 16); ray(L * .4, 1.1, PI2 * 3 / 16); ray(L * .4, 1.1, -PI2 * 3 / 16); } }   // sparkle glints: a four-point star that flashes on the brightest bulbs
-  return TKB[k] = s;
-}
-function mixc2(c) { return drk(c, .3); }   // an unlit bulb: the same color, dark and dull
 var TKG = null;
 function tkGlow(c, lv) {   // the glare around a lit bulb, drawn with light ADDED to the scene: colored, with a white-hot middle
   TKG = TKG || {}; var k = c + lv; if (TKG[k]) return TKG[k];
@@ -2052,6 +2102,9 @@ function tkBurn(v) {   // a burning-magnesium flare: a blown-out white core, a b
   return TKB2[v] = s;
 }
 function tkHash(n) { var x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); }
+function tkTrail(g, at) {   // a few fading embers left behind a spark (at(d) gives the place d steps behind it)
+  for (var d = 1; d < 7; d++) { var p = at(d), r = 2.4 - d * .3; g.fillStyle = 'rgba(200,225,255,' + (.75 - d * .1).toFixed(2) + ')'; g.fillRect(p[0] - r, p[1] - r, r * 2, r * 2); }
+}
 function tkSparks(g, x, y, t, i) {   // hot sparks thrown off the head bulb (worked out from the clock, nothing to keep; one path for all of them)
   var k, u, a, d, m = i * 31, px, py;
   g.strokeStyle = 'rgba(235,245,255,.8)'; g.lineWidth = 1.2; g.beginPath();
@@ -2061,21 +2114,10 @@ function tkSparks(g, x, y, t, i) {   // hot sparks thrown off the head bulb (wor
   }
   g.stroke();
 }
-function tkDraw(g, c, lv, x, y, bz, ft) {   // a bulb with its glare behind it. Levels 0-2 are drawn from small pictures; 3 and 4 are flares of ADDED light that flicker (4 = the head: it also hazes the scene and throws sparks)
-  if (lv > 2) {
-    if (lv > 3) { var wz = bz * 2.6; g.drawImage(tkWash(), x - wz / 2, y - wz / 2, wz, wz); }
-    g.save(); g.globalCompositeOperation = 'lighter';
-    var gz = bz * 1.05, u = ft | 0, bs = bz * 1.5 * (.9 + .2 * ((u * 7) % 5) / 4);
-    g.drawImage(tkGlow(c, 3), x - gz / 2, y - gz / 2, gz, gz);
-    g.drawImage(tkBurn(u & 3), x - bs / 2, y - bs / 2, bs, bs); g.restore();
-    return;
-  }
-  var z = lv > 1 ? bz : bz * 88 / 128; g.drawImage(tkBulb(c, lv), x - z / 2, y - z / 2, z, z);
-}
-function tkLv(i, n, t, flash) {   // the brightness level of bulb i of n: a bright head that races round with a fading tail, and a blink of the whole string now and then
-  var w = (((i - t * 9) % n) + n) % n;   // 0 at the head, growing behind it
-  if (flash) return w < 1.6 ? 4 : i % 4 === 0 ? 3 : 2;
-  return w < 1.6 ? 4 : w < 3 ? 3 : w < 4.6 ? 2 : w < 8 ? 1 : 0;
+function tkSpark(g, x, y, sz, ft) {   // one small magnesium spark: a little dark-blue patch to shine out of, a blue-white glow and the flickering burst of rays
+  var wz = sz * 1.7, gz = sz * .95, bs = sz * (.9 + .2 * ((ft * 7) % 4) / 3);
+  g.drawImage(tkWash(), x - wz / 2, y - wz / 2, wz, wz);
+  g.save(); g.globalCompositeOperation = 'lighter'; g.drawImage(tkGlow('#8cc0ff', 3), x - gz / 2, y - gz / 2, gz, gz); g.drawImage(tkBurn(ft & 3), x - bs / 2, y - bs / 2, bs, bs); g.restore();
 }
 function neonTube(g) {   // strokes the current path as a neon tube
   g.lineWidth = 17; g.strokeStyle = 'rgba(120,255,235,.22)'; g.stroke(); g.lineWidth = 12.5; g.strokeStyle = 'rgba(110,255,230,.4)'; g.stroke();
@@ -2103,15 +2145,14 @@ function track(g, x, t, p, th) {
   for (i = 0; i < 10; i++) { g.fillStyle = i % 2 ? '#fff' : '#2b2140'; g.fillRect(cx + 30 + i * 6, ty - 15, 6, 15); g.fillStyle = i % 2 ? '#2b2140' : '#fff'; g.fillRect(cx + 30 + i * 6, ty, 6, 15); }   // checkered start
   g.strokeStyle = '#2b2140'; g.lineWidth = 1.6; g.strokeRect(cx + 30, ty - 15, 60, 30);
   q = g.createLinearGradient(0, ty - 15, 0, ty + 15); q.addColorStop(0, 'rgba(255,255,255,.35)'); q.addColorStop(.5, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(20,10,40,.3)'); g.fillStyle = q; g.fillRect(cx + 30, ty - 15, 60, 30);
-  var fl2 = ((t * .62) % 1) < .13, nb = 22, lvl, bz = 62;
-  g.save(); g.lineCap = 'butt'; g.beginPath(); g.arc(cx, cy, r + 24, 0, PI2); neonTube(g); g.restore();   // a neon light tube behind the bulbs: a soft glow, a bright colored tube and a white-hot line down its middle
-  g.save(); g.beginPath(); g.moveTo(Math.max(-20, cx - 270), ty - 26); g.lineTo(cx + 36, ty - 26); g.lineCap = 'round'; neonTube(g); g.restore();   // every 1.6 s the whole string blinks for a moment
-  for (i = 0; i < nb; i++) {                                                                                                    // a chasing ring of glowing bulbs
-    a = i / nb * PI2; lvl = tkLv(i, nb, t, fl2); var bx = cx + Math.cos(a) * (r + 24), by = cy + Math.sin(a) * (r + 24); tkDraw(g, lc[i % 3], lvl, bx, by, bz, Math.floor(t * 22) + i * 3); if (lvl > 3) { g.save(); g.globalCompositeOperation = 'lighter'; tkSparks(g, bx, by, t, i); g.restore(); }
-  }
-  for (i = 0; i < 9; i++) {   // and a row of bulbs along the run-up, chasing on from the ring
-    var bx2 = cx - 250 + i * 32; if (bx2 < -30 || bx2 > W + 30) continue;
-    lvl = tkLv(nb + (8 - i), nb + 9, t * 1.0, fl2); tkDraw(g, lc[(i + 1) % 3], lvl, bx2, ty - 26, bz, Math.floor(t * 22) + i * 5); if (lvl > 3) { g.save(); g.globalCompositeOperation = 'lighter'; tkSparks(g, bx2, ty - 26, t, i + 40); g.restore(); }
+  var ra = r + 24, xa = cx + 36, xb = Math.max(-20, cx - 270), ty2 = ty - 26, k, u, sx0, sy0, ft = Math.floor(t * 22), sz = 40;
+  g.save(); g.lineCap = 'butt'; g.beginPath(); g.arc(cx, cy, ra, 0, PI2); neonTube(g); g.restore();   // a neon light tube: a soft glow, a bright colored tube and a white-hot line down its middle
+  g.save(); g.beginPath(); g.moveTo(xb, ty2); g.lineTo(xa, ty2); g.lineCap = 'round'; neonTube(g); g.restore();
+  for (k = 0; k < 4; k++) {   // magnesium sparks race round the ring, and then others run along the run-up from the front (right) to the back (left)
+    u = (t * .42 + k / 4) % 1; a = Math.PI / 2 + u * PI2; sx0 = cx + Math.cos(a) * ra; sy0 = cy + Math.sin(a) * ra; tkSpark(g, sx0, sy0, sz, ft + k * 3);
+    g.save(); g.globalCompositeOperation = 'lighter'; tkSparks(g, sx0, sy0, t, k); tkTrail(g, function (d) { var b = a - d * .09; return [cx + Math.cos(b) * ra, cy + Math.sin(b) * ra]; }); g.restore();
+    u = (t * .5 + k / 4) % 1; sx0 = xa - u * (xa - xb); tkSpark(g, sx0, ty2, sz, ft + k * 5 + 1);
+    g.save(); g.globalCompositeOperation = 'lighter'; tkSparks(g, sx0, ty2, t, k + 10); tkTrail(g, function (d) { return [sx0 + d * 7, ty2]; }); g.restore();
   }
   [[cx - 70, ty], [cx, cy - r], [cx + 70, ty]].forEach(function (c2) {                                                          // bolted metal collars
     rr(g, c2[0] - 13, c2[1] - 26, 26, 52, 7); fs(g, P[10], '#2b2140', 2.2);
@@ -2246,13 +2287,13 @@ function balBack(g, off) { var P = party(); put(g, P.sky.c, 0, 0); layer(g, P.cl
 function balGround(g, off) { var F = party().floor, x; for (x = px(-(off % 72)); x < W; x += 72) put(g, F.c, x, GY); }
 function balWarm() { var i; if (BALW) return; BALW = true; TASKQ.push(party); for (i = 0; i < BALC.length; i++) (function (i) { TASKQ.push(function () { balloonPic(i); }); })(i); TASKQ.push(waferPic); }
 
-return { get tlast() { return TLAST; }, tbmax: TBMAX, fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: crownDraw, setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { draw: mgdraw, water: mgwater, caustic: mgcaustic, glints: mgglints, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, pend: pend, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
+return { get tlast() { return TLAST; }, tbmax: TBMAX, fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: crownDraw, setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { jungle: function (g, y) { if (!JTL) { g.fillStyle = '#17502a'; g.fillRect(0, 0, W, Math.max(0, y)); return; } for (var yy = y - 160; yy > -160; yy -= 160) put(g, JTL.c, 0, yy); }, draw: mgdraw, water: mgwater, caustic: mgcaustic, glints: mgglints, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, pend: pend, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
 })();
 
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1810';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1827';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -3672,10 +3713,19 @@ function mgBoss(b) {   // Prince Chimp's giant submarine, up at the top of the s
   if (!b.end) { ctx.fillStyle = 'rgba(30,20,50,0.55)'; rrect(110, 12, 140, 10, 5); ctx.fill(); ctx.fillStyle = '#ff6b81'; rrect(110, 12, 140 * clamp(1 - b.t / 12, 0, 1), 10, 5); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#ffffff'; rrect(110, 12, 140, 10, 5); ctx.stroke(); }
 }
 var mgRip = [];   // rings spreading on the water where Fancy leaps, lands or gets hit: {x, y, t}
-function renderMini() {
+function renderMini() {   // like the flying game: everything is drawn where it will be when the picture is shown (physics is in fixed steps), so it glides instead of hopping
+  var m = MG, a = m && !m.paused && m.ph === 'play' ? acc : 0, i, e, vS = CFG.mgSpeed;
+  if (a) { m.t += a; m.scroll += vS * a; for (i = 0; i < m.ents.length; i++) { e = m.ents[i]; e.y += (vS + (e.vy || 0)) * a; e.x += (e.vx || 0) * a; } }
+  renderMini0();
+  if (a) { m.t -= a; m.scroll -= vS * a; for (i = 0; i < m.ents.length; i++) { e = m.ents[i]; e.y -= (vS + (e.vy || 0)) * a; e.x -= (e.vx || 0) * a; } }
+}
+function renderMini0() {
   var m = MG, i, e, lt = mgLT(m), rem = Math.max(0, CFG.mgSecs - lt) * CFG.mgSpeed, sb = H - rem, p = clamp(lt / CFG.mgSecs, 0, 1), z = m.leap >= 0 ? Math.sin(Math.PI * m.leap / mgLeapT()) : 0;
   ART.mg.sea(ctx, p, p + H / CFG.mgSpeed / CFG.mgSecs); ART.mg.water(ctx, m.scroll); ART.mg.caustic(ctx, m.scroll, p); ART.mg.glints(ctx, m.scroll, time, p); if (secretsOn() && !m.practice && sb > -300) mgArch(m.cove, sb + 70, m.coveHit);
-  if (sb > 0) { ctx.fillStyle = '#2f8a3a'; ctx.fillRect(0, 0, W, Math.max(0, sb - 230)); ART.mg.draw(ctx, 'shore', W / 2, sb - 115); }
+  if (sb > 0) {
+    ART.mg.jungle(ctx, sb - 300); ART.mg.draw(ctx, 'shore', W / 2, sb - 150);
+    ctx.lineCap = 'round'; for (i = 0; i < 3; i++) { ctx.strokeStyle = 'rgba(255,255,255,' + [.8, .55, .35][i] + ')'; ctx.lineWidth = [3.4, 2.4, 1.6][i]; ctx.beginPath(); for (var wx = 0; wx <= W; wx += 8) { var wy = sb - 6 + i * 6 + Math.sin(wx * .06 + time * 1.8 + i * 1.3) * 3 + Math.sin(wx * .17 - time * 2.4) * 1.1; if (wx === 0) ctx.moveTo(wx, wy); else ctx.lineTo(wx, wy); } ctx.stroke(); }   // waves washing up the beach
+  }
   for (i = 0; i < m.ents.length; i++) { e = m.ents[i]; if (e.k === 'whirl') { ctx.save(); ctx.translate(e.x, e.y); ctx.scale(1.2, 1.2); ART.mg.draw(ctx, 'whirl', 0, 0); ctx.rotate(e.spin * -2); ART.mg.draw(ctx, 'whirlArms', 0, 0); ctx.restore(); } }
   for (i = 0; i < m.ents.length; i++) {
     e = m.ents[i];
@@ -4377,21 +4427,24 @@ function render() {
   var i, pe = punchT > 0 && !calmOn() ? punchT / CFG.punchSecs : 0;
   if (pe > 0) { var sh = pe * pe * 6 * Math.sin(time * 90); ctx.save(); ctx.translate(Math.round(sh * k) / k, Math.round(sh * 0.6 * k) / k); }   // camera shake at the blast off: a plain slide (a zoom would re-scale every picture on screen, which stalled Firefox and phones)
   var mir = mirOn(); if (mir) { ctx.save(); ctx.translate(0, H); ctx.scale(1, -1); }
+  var ex = state === 'play' && !trackOn && !mir && curSpeed > 0 ? Math.min(curSpeed * acc, 30) : 0, ey = state === 'play' && !trackOn && !BAL && !FT ? clamp(vy * acc, -6, 6) : 0;   // the world is drawn where it will be at the moment the picture is shown: physics runs in fixed 1/120 s steps, so without this the scenery would jump by one, two or three steps from picture to picture
+  if (ex) dist += ex;
   drawBack(); lap('back'); drawLife(); lap('life'); drawWind(); lap('wind');
   drawVaultBack();
+  if (ex) for (i = 0; i < obs.length; i++) obs[i].x -= ex;
   for (i = 0; i < obs.length; i++) { ART.obstacle(ctx, obs[i]); if (obs[i].gold && !obs[i].passed) drawGold(obs[i]); if (obs[i].waf) drawWafer(obs[i]); }
   if (BAL || shd.length) drawBalloons(); if (FT && FT.ph !== 'wait') drawFight();
-  lap('obstacles'); drawCoins(); lap('coins');
+  lap('obstacles'); drawCoins(); lap('coins'); if (ex) for (i = 0; i < obs.length; i++) obs[i].x += ex;
   var zm = zoomOn();
   if (state === 'ready' || state === 'gift' || state === 'launch' || (state === 'play' && trackOn)) ART.track(ctx, trackX, calmOn() ? time * 0.15 : time, state === 'launch' ? Math.max(0, launchT) / CFG.launchSecs : 0, bgTheme);
   if (zm) ctx.restore();
-  lap('track'); drawGround(); lap('ground');
+  lap('track'); drawGround(); lap('ground'); if (ex) dist -= ex;
   if (bgT < 1) { ctx.globalAlpha = Math.min(calmOn() ? 0.4 : 0.92, (bgT < 0.5 ? bgT : 1 - bgT) * 2.6); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }   // the fade through white washes the scene only: the card, Fancy and the confetti stay clear
   if (state === 'title') { var fi = titleFancyIn(); if (fi > 0) { var fz = 1 + 2.6 * (1 - easeOutBack(fi)); ctx.globalAlpha = clamp(fi * 3, 0, 1); drawFancy(62 + 14 * easeOutBack(fi), 204 + Math.sin(time * 4) * 6, -0.1 + Math.sin(time * 4) * 0.05 - (1 - fi) * 0.9 + Math.sin(time * 45) * 0.2 * museW, 1.25 * Math.max(.2, fz)); ctx.globalAlpha = 1; } }
   else {
     if (cardT >= 0 && state === 'play') { if (mir) { ctx.save(); ctx.translate(0, H); ctx.scale(1, -1); } stageCard(); if (mir) ctx.restore(); lap('card'); }   // drawn before Fancy, so Fancy always stays in view
     zm = zoomOn(); drawTrail(); if ((state === 'play' || state === 'paused') && flagsOn()) drawFlags(); if ((state === 'play' || state === 'paused') && bunchOn()) drawBuddies(); lap('trail'); drawSpeedLines(); lap('speedlines');
-    if (!zm && !blinkOff()) { if (calmOn() && invuln > 0 && spinT <= 0) ctx.globalAlpha = 0.6; drawFancy(bx, by, angle, 1); ctx.globalAlpha = 1; }
+    if (!zm && !blinkOff()) { if (calmOn() && invuln > 0 && spinT <= 0) ctx.globalAlpha = 0.6; drawFancy(bx, by + ey, angle, 1); ctx.globalAlpha = 1; }
     lap('fancy'); drawShield();
     if (zm) { ctx.restore(); if (!blinkOff()) drawFancy(zoomX + (bx - zoomX) * zoomK, GROUND_Y + (by - GROUND_Y) * zoomK, angle, 1); }   // in the swoop-in Fancy follows the zoomed track but is stamped at his normal size (a scaled stamp was the costly one)
   }
