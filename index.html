@@ -66,6 +66,11 @@ body.bt #pSet .opt.cmp{min-height:calc(56*var(--u))}
 #pHelp .hrow{display:flex;align-items:center;gap:calc(10*var(--u));margin:calc(6*var(--u)) 0}
 #pHelp .hrow p{margin:0}
 .hic{flex:none;width:calc(56*var(--u));height:calc(44*var(--u));background:#ffe9b8;border-radius:calc(10*var(--u))}
+.swr{display:flex;flex-wrap:wrap;gap:calc(6*var(--u))}
+.sw{min-width:calc(52*var(--u));min-height:calc(56*var(--u));padding:calc(4*var(--u)) calc(8*var(--u));font-size:calc(12.5*var(--u));background:#fff}
+.sw i{display:block;width:calc(24*var(--u));height:calc(24*var(--u));margin:0 auto calc(2*var(--u));border-radius:50%;border:calc(2.5*var(--u)) solid #3a2a4d}
+.sw.on{background:#ffd93b}
+.sw:disabled{opacity:.55;cursor:default}
 #museFr{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(6*var(--u));text-align:center}
 #museFr .fr canvas{width:calc(64*var(--u));height:calc(48*var(--u))}
 #museFr .fr span{display:block;font-weight:700}
@@ -84,7 +89,7 @@ textarea{width:100%;height:calc(96*var(--u));font:calc(12*var(--u))/1.3 ui-monos
 <canvas id="c" role="img" aria-label="Fancy, the Banana. Tap, click or press the space bar to flap the banana through the gaps."></canvas>
 <div id="bar">
 <div class="brow"><button id="bSet" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="#3a2a4d" fill-rule="evenodd" d="M10.4 2h3.2l.5 2.6c.6.2 1.2.5 1.7.9l2.5-.9 1.6 2.8-2 1.7c.1.6.1 1.3 0 1.9l2 1.7-1.6 2.8-2.5-.9c-.5.4-1.1.7-1.7.9l-.5 2.6h-3.2l-.5-2.6c-.6-.2-1.2-.5-1.7-.9l-2.5.9-1.6-2.8 2-1.7a6 6 0 010-1.9l-2-1.7 1.6-2.8 2.5.9c.5-.4 1.1-.7 1.7-.9zM12 8.6a2.4 2.4 0 100 4.8 2.4 2.4 0 000-4.8z" transform="translate(0 1.4)"/></svg></button><button id="bHelp" aria-label="Help" title="Help">?</button><button id="bSave" aria-label="Save and records" title="Save code and file">Save</button></div>
-<div class="brow"><button id="bPractice" class="alt sm" hidden>Practice</button><button id="bWear" class="alt sm">Costume</button><button id="bUp" class="alt sm">Upgrades</button></div>
+<div class="brow"><button id="bPractice" class="alt sm" hidden>Practice</button><button id="bChal" class="alt sm" hidden>Challenges</button><button id="bWear" class="alt sm">Costume</button><button id="bUp" class="alt sm">Upgrades</button></div>
 </div>
 <div id="bar2" hidden></div>
 <button id="bCont" hidden>Continue</button>
@@ -144,7 +149,16 @@ textarea{width:100%;height:calc(96*var(--u));font:calc(12*var(--u))/1.3 ui-monos
 <button class="opt" id="wRain"><span>Rainbow trail<small id="rainNote"></small></span></button>
 <button class="opt" id="wBunch"><span>Banana Bunch<small id="bunchNote"></small></span></button>
 <button class="opt" id="wFlags"><span>Pennant flags<small id="flagNote"></small></span></button>
+<h3>Scarf color</h3><div class="swr" id="scRow"></div>
+<h3>Mask color</h3><div class="swr" id="mkRow"></div>
 <div class="row"><button id="wClose">Close</button></div>
+</section>
+<section id="pChal" class="panel" hidden aria-label="Challenges">
+<h2>Challenges</h2>
+<p>Pick one for your next run. Reach the end of the game in it to earn its badge and a new scarf and mask color. Normal runs never change.</p>
+<div id="chList"></div>
+<p id="chNote"></p>
+<div class="row"><button id="chClose">Close</button></div>
 </section>
 <section id="pMuse" class="panel" hidden aria-label="Banana Museum">
 <h2>Banana Museum</h2>
@@ -270,6 +284,17 @@ function rotX(p, phi) {   // turn a point (and its normal) about the long axis
   var c = Math.cos(phi), s = Math.sin(phi), y = p.y - YC;
   return { x: p.x, y: YC + y * c + p.z * s, z: -y * s + p.z * c, nx: p.nx, ny: p.ny * c + p.nz * s, nz: -p.ny * s + p.nz * c };
 }
+/* ----- Fancy's mask and scarf colors (a challenge badge unlocks more of them); red is the default ----- */
+var PAL = { m: '#e22a40', s: '#e22a40' };
+function hexRgb(h) { var n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function mixHex(h, to, f) { var c = hexRgb(h), i; for (i = 0; i < 3; i++) c[i] = Math.round(c[i] + (to - c[i]) * f); return c; }
+function rgbS(c, a) { return a === undefined ? 'rgb(' + c.join(',') + ')' : 'rgba(' + c.join(',') + ',' + a + ')'; }
+function setColors(m, s) {   // the new colors are drawn into Fancy's pictures; the first face now, the rest in the background
+  if (!/^#[0-9a-f]{6}$/i.test(m || '') || !/^#[0-9a-f]{6}$/i.test(s || '') || (m === PAL.m && s === PAL.s)) return false;
+  PAL.m = m; PAL.s = s; RAMP[4] = [[0, mixHex(s, 0, .34)[0], mixHex(s, 0, .34)[1], mixHex(s, 0, .34)[2]], [.5, hexRgb(s)[0], hexRgb(s)[1], hexRgb(s)[2]], [1, mixHex(s, 255, .5)[0], mixHex(s, 255, .5)[1], mixHex(s, 255, .5)[2]]]; LUT = null;
+  if (BAN) { var e, i; BAN.hero = []; BAN.spin = []; BAN.knots = []; BAN.spinT = null; heroPic(0); for (e = 1; e < 4; e++) (function (e) { TASKQ.push(function () { heroPic(e); }); })(e); for (i = 0; i < SPINN; i++) (function (i) { TASKQ.push(function () { spinFrame(i); }); })(i); }
+  return true;
+}
 /* ----- the face, painted flat in (length, around) space and wrapped onto the body by the renderer ----- */
 function faceTex(kind, e, pupils) {   // kind 'hero' | 'friend'; e 0 smile, 1 happy, 2 grit (clenched teeth, slanted brows), 3 blink
   var c = document.createElement('canvas'); c.width = TU; c.height = TV; var g = c.getContext('2d'), sx = TU / FACE_ARC, sy = TV / (2 * Math.PI * RMAX);
@@ -277,8 +302,8 @@ function faceTex(kind, e, pupils) {   // kind 'hero' | 'friend'; e 0 smile, 1 ha
   var hero = kind === 'hero', ex = hero ? 9.0 : 7.6, ey = hero ? -5.2 : -3.2, i, d, x;
   if (hero) {                                                                                                          // the red mask, with little upswept tips
     g.beginPath(); g.moveTo(-19, -5); g.quadraticCurveTo(-9, -9.5, 0, -6.5); g.quadraticCurveTo(9, -9.5, 19, -5); g.quadraticCurveTo(21, 3, 10, 5.6); g.quadraticCurveTo(0, 3.2, -10, 5.6); g.quadraticCurveTo(-21, 3, -19, -5); g.closePath();
-    g.fillStyle = '#e22a40'; g.fill(); g.strokeStyle = '#8a1428'; g.lineWidth = 1.2; g.stroke();
-    g.fillStyle = 'rgba(255,150,160,.55)'; g.beginPath(); g.moveTo(-14, -6); g.quadraticCurveTo(-8, -8.6, -1, -6.4); g.quadraticCurveTo(-8, -6.2, -14, -6); g.fill();
+    g.fillStyle = PAL.m; g.fill(); g.strokeStyle = rgbS(mixHex(PAL.m, 0, .39)); g.lineWidth = 1.2; g.stroke();
+    g.fillStyle = rgbS(mixHex(PAL.m, 255, .55), .55); g.beginPath(); g.moveTo(-14, -6); g.quadraticCurveTo(-8, -8.6, -1, -6.4); g.quadraticCurveTo(-8, -6.2, -14, -6); g.fill();
   }
   for (i = 0; i < 2; i++) {
     d = i ? 1 : -1; x = d * ex;
@@ -301,7 +326,7 @@ function faceTex(kind, e, pupils) {   // kind 'hero' | 'friend'; e 0 smile, 1 ha
 }
 function bandsTex(c, hero) {   // the plain body paint shared by every face: stem and tip ends, and (hero) the red scarf band round the neck
   var g = c.getContext('2d'); g.save();
-  if (hero) { g.fillStyle = '#e22a40'; g.fillRect(.15 * TU, 0, .075 * TU, TV); g.fillStyle = '#8a1428'; g.fillRect(.15 * TU, 0, 1.4, TV); g.fillRect(.225 * TU - 1.4, 0, 1.4, TV); g.fillStyle = 'rgba(255,150,160,.55)'; g.fillRect(.16 * TU, 0, 2.2, TV); }
+  if (hero) { g.fillStyle = PAL.s; g.fillRect(.15 * TU, 0, .075 * TU, TV); g.fillStyle = rgbS(mixHex(PAL.s, 0, .39)); g.fillRect(.15 * TU, 0, 1.4, TV); g.fillRect(.225 * TU - 1.4, 0, 1.4, TV); g.fillStyle = rgbS(mixHex(PAL.s, 255, .55), .55); g.fillRect(.16 * TU, 0, 2.2, TV); }
   g.restore(); return c;
 }
 function texData(c) { var d = c.getContext('2d').getImageData(0, 0, TU, TV).data; return { d: d }; }
@@ -442,7 +467,7 @@ function banana(g, x, y, rot, sc, flap, t, bow, vy, up, gaze, roll, face) {
   if (spin) { si = Math.floor((roll % PI2) / PI2 * SPINN + .5) % SPINN; pic = spinFrame(si); kn = BAN.knots[si]; } else pic = heroPic(e);
   KX = kn[0]; KY = kn[1];
   g.save(); g.translate(x, y); g.rotate(rot); g.scale(sc, sc);
-  g.save(); if (up) { g.translate(KX, KY); g.rotate(-1.45); g.translate(-KX, -KY); } g.beginPath(); tailPath(g, t, flap, vy, 40, 13, 0, 7); tailPath(g, t, flap, vy, 31, 11.5, 2.1, -3); g.fillStyle = '#e22a40'; g.fill(); g.strokeStyle = OUTK; g.lineWidth = 2.4; g.stroke(); g.restore();
+  g.save(); if (up) { g.translate(KX, KY); g.rotate(-1.45); g.translate(-KX, -KY); } g.beginPath(); tailPath(g, t, flap, vy, 40, 13, 0, 7); tailPath(g, t, flap, vy, 31, 11.5, 2.1, -3); g.fillStyle = PAL.s; g.fill(); g.strokeStyle = OUTK; g.lineWidth = 2.4; g.stroke(); g.restore();
   g.drawImage(pic.c, -BOX, -BOY, BW, BH);
   if (e < 2 && !spin) { gy = 1.5 * Math.max(-1, Math.min(1, gaze || 0)); g.drawImage(BAN.iris.c, EYES[0][0] - 10 + .4, EYES[0][1] - 10 + gy + .4, 20, 20); g.drawImage(BAN.iris.c, EYES[1][0] - 10 + .4, EYES[1][1] - 10 + gy + .4, 20, 20); }   // eyes: the pupils follow the gaze
   if (bow && !spin) bowTie(g, BOWP[0], BOWP[1], .85);
@@ -1769,13 +1794,13 @@ function balBack(g, off) { var P = party(); put(g, P.sky.c, 0, 0); layer(g, P.cl
 function balGround(g, off) { var F = party().floor, x; for (x = px(-(off % 72)); x < W; x += 72) put(g, F.c, x, GY); }
 function balWarm() { var i; if (BALW) return; BALW = true; TASKQ.push(party); for (i = 0; i < BALC.length; i++) (function (i) { TASKQ.push(function () { balloonPic(i); }); })(i); TASKQ.push(waferPic); }
 
-return { journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { draw: mgdraw, water: mgwater, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
+return { setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { draw: mgdraw, water: mgwater, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
 })();
 
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.0032';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.0049';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -1922,11 +1947,11 @@ function readText(text) {
 /* ===== Page parts ===== */
 var stageEl = $('stage'), cv = $('c'), ctx = cv.getContext('2d');
 var bar = $('bar'), toastEl = $('toast');
-var pWin = $('pWin'), pHelp = $('pHelp'), pWear = $('pWear'), pUp = $('pUp'), pSet = $('pSet'), pPrac = $('pPrac'), pMuse = $('pMuse'), bar2 = $('bar2'), pSave = $('pSave'), codeEl = $('code'), saveMsg = $('saveMsg'), bConfirm = $('bConfirm'), fileEl = $('file');
+var pWin = $('pWin'), pHelp = $('pHelp'), pWear = $('pWear'), pUp = $('pUp'), pSet = $('pSet'), pPrac = $('pPrac'), pMuse = $('pMuse'), pChal = $('pChal'), bar2 = $('bar2'), pSave = $('pSave'), codeEl = $('code'), saveMsg = $('saveMsg'), bConfirm = $('bConfirm'), fileEl = $('file');
 var toastTimer = 0;
 function toast(t, ms) { toastEl.textContent = t; toastEl.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove('on'); }, ms || 3200); }
-function panelOpen() { return !pWin.hidden || !pHelp.hidden || !pSave.hidden || !pWear.hidden || !pUp.hidden || !pSet.hidden || !pPrac.hidden || !pMuse.hidden; }
-function closePanels() { pHelp.hidden = true; pSave.hidden = true; pWear.hidden = true; pUp.hidden = true; pSet.hidden = true; pPrac.hidden = true; pMuse.hidden = true; pending = null; bConfirm.hidden = true; }
+function panelOpen() { return !pWin.hidden || !pHelp.hidden || !pSave.hidden || !pWear.hidden || !pUp.hidden || !pSet.hidden || !pPrac.hidden || !pMuse.hidden || !pChal.hidden; }
+function closePanels() { pHelp.hidden = true; pSave.hidden = true; pWear.hidden = true; pUp.hidden = true; pSet.hidden = true; pPrac.hidden = true; pMuse.hidden = true; pChal.hidden = true; pending = null; bConfirm.hidden = true; }
 function fmtTime(s) { var m = Math.floor(s / 60); return m < 1 ? s + ' s' : m + ' min ' + (s % 60) + ' s'; }
 function refreshHelp() {
   var r = $('recs'); r.textContent = '';
@@ -1967,13 +1992,14 @@ function helpSecrets() {   // before the first win: a teaser; after it: a rumor 
   if (!secretsOn()) { add('balloon', 'The game hides secrets, and the first one is waiting for whoever beats Prince Chimp. Win once, then come back here for rumors.'); return; }
   add('friend', 'Psst! The game is full of secrets now: shimmering edges, glowing gates, and a little door on the title screen. Five quick taps on Fancy there open the Banana Museum.');
   add('friend', huntOn() ? 'Six banana friends are lost in the stages: ' + frCount() + ' of 6 found. Look in the top and bottom corners, halfway between two gates.' : 'Rumor: six banana friends got lost around the stages. They only start hiding once the game has been beaten twice.');
+  add('star', 'Challenges: a Challenges button on the title screen turns on Night flashlight, Tiny gaps, Wafer storm or Mirror for your next run. Reach the end in one to earn its badge and a new scarf and mask color for Costume.');
   MUSE.forEach(function (r) { if (!save.unlocks[r[0]]) add(SEC_ICON[r[0]] || 'star', 'Rumor: ' + r[1] + '. ' + r[2]); });
 }
 function refreshCode() {
   $('storeWarn').hidden = storageOK;
   makeCode().then(function (c) { codeEl.value = c; }, function (e) { logError('code', e); });
 }
-function openPanel(p) { closePanels(); p.hidden = false; saveMsg.textContent = ''; if (p === pSave) refreshCode(); else if (p === pWear) refreshWear(); else if (p === pUp) refreshUp(); else if (p === pSet) refreshSet(); else if (p === pPrac) refreshPrac(); else if (p === pMuse) refreshMuse(); else refreshHelp(); }
+function openPanel(p) { closePanels(); p.hidden = false; saveMsg.textContent = ''; if (p === pSave) refreshCode(); else if (p === pWear) refreshWear(); else if (p === pUp) refreshUp(); else if (p === pSet) refreshSet(); else if (p === pPrac) refreshPrac(); else if (p === pChal) refreshChal(); else if (p === pMuse) refreshMuse(); else refreshHelp(); }
 function describe(c) { return 'best score ' + c.best + ', best stage ' + c.bestStage + ', ' + c.stats.runs + ' runs, ' + c.stats.friends + ' friends freed'; }
 
 var pending = null;
@@ -2068,6 +2094,7 @@ function refreshWear() {
     var g = $(p[0]).getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, 176, 120); g.setTransform(2, 0, 0, 2, 0, 0);
     ART.banana(g, 54, 32, -0.05, 0.95, 0, 0.4, p[1], 0);
   });
+  refreshColors();
   $('wPlain').classList.toggle('on', !on); $('wBow').classList.toggle('on', on);
   $('wRain').disabled = !rainOk(); $('wRain').classList.toggle('on', rainOn()); $('rainNote').textContent = rainOk() ? (rainOn() ? 'A rainbow behind Fancy' : 'Off') : 'A secret: a perfect streak of 10';
   var fu = !!save.unlocks.flags; $('wFlags').disabled = !fu; $('wFlags').classList.toggle('on', flagsOn()); $('flagNote').textContent = fu ? (flagsOn() ? 'Flying behind Fancy' : 'Off') : 'A secret: beat Prince Chimp';
@@ -2094,7 +2121,7 @@ function magR() { return CFG.magnetR * (1 + 0.35 * lvl('magnet')); }
 function nextCost(u) { var l = lvl(u.id); return l < u.costs.length ? u.costs[l] : 0; }
 function canBuy(u) { var c = nextCost(u); return c > 0 && bal() >= c; }
 function anyBuy() { return UPS.some(canBuy); }
-function syncUp() { $('bCont').hidden = !(save.cont.st > 1) || state !== 'title'; $('bCont').textContent = 'Continue: stage ' + (save.cont.st || 0); $('bUp').hidden = !anyBuy(); $('bPractice').hidden = lvl('practice') < 1 || state !== 'title'; }
+function syncUp() { $('bCont').hidden = !(save.cont.st > 1) || state !== 'title'; $('bCont').textContent = 'Continue: stage ' + (save.cont.st || 0); $('bUp').hidden = !anyBuy(); $('bPractice').hidden = lvl('practice') < 1 || state !== 'title'; $('bChal').hidden = !secretsOn() || state !== 'title'; applyColors(); }
 function lvl(id) { return save.boosts[id] || 0; }
 function bal() { return save.stats.friends + save.stats.coins - (save.boosts.spent || 0); }
 function refreshUp() {
@@ -2118,6 +2145,32 @@ $('pracClose').addEventListener('click', closePanels);
 /* Practice: the water level, or any stage that has been cleared (the same 40-credit upgrade). Nothing is earned and nothing is saved. */
 var pracN = 0, pracEnd = '';   // pracN: the stage being practiced (0 = a normal run); pracEnd: how a practice run ended ('win' or 'lose')
 function clearedStages() { return save.stats.wins > 0 ? ART.names.length : Math.min(ART.names.length, save.bestStage - 1); }
+function refreshChal() {
+  var box = $('chList'), cur = chalIdx(), i;
+  box.textContent = '';
+  CHAL.forEach(function (c, i) {
+    var b = document.createElement('button'), sp = document.createElement('span'), sm = document.createElement('small'), st = document.createElement('b');
+    b.className = 'opt cmp'; b.id = 'ch' + i; b.setAttribute('aria-pressed', cur === i + 1 ? 'true' : 'false'); if (cur === i + 1) b.classList.add('on');
+    sp.textContent = c[1]; sm.textContent = c[2] + (badgeOf(i) ? ' Badge earned.' : ''); sp.appendChild(sm); b.appendChild(sp);
+    st.textContent = cur === i + 1 ? 'ON' : badgeOf(i) ? '\u2605' : ''; b.appendChild(st);
+    b.addEventListener('click', function () { save.unlocks.chal = cur === i + 1 ? 0 : i + 1; persist(); refreshChal(); });
+    box.appendChild(b);
+  });
+  $('chNote').textContent = cur ? 'Your next run is in ' + CHAL[cur - 1][1] + '. Tap it again to turn it off.' : 'No challenge is on, so runs are normal.';
+}
+function refreshColors() {
+  [['scRow', 'scarf', SCARFS], ['mkRow', 'mask', MASKS]].forEach(function (r) {
+    var box = $(r[0]), cur = colorIdx(r[1]);
+    box.textContent = '';
+    r[2].forEach(function (c, i) {
+      var b = document.createElement('button'), sw = document.createElement('i'), ok = i === 0 || badgeOf(i - 1);
+      b.className = 'sw' + (cur === i ? ' on' : ''); b.id = r[1] + i; b.disabled = !ok; b.setAttribute('aria-label', c[0] + (ok ? '' : ', locked: win the ' + CHAL[i - 1][1] + ' challenge'));
+      sw.style.background = ok ? c[1] : '#cfc6d8'; b.appendChild(sw); b.appendChild(document.createTextNode(ok ? c[0] : '?'));
+      b.addEventListener('click', function () { save.unlocks[r[1]] = i; persist(); applyColors(); refreshWear(); });
+      box.appendChild(b);
+    });
+  });
+}
 function refreshPrac() {
   var box = $('pracList'), i, b, add = function (label, sub, fn) { b = document.createElement('button'); b.className = 'opt'; b.innerHTML = '<span></span>'; b.firstChild.textContent = label; if (sub) { var sm = document.createElement('small'); sm.textContent = sub; b.firstChild.appendChild(sm); } b.addEventListener('click', fn); box.appendChild(b); };
   box.textContent = '';
@@ -2128,7 +2181,7 @@ $('wClose').addEventListener('click', closePanels); $('uClose').addEventListener
 $('wPlain').addEventListener('click', function () { pickWear(0); }); $('wBow').addEventListener('click', function () { pickWear(1); });
 $('wRain').addEventListener('click', function () { if (rainOk()) { save.unlocks.rainOff = rainOn() ? 1 : 0; persist(); refreshWear(); } });
 $('wBunch').addEventListener('click', function () { if (bunchOk()) { save.unlocks.bunchOff = bunchOn() ? 1 : 0; persist(); refreshWear(); } });
-$('mClose').addEventListener('click', closePanels);
+$('mClose').addEventListener('click', closePanels); $('chClose').addEventListener('click', closePanels); $('bChal').addEventListener('click', function () { if (state === 'title') openPanel(pChal); });
 $('wFlags').addEventListener('click', function () { if (save.unlocks.flags) { save.unlocks.flagsOff = flagsOn() ? 1 : 0; persist(); refreshWear(); } });
 
 $('bHelp').addEventListener('click', function () { openPanel(pHelp); });
@@ -2158,7 +2211,7 @@ var celT = 0;   // the one celebration roll after a stage clear (counts down)
 var rsgT = -1, rsgGo = false;   // Ready, Set, Go after every stage: Fancy floats on his own (rsgT counts up from the stage clear), then control comes back at GO
 var cardT = -1, cardStage = 0, cardY = 125, cardGoal = 125, topT = 0;       // cardT below 0 means no stage card is showing
 var titleT = 0, TTL = null, TTLK = 0, tapPic = null, launchT = 0, trackX = 60, trackOn = true, boost = 0, boostT = 99, pendNext = '', nextT = 0, vicT = 0, MG = null, keys = {}, tickW = null, tickSum = 0;
-var runCoins = 0, streak = 0, bestStreak = 0, pops = [], trail = [], trailAcc = 0, wind = [], flashT = 0, zoomK = 1, zoomX = 180, gazeS = 0, lastAfter = 0, scrollDX = 0, curSpeed = 0, sparkT = 0;
+var runChal = '', runCoins = 0, streak = 0, bestStreak = 0, pops = [], trail = [], trailAcc = 0, wind = [], flashT = 0, zoomK = 1, zoomX = 180, gazeS = 0, lastAfter = 0, scrollDX = 0, curSpeed = 0, sparkT = 0;
 var fx = [], fxFree = [], fxMax = 70, frng = mulberry32(12345), punchT = 0, whooshT = 0, shield = 0, invuln = 0, spinT = 0, gardenD0 = 0;   // sparks and confetti, camera punch, the WHOOSH word, bonk shield
 
 function longOn() { return save.stats.wins >= CFG.longAfter; }   // from the fifth win on, the stages after the water level are 15 gates long
@@ -2167,7 +2220,7 @@ function gateStart(st) { var n = 0, i; for (i = 1; i < st; i++) n += gpsOf(i); r
 function stageOfGate(g) { var st = 1; while (g >= gateStart(st + 1)) st++; return st; }
 function themeOf(st) { return ART.order[(st - 1) % ART.order.length]; }
 function easy(st) { return Math.max(0, CFG.easyStages + 1 - st) / CFG.easyStages; }   // 1 in stage 1, 0.5 in stage 2, 0 from stage 3 on
-function gapFor(st) { return Math.max(CFG.gapMin, CFG.gap0 - CFG.gapStep * (st - 1)) + CFG.easyGap * 2 * easy(st) + 5 * lvl('roomy'); }
+function gapFor(st) { var g = Math.max(CFG.gapMin, CFG.gap0 - CFG.gapStep * (st - 1)) + CFG.easyGap * 2 * easy(st) + 5 * lvl('roomy'); return runChal === 'tiny' ? Math.round(g * 0.8) : g; }
 function plusK() { return 1 + CFG.plusStep * Math.min(CFG.plusMax, save.stats.plus || 0); }   // each victory where the player keeps their stuff makes every later run 10% faster, up to double
 function speedFor(st) { return (Math.min(CFG.speedMax, CFG.speed0 + CFG.speedStep * (st - 1)) - CFG.easySpeed * 2 * easy(st)) * relaxK() * plusK(); }   // Relaxed mode: 80% of the speed
 function setBar(on) { bar.hidden = !on; bar2.hidden = !on; if (on) syncUp(); else $('bCont').hidden = true; }
@@ -2209,7 +2262,7 @@ function gazeTarget() {   // Fancy looks toward the middle of the next gap
   for (var i = 0; i < obs.length; i++) if (!obs[i].passed) return clamp(((obs[i].gt + obs[i].gb) / 2 - by) / 80, -1, 1);
   return 0;
 }
-function pop(txt, col, sz) { pops.push({ txt: txt, col: col, sz: sz || 22, t: 0, x: clamp(bx + 34, 70, W - 70), y: by - 40 }); if (pops.length > 6) pops.shift(); }
+function pop(txt, col, sz) { pops.push({ txt: txt, col: col, sz: sz || 22, t: 0, x: clamp(bx + 34, 70, W - 70), y: mirY(by) - 40 }); if (pops.length > 6) pops.shift(); }
 function giveCoins(n, x, y) { runCoins += n; if (!pracN) save.stats.coins += n; burst(x, y, 8 + n * 3, ['#ffd93b', '#fff2a0', '#ffffff'], 150, 140); }
 function clearance(o) {   // how far Fancy is from touching this obstacle (px between his circle and the nearest hit box)
   var m = 1e9, i, r, nx, ny, d;
@@ -2230,6 +2283,7 @@ function rateGate(o) {   // called as Fancy clears a gate: perfect (through the 
 var contN = 0;
 function continueRun() { var n = save.cont.st; if (!(n > 1) || state !== 'title') return; contN = n; closePanels(); ART.warm(themeOf(n)); toReady(); toast('Carrying on from stage ' + n + '. Tap to launch!', 3500); }
 function resetWorld() {
+  var ci = pracN ? 0 : chalIdx(); runChal = ci ? CHAL[ci - 1][0] : ''; nightA = 0;
   windUsed = false; resT = -1; wasCtrl = true; tapFx.length = 0; obs = []; score = 0; stage = 1; runTime = 0; runFlaps = 0; spawned = 0; dist = 0; BAL = null; BALR = null; fl.length = 0; shd.length = 0; if (save.unlocks.balloons) ART.bal.warm();
   runSecs = runPauses = runHurts = runPops = runPopsOf = 0; runFriends0 = save.stats.friends; VS = null;
   lastC = GROUND_Y * 0.45; by = CFG.launchY; vy = 0; bx = CFG.bananaX; angle = 0; flapAnim = 0; grace = 0; fallD = 0; hurtT = 0;
@@ -2249,20 +2303,24 @@ function spawnOb(x) {
   if (spawned > 0 && spawned === gateStart(gs)) c = clamp(CFG.rsgY + (rng() * 2 - 1) * 25, lo, hi);   // the first gate after a stage break opens right where Fancy waits, so GO never starts with a scramble
   lastC = c;
   var o = { x: x, th: themeOf(gs), gt: c - gap / 2, gb: c + gap / 2, kt: Math.floor(rng() * 4), kb: Math.floor(rng() * 4), col: Math.floor(rng() * 4), passed: false, after: CFG.spacing, cc: 1e9, mid: false, yAt: 0, coins: [{ dx: CFG.obW / 2, y: clamp(c + (rng() * 2 - 1) * gap * 0.2, o_lo(c, gap), c + gap * 0.3), got: false, ph: rng() * 3 }] };
-  if (spawned > 0 && lastAfter === CFG.spacing) o.coins.push({ dx: CFG.obW / 2 - CFG.spacing / 2, y: (pc + c) / 2, got: false, ph: rng() * 3 });   // a coin halfway between two gates, on the way
+  if (spawned > 0 && lastAfter === CFG.spacing) {
+    o.coins.push({ dx: CFG.obW / 2 - CFG.spacing / 2, y: (pc + c) / 2, got: false, ph: rng() * 3 });   // a coin halfway between two gates, on the way
+    if (runChal === 'storm' && spawned > gateStart(gs)) o.waf = { dx: CFG.obW / 2 - CFG.spacing / 2, y: clamp((pc + c) / 2 + (rng() < 0.5 ? -92 : 92), 52, GROUND_Y - 52) };   // Wafer storm: a vanilla wafer floats in the open air, clear of the line between the two gaps
+  }
   // the last gate of a stage is followed by a long empty stretch (the breather) so the stage card never lands on a danger
-  if (spawned + 1 === gateStart(gs + 1)) o.after += speedFor(gs + 1) * (CFG.breathSecs + (secretsOn() ? CFG.hugExtra : 0));   // from the second playthrough the quiet stretch is a little longer: room for the hidden rooms
-  if (secretsOn() && !pracN && streak >= goldNext && spawned > gateStart(gs) && spawned + 1 < gateStart(gs + 1)) { o.gold = true; goldNext = streak + CFG.goldStreak; }   // a long PERFECT streak turns a gate gold
-  if (huntOn() && !pracN && gs <= 6 && spawned - gateStart(gs) === 6 && !frFound(gs - 1)) o.fr = { i: gs - 1, dx: CFG.obW / 2 - CFG.spacing / 2, y: gs % 2 ? 34 : GROUND_Y - 40, got: false };   // a lost friend, halfway between two gates, right up in the corner or down by the floor
+  if (spawned + 1 === gateStart(gs + 1)) o.after += speedFor(gs + 1) * (CFG.breathSecs + (runSec() ? CFG.hugExtra : 0));   // from the second playthrough the quiet stretch is a little longer: room for the hidden rooms
+  if (runSec() && !pracN && streak >= goldNext && spawned > gateStart(gs) && spawned + 1 < gateStart(gs + 1)) { o.gold = true; goldNext = streak + CFG.goldStreak; }   // a long PERFECT streak turns a gate gold
+  if (huntOn() && !runChal && !pracN && gs <= 6 && spawned - gateStart(gs) === 6 && !frFound(gs - 1)) o.fr = { i: gs - 1, dx: CFG.obW / 2 - CFG.spacing / 2, y: gs % 2 ? 34 : GROUND_Y - 40, got: false };   // a lost friend, halfway between two gates, right up in the corner or down by the floor
   lastAfter = o.after; o.rects = ART.rects(o);
   for (i = 0; i < o.rects.length; i++) { r = o.rects[i]; if (r[1] <= 0) { r[1] -= 1000; r[3] += 1000; } }   // top obstacles reach up past the screen edge, so flying over them does not work
+  if (o.waf) o.rects.push([o.waf.dx - 13, o.waf.y - 13, 26, 26]);
   obs.push(o); spawned++; nextX = x + o.after;
 }
 
 function bd(th) { return th === ART.journeyTheme ? Math.max(0, dist - gardenD0) : dist; }   // the garden's backdrop is one long journey from the beach to the jungle, so it counts from where that stage began
 function boing(v) { runHurts++; invuln = 1.3; hurtT = 0.9; fallD = 0; vy = v; flapAnim = 0.18; burst(CFG.bananaX, by, 28, ['#8ae28a', '#ffffff', '#ffd93b'], 240, 200); pop('BOING!', '#7be07b', 26); }
 function flap() { vy = CFG.flapV; flapAnim = 0.18; runFlaps++; fallD = 0; }
-function toReady() { resetWorld(); state = 'ready'; setBar(false); }
+function toReady() { resetWorld(); state = 'ready'; setBar(false); if (runChal === 'storm') ART.mg.sprite('wafer'); }
 function rsgGoAt() { return CFG.cardSecs + CFG.rsgBeat * 2; }   // seconds after the stage clear when control comes back
 function rsgHold() { return rsgT >= 0 && rsgT < rsgGoAt(); }
 function startLaunch() { state = 'launch'; launchT = -CFG.countSecs; if (stage === 1 && save.cont.st) { save.cont = {}; persist(); } }   // a 3-2-1 countdown first, then the run
@@ -2300,6 +2358,28 @@ function secondWind() {   // the Second wind upgrade: once per run, a crash rest
 var FR_NAMES = ['Pip', 'Specs', 'Wizzy', 'Dapper', 'Leafy', 'Lucky'], FR_V = [0, 1, 2, 3, 4, 0];   // the six lost friends and which look (hat, glasses...) each one wears
 var SEC_KEYS = ['balloons', 'flags', 'wafers', 'vault', 'gold', 'drawer', 'raft', 'cove', 'boss'];
 function secretsOn() { return save.stats.wins >= 1; }
+function runSec() { return secretsOn() && !runChal; }   // the hidden rooms stay shut during a challenge run
+/* ===== Challenges (build 3a): optional ways to play, from the first win on. Beat the last stage in one to earn its badge, and a new scarf and mask color. ===== */
+var CHAL = [['night', 'Night flashlight', 'The whole stage is dark. Your flashlight lights the way.'], ['tiny', 'Tiny gaps', 'Every opening is 20% smaller.'], ['storm', 'Wafer storm', 'Vanilla wafers float between the gates.'], ['mirror', 'Mirror', 'The whole world is upside down.']];
+var SCARFS = [['Red', '#e22a40'], ['Blue', '#3d7bff'], ['Green', '#2fbf5f'], ['Orange', '#ff8a1f'], ['Violet', '#b45cff']], MASKS = [['Red', '#e22a40'], ['Navy', '#22337a'], ['Teal', '#12b3a6'], ['Purple', '#7a3fd0'], ['Gold', '#f2b81f']];
+var nightA = 0, badgeNew = '';
+function chalIdx() { var c = save.unlocks.chal; return secretsOn() && c >= 1 && c <= 4 ? c : 0; }
+function badgeOf(i) { return !!save.unlocks['b_' + CHAL[i][0]]; }
+function mirOn() { return runChal === 'mirror' && !BAL && (state === 'play' || state === 'paused' || state === 'dead' || state === 'launch' || state === 'ready'); }
+function mirY(y) { return mirOn() ? H - y : y; }
+function nightLive() { return runChal === 'night' && state === 'play' && !BAL && !VAULT && cardT < 0 && !rsgHold() && spinT <= 0; }
+function colorIdx(k) { var i = save.unlocks[k]; return i >= 1 && i <= 4 && badgeOf(i - 1) ? i : 0; }
+function applyColors() { ART.setColors(MASKS[colorIdx('mask')][1], SCARFS[colorIdx('scarf')][1]); }
+function drawNight() {   // darkness with a soft flashlight round Fancy
+  var a = nightA * (calmOn() ? 0.84 : 0.94), g = ctx.createRadialGradient(0, 0, 96, 0, 0, 236);
+  g.addColorStop(0, 'rgba(8,12,46,0)'); g.addColorStop(1, 'rgba(8,12,46,' + a.toFixed(2) + ')');
+  ctx.save(); ctx.translate(bx, mirY(by)); ctx.scale(1, 1.2); ctx.fillStyle = g; ctx.fillRect(-W * 2, -H * 2, W * 4, H * 4); ctx.restore();
+}
+function drawWafer(o) {
+  var x = o.x + o.waf.dx; if (x < -30 || x > W + 30) return;
+  ctx.globalAlpha = 0.25; ctx.fillStyle = '#3a2a4d'; ctx.beginPath(); ctx.ellipse(x + 3, o.waf.y + 17, 13, 4, 0, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
+  ART.mg.draw(ctx, 'wafer', x, o.waf.y);
+}
 function huntOn() { return save.stats.wins >= 2; }
 function frFound(i) { return !!save.unlocks['f' + i]; }
 function frCount() { var n = 0, i; for (i = 0; i < 6; i++) if (frFound(i)) n++; return n; }
@@ -2317,7 +2397,7 @@ function frCollect(i) {
 var VAULT = null, hugT = 0, hugKind = '', goldNext = 8;
 function quietAhead() { for (var i = 0; i < obs.length; i++) { var o = obs[i]; if (o.x < bx + 170 && o.x + CFG.obW > bx - 50) return false; } return true; }
 function hugWant() {
-  if (VAULT || !secretsOn() || pracN || BAL || pendNext || cardT >= 0 || rsgHold() || spinT > 0 || grace > 0 || (score === 0 && stage === 1) || !quietAhead()) return '';
+  if (VAULT || !runSec() || pracN || BAL || pendNext || cardT >= 0 || rsgHold() || spinT > 0 || grace > 0 || (score === 0 && stage === 1) || !quietAhead()) return '';
   if (by < 60) return 'sky';
   if (by + CFG.bananaR > GROUND_Y - 90 && themeOf(stage) === CFG.miniAfter && score === gateStart(stage)) return 'drawer';   // the junk drawer: only in the quiet stretch before the Silverware Drawer's first gate
   return '';
@@ -2388,7 +2468,7 @@ function drawGold(o) {
   for (i = 0; i < 4; i++) { sx = x + 6 + ((i * 37 + time * 40) % (w - 12)); sy = o.gt + 8 + ((i * 53 + time * 30) % (o.gb - o.gt - 16)); ctx.fillStyle = '#fffbe0'; ctx.fillRect(sx - 1, sy - 4, 2, 8); ctx.fillRect(sx - 4, sy - 1, 8, 2); }
 }
 function drawHug() {   // a hint for those who look: a faint shimmer on the edge, and a bar that fills while you hold still
-  if (state !== 'play' || VAULT || !secretsOn() || pracN || BAL || pendNext || cardT >= 0 || rsgHold() || !quietAhead() || (score === 0 && stage === 1)) return;
+  if (state !== 'play' || VAULT || !runSec() || pracN || BAL || pendNext || cardT >= 0 || rsgHold() || !quietAhead() || (score === 0 && stage === 1)) return;
   var top = by < 130, flr = themeOf(stage) === CFG.miniAfter && score === gateStart(stage) && by > GROUND_Y - 170, fy = GROUND_Y - 3, a;
   if (top) { a = 0.12 + 0.1 * Math.sin(time * 5); ctx.fillStyle = 'rgba(255,217,59,' + a.toFixed(2) + ')'; ctx.fillRect(0, 0, W, 6); }
   if (flr) { a = 0.1 + 0.08 * Math.sin(time * 5); ctx.fillStyle = 'rgba(255,107,129,' + a.toFixed(2) + ')'; ctx.fillRect(0, fy - 4, W, 6); }
@@ -2409,8 +2489,8 @@ function stageUp() {
   pendNext = done === CFG.miniAfter ? 'mini' : done === CFG.finalTheme ? 'win' : done === CFG.balAfter && save.unlocks.balloons && !pracN ? 'balloons' : '';
   if (pendNext !== 'mini' && pendNext !== 'balloons') { bgFrom = bgTheme; bgTheme = themeOf(stage); bgT = bgFrom === bgTheme ? 1 : 0; if (bgTheme === ART.journeyTheme) gardenD0 = dist; }   // before the water bonus the scene stays put (no glimpse of the next stage): it washes out to white into the mini game
   if (stage >= CFG.bowStage && !save.unlocks.bow) { save.unlocks.bow = true; toast('New costume unlocked: a bow tie for Fancy!'); }
-  if (pendNext === 'win') { save.stats.wins++; save.stats.friends += CFG.winBonus; nextT = 0.8; }   // the finale gets its own victory screen instead of a stage card
-  else { cardT = 0; cardY = cardGoal = by < 335 ? 345 : 125; nextT = pendNext ? CFG.cardSecs + 0.35 : 0; rsgT = 0; rsgGo = false; celT = CFG.celSecs; }   // a little celebration roll, once around
+  if (pendNext === 'win') { save.stats.wins++; save.stats.friends += CFG.winBonus; nextT = 0.8; if (runChal && !pracN) { var bk = 'b_' + runChal; if (!save.unlocks[bk]) { save.unlocks[bk] = 1; badgeNew = CHAL[chalIdx() - 1][1]; } } }   // the finale gets its own victory screen instead of a stage card
+  else { cardT = 0; cardY = cardGoal = mirY(by) < 335 ? 345 : 125; nextT = pendNext ? CFG.cardSecs + 0.35 : 0; rsgT = 0; rsgGo = false; celT = CFG.celSecs; }   // a little celebration roll, once around
   if (pendNext !== 'win' && !pracN) save.cont = { st: stage, tm: Math.round(runSecs) };   // where to carry on if the tab is closed mid-run
   persist();
 }
@@ -2456,6 +2536,7 @@ function hits(o) {
 
 function update(dt) {
   if (shd.length) shardStep(dt);
+  nightA = clamp(nightA + (nightLive() ? 1 : -1) * dt * 2.5, 0, 1);
   time += dt; if (state === 'launch' || state === 'play' || (state === 'mini' && MG && !MG.paused && MG.ph !== 'lose')) runSecs += dt; if (flapAnim > 0) flapAnim -= dt; if (punchT > 0) punchT -= dt; if (whooshT > 0) whooshT -= dt; if (invuln > 0) invuln -= dt; if (flashT > 0) flashT -= dt; if (celT > 0) celT = Math.max(0, celT - dt);
   for (var ti = tapFx.length - 1; ti >= 0; ti--) { tapFx[ti].t += dt; if (tapFx[ti].t > 0.4) tapFx.splice(ti, 1); }
   for (var pi = pops.length - 1; pi >= 0; pi--) { pops[pi].t += dt; pops[pi].y -= 26 * dt; if (pops[pi].t > 1.1) pops.splice(pi, 1); }
@@ -2514,7 +2595,7 @@ function update(dt) {
     if (BALR && (rsgT < 0 || rsgT >= CFG.cardSecs)) BALR = null;
     if (by + CFG.bananaR > GROUND_Y - 2) { by = GROUND_Y - CFG.bananaR; if (VAULT) { vy = VAULT.kind === 'drawer' ? -600 : -330; VAULT.bz = 1; burst(CFG.bananaX, by + 8, 8, ['#ffffff', '#ffd93b'], 120, 140); } else if (shield > 0) { shield--; boing(-CFG.bounceVy); } else { die(); return; } }
     var bonk = null;
-    for (i = 0; i < obs.length && !bonk; i++) { var o = obs[i]; if (o.x < CFG.bananaX + CFG.bananaR && o.x + CFG.obW > CFG.bananaX - CFG.bananaR && hits(o)) bonk = o; }
+    for (i = 0; i < obs.length && !bonk; i++) { var o = obs[i]; if (((o.x < CFG.bananaX + CFG.bananaR && o.x + CFG.obW > CFG.bananaX - CFG.bananaR) || (o.waf && Math.abs(o.x + o.waf.dx - CFG.bananaX) < 44)) && hits(o)) bonk = o; }
     if (bonk && invuln <= 0) {
       if (shield > 0) { shield--; boing(clamp((bonk.gt + bonk.gb) / 2 - by, -100, 100) * 5.2); }   // boing: Fancy springs toward the middle of the gap and flies on
       else { die(); return; }
@@ -2838,6 +2919,7 @@ function recordRun() {
 /* ===== The finale: Prince Chimp is beaten. The player chooses to keep their upgrades and banana credits, or start fresh. Either way the game is exactly as hard as before. ===== */
 function startVictory() {
   var s = save.stats, secs = Math.max(1, Math.round(runSecs)), pz = runPauses;
+  if (badgeNew) { toast('Challenge badge earned: ' + badgeNew + '! New scarf and mask colors are in Costume.', 7000); badgeNew = ''; }
   state = 'victory'; setBar(false); vicT = 0; pendNext = ''; nextT = 0; cardT = -1; BAL = null; fwk.length = 0; fwkT = 0.4; recordRun();
   VS = { secs: secs, pauses: pz, flaps: runFlaps, coins: runCoins, hurts: runHurts, friends: s.friends - runFriends0, pops: runPops, popsOf: runPopsOf, prevTime: s.bestWin, prevPz: s.bestPz ? s.bestPz - 1 : -1, recT: !s.bestWin || secs < s.bestWin, recP: !s.bestPz || pz + 1 < s.bestPz };
   if (VS.recT) s.bestWin = secs; if (VS.recP) s.bestPz = pz + 1;
@@ -3121,7 +3203,7 @@ var TICKS = ['BREAKING NEWS: Evil Prince Chimp has banana-napped every banana fr
   'Why did the banana go to the doctor? It wasn\'t peeling well!', 'What do you call two bananas? A pair of slippers!', 'Why did the banana wear sunscreen? So it wouldn\'t peel!', 'What\'s a banana\'s favorite game? Hide and go peel!',
   'Why are bananas never lonely? They hang out in bunches!', 'What did the banana say to the vacuum? I\'m not afraid of you, I\'m a-peeling!', 'How do you make a banana split? Cut it in half!'];
 var RUMOR_A = ['RUMOR: Win once and Prince Chimp may give up a big surprise!', 'RUMOR: Winners say the game keeps secrets. Can you find them?'];
-var RUMOR_B = ['RUMOR: A shimmer at the very top of the sky hides a vault!', 'RUMOR: A long PERFECT streak can make one gate glow gold!', 'RUMOR: Stay low before the Silverware Drawer. Something rattles!', 'RUMOR: In Chimp\'s Navy, three perfect barrel leaps call up a raft!', 'RUMOR: A rock arch near the Navy\'s end hides a secret cove!', 'RUMOR: Sail the whole Navy with no hits and the Boss Sub awaits!', 'RUMOR: Five quick taps on Fancy open a little secret door!', 'RUMOR: Six banana friends are still lost. Look closely!'];
+var RUMOR_B = ['RUMOR: A shimmer at the very top of the sky hides a vault!', 'RUMOR: A long PERFECT streak can make one gate glow gold!', 'RUMOR: Stay low before the Silverware Drawer. Something rattles!', 'RUMOR: In Chimp\'s Navy, three perfect barrel leaps call up a raft!', 'RUMOR: A rock arch near the Navy\'s end hides a secret cove!', 'RUMOR: Sail the whole Navy with no hits and the Boss Sub awaits!', 'RUMOR: Five quick taps on Fancy open a little secret door!', 'RUMOR: Six banana friends are still lost. Look closely!', 'RUMOR: Beat the game in a Challenge for a badge and new colors!'];
 var TKLIST = null, TKW = -1;
 function tickList() {   // the headlines: the news, a few jokes (a different few each time you play), and rumors that hint at the secrets
   var w = save.stats.wins > 0 ? 1 : 0, j = TICKS.slice(3), o = TICKS.slice(0, 3), i, st = save.stats.runs % j.length;
@@ -3391,9 +3473,10 @@ function render() {
   if (state === 'mini' && MG) { renderMini(); return; }
   var i, pe = punchT > 0 && !calmOn() ? punchT / CFG.punchSecs : 0;
   if (pe > 0) { var sh = pe * pe * 6 * Math.sin(time * 90); ctx.save(); ctx.translate(Math.round(sh * k) / k, Math.round(sh * 0.6 * k) / k); }   // camera shake at the blast off: a plain slide (a zoom would re-scale every picture on screen, which stalled Firefox and phones)
+  var mir = mirOn(); if (mir) { ctx.save(); ctx.translate(0, H); ctx.scale(1, -1); }
   drawBack(); lap('back'); drawLife(); lap('life'); drawWind(); lap('wind');
   drawVaultBack();
-  for (i = 0; i < obs.length; i++) { ART.obstacle(ctx, obs[i]); if (obs[i].gold && !obs[i].passed) drawGold(obs[i]); }
+  for (i = 0; i < obs.length; i++) { ART.obstacle(ctx, obs[i]); if (obs[i].gold && !obs[i].passed) drawGold(obs[i]); if (obs[i].waf) drawWafer(obs[i]); }
   if (BAL || shd.length) drawBalloons();
   lap('obstacles'); drawCoins(); lap('coins');
   var zm = zoomOn();
@@ -3403,21 +3486,25 @@ function render() {
   if (bgT < 1) { ctx.globalAlpha = Math.min(calmOn() ? 0.4 : 0.92, (bgT < 0.5 ? bgT : 1 - bgT) * 2.6); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }   // the fade through white washes the scene only: the card, Fancy and the confetti stay clear
   if (state === 'title') { var fi = titleFancyIn(); if (fi > 0) { var fz = 1 + 2.6 * (1 - easeOutBack(fi)); ctx.globalAlpha = clamp(fi * 3, 0, 1); drawFancy(62 + 14 * easeOutBack(fi), 182 + Math.sin(time * 4) * 6, -0.1 + Math.sin(time * 4) * 0.05 - (1 - fi) * 0.9 + Math.sin(time * 45) * 0.2 * museW, 1.25 * Math.max(.2, fz)); ctx.globalAlpha = 1; } }
   else {
-    if (cardT >= 0 && state === 'play') { stageCard(); lap('card'); }   // drawn before Fancy, so Fancy always stays in view
+    if (cardT >= 0 && state === 'play') { if (mir) { ctx.save(); ctx.translate(0, H); ctx.scale(1, -1); } stageCard(); if (mir) ctx.restore(); lap('card'); }   // drawn before Fancy, so Fancy always stays in view
     zm = zoomOn(); drawTrail(); if ((state === 'play' || state === 'paused') && flagsOn()) drawFlags(); if ((state === 'play' || state === 'paused') && bunchOn()) drawBuddies(); lap('trail'); drawSpeedLines(); lap('speedlines');
     if (!zm && !blinkOff()) { if (calmOn() && invuln > 0 && spinT <= 0) ctx.globalAlpha = 0.6; drawFancy(bx, by, angle, 1); ctx.globalAlpha = 1; }
     lap('fancy'); drawShield();
     if (zm) { ctx.restore(); if (!blinkOff()) drawFancy(zoomX + (bx - zoomX) * zoomK, GROUND_Y + (by - GROUND_Y) * zoomK, angle, 1); }   // in the swoop-in Fancy follows the zoomed track but is stamped at his normal size (a scaled stamp was the costly one)
   }
   zm = zoomOn(); drawFx(); if (zm) ctx.restore();
+  if (mir) ctx.restore();
+  if (nightA > 0.01) drawNight();
   lap('fx'); drawHug(); drawPops(); drawCount(); drawRSG(); drawTaps(); lap('pops');
   if (state === 'gift') drawGift(); else if (state === 'play') { if (BAL) balIntro(); if (BALR && rsgT >= 0 && rsgT < CFG.cardSecs) balResultCard(); }
-  if (whooshT > 0) { ctx.globalAlpha = clamp(whooshT / 0.5, 0, 1); outlined('WHOOSH!', 190, by - 52 - (0.9 - whooshT) * 40, 34, '#ffd93b'); ctx.globalAlpha = 1; }
+  if (whooshT > 0) { ctx.globalAlpha = clamp(whooshT / 0.5, 0, 1); outlined('WHOOSH!', 190, mirY(by) - 52 - (0.9 - whooshT) * 40, 34, '#ffd93b'); ctx.globalAlpha = 1; }
   if (pe > 0) ctx.restore();
   if (flashT > 0) { ctx.globalAlpha = 0.6 * flashT / 0.25; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
   if (state === 'play' && by < 0) {   // Fancy is above the top edge: show where he is and that he is being called back
     var w = clamp(topT / CFG.topFreeSecs, 0, 1);
+    if (mirOn()) { ctx.save(); ctx.translate(0, H); ctx.scale(1, -1); }
     ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(bx, 12); ctx.lineTo(bx - 14, 36); ctx.lineTo(bx + 14, 36); ctx.closePath(); fs(w > 0.6 && (calmOn() || Math.floor(time * 10) % 2) ? '#ff6b5e' : '#ffd93b');
+    if (mirOn()) ctx.restore();
   }
   if (state === 'play' || state === 'paused' || state === 'dead') {
     outlinedC(String(BAL ? BAL.popped : score), W / 2, 84, 64, '#ffffff');
@@ -3446,6 +3533,7 @@ function render() {
     if (skipLaunch()) { ctx.globalAlpha = 0.85; outlined('Tap to skip', W / 2, 604, 17, '#ffffff'); ctx.globalAlpha = 1; }
   } else if (state === 'ready') {
     outlined('Tap to launch!', W / 2, 110, 28, '#ffffff');
+    if (runChal) outlined('Challenge: ' + CHAL[chalIdx() - 1][1], W / 2, 146, 17, '#ffd93b');
   } else if (state === 'paused') {
     if (resT >= 0) { ctx.fillStyle = 'rgba(58,42,77,0.18)'; ctx.fillRect(0, 0, W, H); drawResume(); }
     else { ctx.fillStyle = 'rgba(58,42,77,0.35)'; ctx.fillRect(0, 0, W, H); outlined('Paused', W / 2, 270, 44, '#ffd93b'); outlined('Tap to continue', W / 2, 330, 24, '#ffffff'); mgBtn(PS_BT, 'Settings', '#4a9bd8'); padLine(); if (pracN) mgBtn(MG_BT, 'Back to title', '#8a6cd8'); else outlined('(the P key pauses too)', W / 2, 366, 15, '#ffffff'); }
@@ -3485,7 +3573,7 @@ addEventListener('keydown', function (e) {
   if (e.key !== ' ' && e.key !== 'ArrowUp' && e.key !== 'Enter') return;
   var t = document.activeElement && document.activeElement.tagName;
   if (t === 'BUTTON' || t === 'TEXTAREA' || t === 'INPUT') return;
-  e.preventDefault(); if (!e.repeat) { if (state === 'play' || state === 'launch') tapRipple(bx, by, tapIgnored()); onAction(); }
+  e.preventDefault(); if (!e.repeat) { if (state === 'play' || state === 'launch') tapRipple(bx, mirY(by), tapIgnored()); onAction(); }
 });
 addEventListener('keyup', function (e) { var kk = { ArrowLeft: 'l', a: 'l', ArrowRight: 'r', d: 'r', ArrowUp: 'u', w: 'u', ArrowDown: 'd', s: 'd' }[e.key]; if (kk) keys[kk] = false; });
 document.addEventListener('contextmenu', function (e) { if (e.target === cv) e.preventDefault(); });
@@ -3498,7 +3586,7 @@ addEventListener('gamepadconnected', function () { if (!padOn) toast('Controller
 addEventListener('blur', function (e) { if (e.target && e.target.classList) e.target.classList.remove('pf'); }, true);
 function padList() { return padTest || (navigator.getGamepads ? navigator.getGamepads() : []); }
 function padB(g, n) { return !!(g.buttons[n] && g.buttons[n].pressed); }
-function padPanel() { var a = [pWin, pHelp, pSave, pWear, pUp, pSet, pPrac, pMuse], i; for (i = 0; i < a.length; i++) if (!a[i].hidden) return a[i]; return null; }
+function padPanel() { var a = [pWin, pHelp, pSave, pWear, pUp, pSet, pPrac, pMuse, pChal], i; for (i = 0; i < a.length; i++) if (!a[i].hidden) return a[i]; return null; }
 function padCands(root) {   // the buttons a controller can reach right now: the open panel's, or the title screen's own buttons
   var L = (root === stageEl ? stageEl : root).querySelectorAll('button'), o = [], i, b;
   for (i = 0; i < L.length; i++) { b = L[i]; if (b.disabled || !b.getClientRects().length) continue; if (root === stageEl && !bar.contains(b) && b.id !== 'bCont') continue; o.push(b); }
@@ -3559,7 +3647,7 @@ function padStep() {
     else if ((E.xy || E.sel) && canPause) padOpenSet();
     else if (E.b && pracN && ((state === 'dead' && deadT >= CFG.retryDelay) || canPause)) practiceExit();
     else if (E.b && state === 'mini' && MG && MG.practice && mgCard(MG)) practiceExit();
-    else if (E.act && !((D.xy || D.sel) && canPause && !D.a)) { if (state === 'play' || state === 'launch') tapRipple(bx, by, tapIgnored()); onAction(); }
+    else if (E.act && !((D.xy || D.sel) && canPause && !D.a)) { if (state === 'play' || state === 'launch') tapRipple(bx, mirY(by), tapIgnored()); onAction(); }
     if (E.pz && !panelOpen()) { if (state === 'mini') mgPause(); else if (state === 'play') onHidden(); else if (state === 'paused') beginResume(); else if (state === 'title') { padNavT = false; toReady(); } }
   }
   padPrev = D;
@@ -3567,7 +3655,7 @@ function padStep() {
 
 /* ===== Start ===== */
 var awayMs = save.stats.runs > 0 && save.savedAt > 0 ? Date.now() - save.savedAt : 0;
-syncOpts(); resetWorld(); resize(); setBar(true); if (awayMs > 3 * 864e5) setTimeout(function () { toast('Welcome back! Tap, click or press Space to flap. P pauses. Settings is the gear.', 6000); }, 2500); ART.warm(shownTheme());   // the first stage's obstacle pieces are built in the background while the title shows
+applyColors(); syncOpts(); resetWorld(); resize(); setBar(true); if (awayMs > 3 * 864e5) setTimeout(function () { toast('Welcome back! Tap, click or press Space to flap. P pauses. Settings is the gear.', 6000); }, 2500); ART.warm(shownTheme());   // the first stage's obstacle pieces are built in the background while the title shows
 if (loadNote) toast(loadNote);
 if (!storageOK) toast('This browser is not keeping progress. Use Save to copy your save code.');
 
