@@ -1697,6 +1697,33 @@ function drawBarrels(g, n, vert) {   // one, two or three barrels seen from a li
     [-1, 1].forEach(function (s) { ell(g, cx + s * 9.6, cy - 1.4, 4.2, 3.3, s * .6); fs(g, rg(g, cx + s * 8.8, cy - 2.4, .5, cx + s * 9.6, cy - 1.4, 4.6, [[0, '#b58558'], [1, '#6a4128']]), '#2b1a10', 1.4); });   // paws gripping the rim
   }
 }
+var SHP = null;
+function SHPALM(g, a, b) { var i, l, x, h; for (i = a; i < b; i++) { x = SHP[i][0]; h = SHP[i][1]; g.strokeStyle = '#7a4a22'; g.lineWidth = 6; g.beginPath(); g.moveTo(x, 150); g.quadraticCurveTo(x + 8, 150 - h * .6, x - 2, 150 - h); g.stroke(); for (l = 0; l < 6; l++) { g.save(); g.translate(x - 2, 150 - h); g.rotate(-1.2 + l * .48); ell(g, 0, -14, 6, 20); fs(g, '#2f9a3a', '#17481f', 1.2); g.restore(); } } }
+var SHORE = [   // the beach is painted in small steps (the warm-up runs one per frame, so no single step is a visible stall)
+  function (g) { g.fillStyle = lg(g, 0, 0, 0, 230, [[0, '#2f8a3a'], [.5, '#59c24a'], [1, '#f5e0a0']]); g.fillRect(0, 0, W, 230); var r = rnd(44), i; SHP = []; for (i = 0; i < 9; i++) SHP.push([20 + i * 42 + r() * 14, 70 + r() * 40]); },
+  function (g) { SHPALM(g, 0, 3); }, function (g) { SHPALM(g, 3, 6); }, function (g) { SHPALM(g, 6, 9); },
+  function (g) {
+    var i; g.fillStyle = '#f5e0a0'; g.beginPath(); g.moveTo(0, 150); g.quadraticCurveTo(90, 132, 180, 150); g.quadraticCurveTo(270, 168, 360, 148); g.lineTo(360, 230); g.lineTo(0, 230); g.fill();
+    g.fillStyle = 'rgba(255,255,255,.8)'; g.beginPath(); g.moveTo(0, 214); for (i = 0; i <= 18; i++) g.lineTo(i * 20, 214 + Math.sin(i * 1.7) * 5); g.lineTo(360, 230); g.lineTo(0, 230); g.fill();
+  },
+  function (g) {
+    g.save(); g.translate(180, 66); g.scale(1.2, 1.2); chimpDraw(g, 0); g.restore();   // Prince Chimp himself, crown and cape, big above the gate
+    rr(g, 150, 120, 14, 80, 3); fs(g, '#7a4a22', '#3f2812', 1.6); rr(g, 196, 120, 14, 80, 3); fs(g, '#7a4a22', '#3f2812', 1.6); rr(g, 140, 108, 80, 18, 5); fs(g, '#a24ad8', '#3b1a5c', 1.8);
+    [[34, 'L'], [326, 'R']].forEach(function (p) { rr(g, p[0] - 5, 196, 10, 26, 3); fs(g, '#6a3e1c', '#3f2812', 1.6); });   // the sign's two posts
+    rr(g, 20, 170, 320, 44, 10); fs(g, lg(g, 0, 170, 0, 214, [[0, '#c98a4a'], [.5, '#a86a30'], [1, '#7a4a22']]), '#3f2812', 3);   // the big signboard
+    g.strokeStyle = 'rgba(60,32,10,.35)'; g.lineWidth = 1.2; [184, 198].forEach(function (y) { g.beginPath(); g.moveTo(26, y); g.lineTo(334, y); g.stroke(); });   // planks
+    g.fillStyle = '#3f2812'; [[28, 178], [332, 178], [28, 206], [332, 206]].forEach(function (p) { g.beginPath(); g.arc(p[0], p[1], 2, 0, 7); g.fill(); });   // nails
+  },
+  function (g) {
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+    var t1 = 'Prince Chimp’s Tropical Jungle Island', sz = 17; g.font = '800 17px ' + FONT; sz = Math.min(17, 17 * 296 / g.measureText(t1).width); g.font = '800 ' + sz.toFixed(1) + 'px ' + FONT;
+    g.strokeStyle = '#3a1f0a'; g.lineWidth = 3.6; g.strokeText(t1, 180, 193); g.fillStyle = '#fff3d0'; g.fillText(t1, 180, 193);
+    g.strokeStyle = '#3f2812'; g.lineWidth = 2; g.beginPath(); g.moveTo(158, 126); g.lineTo(162, 134); g.moveTo(202, 126); g.lineTo(198, 134); g.stroke();   // the small sign hangs from the gate
+    rr(g, 118, 134, 124, 26, 8); fs(g, lg(g, 0, 134, 0, 160, [[0, '#e0a864'], [1, '#b87a3a']]), '#3f2812', 2.4);
+    g.font = '800 13px ' + FONT; g.strokeStyle = '#3a1f0a'; g.lineWidth = 3; g.strokeText('AKA Rhode Island', 180, 148); g.fillStyle = '#ffd93b'; g.fillText('AKA Rhode Island', 180, 148);
+    g.textAlign = 'start'; g.textBaseline = 'alphabetic'; 
+  }
+];
 var MG = {
   sub: function () { return spr(184, 60, function (g) {                                       // a Chimp Navy submarine seen from a little above: a glossy purple hull with a visible side, a tower standing on the deck, the captain chimp popping out of the hatch
     var i, a;
@@ -1770,32 +1797,15 @@ var MG = {
   }); },
   bubble: function () { return spr(44, 44, function (g) { circ(g, 22, 22, 20); fs(g, 'rgba(210,245,255,.38)', 'rgba(255,255,255,.95)', 1.8); friend(g, 22, 24, 0, .66, 0); circ(g, 14, 12, 3.4); g.fillStyle = 'rgba(255,255,255,.9)'; g.fill(); }); },
   heart: function (full) { return spr(24, 22, function (g) { g.beginPath(); g.moveTo(12, 20); g.bezierCurveTo(-4, 9, 4, -2, 12, 5); g.bezierCurveTo(20, -2, 28, 9, 12, 20); g.closePath(); if (full) { fs(g, lg(g, 0, 0, 0, 20, [[0, '#ff7a90'], [1, '#d9254a']]), '#7a0f26', 1.8); g.fillStyle = 'rgba(255,255,255,.55)'; ell(g, 7.5, 6.5, 2.6, 1.6, -.6); g.fill(); } else fs(g, 'rgba(255,255,255,.35)', '#7a0f26', 1.8); }); },
-  shore: function () { return spr(W, 230, function (g) {                                   // Prince Chimp's beach: the finish line of the mini game
-    g.fillStyle = lg(g, 0, 0, 0, 230, [[0, '#2f8a3a'], [.5, '#59c24a'], [1, '#f5e0a0']]); g.fillRect(0, 0, W, 230);
-    var r = rnd(44), i; for (i = 0; i < 9; i++) { var x = 20 + i * 42 + r() * 14, h = 70 + r() * 40; g.strokeStyle = '#7a4a22'; g.lineWidth = 6; g.beginPath(); g.moveTo(x, 150); g.quadraticCurveTo(x + 8, 150 - h * .6, x - 2, 150 - h); g.stroke(); for (var l = 0; l < 6; l++) { g.save(); g.translate(x - 2, 150 - h); g.rotate(-1.2 + l * .48); ell(g, 0, -14, 6, 20); fs(g, '#2f9a3a', '#17481f', 1.2); g.restore(); } }
-    g.fillStyle = '#f5e0a0'; g.beginPath(); g.moveTo(0, 150); g.quadraticCurveTo(90, 132, 180, 150); g.quadraticCurveTo(270, 168, 360, 148); g.lineTo(360, 230); g.lineTo(0, 230); g.fill();
-    g.fillStyle = 'rgba(255,255,255,.8)'; g.beginPath(); g.moveTo(0, 214); for (i = 0; i <= 18; i++) g.lineTo(i * 20, 214 + Math.sin(i * 1.7) * 5); g.lineTo(360, 230); g.lineTo(0, 230); g.fill();
-    g.save(); g.translate(180, 66); g.scale(1.2, 1.2); chimpDraw(g, 0); g.restore();   // Prince Chimp himself, crown and cape, big above the gate
-    rr(g, 150, 120, 14, 80, 3); fs(g, '#7a4a22', '#3f2812', 1.6); rr(g, 196, 120, 14, 80, 3); fs(g, '#7a4a22', '#3f2812', 1.6); rr(g, 140, 108, 80, 18, 5); fs(g, '#a24ad8', '#3b1a5c', 1.8);
-    [[34, 'L'], [326, 'R']].forEach(function (p) { rr(g, p[0] - 5, 196, 10, 26, 3); fs(g, '#6a3e1c', '#3f2812', 1.6); });   // the sign's two posts
-    rr(g, 20, 170, 320, 44, 10); fs(g, lg(g, 0, 170, 0, 214, [[0, '#c98a4a'], [.5, '#a86a30'], [1, '#7a4a22']]), '#3f2812', 3);   // the big signboard
-    g.strokeStyle = 'rgba(60,32,10,.35)'; g.lineWidth = 1.2; [184, 198].forEach(function (y) { g.beginPath(); g.moveTo(26, y); g.lineTo(334, y); g.stroke(); });   // planks
-    g.fillStyle = '#3f2812'; [[28, 178], [332, 178], [28, 206], [332, 206]].forEach(function (p) { g.beginPath(); g.arc(p[0], p[1], 2, 0, 7); g.fill(); });   // nails
-    g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
-    var t1 = 'Prince Chimp’s Tropical Jungle Island', sz = 17; g.font = '800 17px ' + FONT; sz = Math.min(17, 17 * 296 / g.measureText(t1).width); g.font = '800 ' + sz.toFixed(1) + 'px ' + FONT;
-    g.strokeStyle = '#3a1f0a'; g.lineWidth = 3.6; g.strokeText(t1, 180, 193); g.fillStyle = '#fff3d0'; g.fillText(t1, 180, 193);
-    g.strokeStyle = '#3f2812'; g.lineWidth = 2; g.beginPath(); g.moveTo(158, 126); g.lineTo(162, 134); g.moveTo(202, 126); g.lineTo(198, 134); g.stroke();   // the small sign hangs from the gate
-    rr(g, 118, 134, 124, 26, 8); fs(g, lg(g, 0, 134, 0, 160, [[0, '#e0a864'], [1, '#b87a3a']]), '#3f2812', 2.4);
-    g.font = '800 13px ' + FONT; g.strokeStyle = '#3a1f0a'; g.lineWidth = 3; g.strokeText('AKA Rhode Island', 180, 148); g.fillStyle = '#ffd93b'; g.fillText('AKA Rhode Island', 180, 148);
-    g.textAlign = 'start'; g.textBaseline = 'alphabetic'; }); }
+  shore: function () { var s = mk(W, 230); SHORE.forEach(function (p) { p(s.g); }); return s; }   // Prince Chimp's beach: the finish line of the mini game (built in three parts, see SHORE)
 };
 var MGC = {};
 function mgs(k, a) { var key = k + (a === undefined ? '' : a); return MGC[key] || (MGC[key] = MG[k](a)); }
 /* draw one mini game thing centred on (x, y) */
 function mgdraw(g, k, x, y, a) { var s = mgs(k, a); put(g, s.c, x - s.w / 2, y - s.h / 2); }
 var MGW = null;
-var MGQ = [];
-function mgwarm() { MGQ = [['sub'], ['barrels', 1], ['barrels', 2], ['barrels', 3], ['barrelsV', 2], ['barrelsV', 3], ['gull', 0], ['gull', 1], ['gull', 2], ['gull', 3], ['gullShadow', 0], ['gullShadow', 1], ['gullShadow', 2], ['gullShadow', 3], ['whirl'], ['whirlArms'], ['bubble'], ['shore'], ['heart', true], ['heart', false], ['wafer']].map(function (a) { return function () { mgs(a[0], a[1]); }; }); MGQ.push(function () { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } }); }
+var MGQ = [], MGSH = null;
+function mgwarm() { MGQ = [['sub'], ['barrels', 1], ['barrels', 2], ['barrels', 3], ['barrelsV', 2], ['barrelsV', 3], ['gull', 0], ['gull', 1], ['gull', 2], ['gull', 3], ['gullShadow', 0], ['gullShadow', 1], ['gullShadow', 2], ['gullShadow', 3], ['whirl'], ['whirlArms'], ['bubble'], ['heart', true], ['heart', false], ['wafer']].map(function (a) { return function () { mgs(a[0], a[1]); }; }); MGQ.push(function () { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } }); SHORE.forEach(function (st, n) { MGQ.push(function () { if (MGC.shore) return; if (n === 0) MGSH = mk(W, 230); if (!MGSH) return; st(MGSH.g); if (n === SHORE.length - 1) { MGC.shore = MGSH; MGSH = null; } }); }); }
 function mgdone() { while (MGQ.length) MGQ.shift()(); }
 function mgcol(a, b, w) { return 'rgb(' + Math.round(a[0] + (b[0] - a[0]) * w) + ',' + Math.round(a[1] + (b[1] - a[1]) * w) + ',' + Math.round(a[2] + (b[2] - a[2]) * w) + ')'; }
 /* The sea is light and teal at the start and the end of the level and deep blue in the middle. The color is a gradient up the screen (what is ahead is at the top), so a change is seen traveling toward Fancy instead of switching in steps. p0 = the level's progress at the bottom, p1 = at the top (0..1). */
@@ -1806,7 +1816,7 @@ function mgsea(g, p0, p1) {
 }
 function mgwater(g, off) { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } var y = ((off % 320) + 320) % 320 - 320; for (; y < 640; y += 320) put(g, MGW.c, 0, y); }
 
-function init(k) { K = k; CRP = null; CHP = {}; BALP = {}; WAFP = null; PARTY = null; BALW = false; SET = {}; PLAN = {}; QUEUE = []; MGQ = []; TASKQ = []; MGC = {}; MGW = null; COIN = null; initBanana(); coinFrames(); [[.78, 0], [.42, 1], [.56, 2], [1.15, 2]].forEach(function (c) { TASKQ.push(function () { chimpPic(c[0], c[1]); }); }); Object.keys(TEXF).forEach(function (k) { TASKQ.push(function () { tex3(k); }); }); }   // the chimp pictures for the Oops and stage cards are built early, a few ms per frame
+function init(k) { K = k; CRP = null; CHP = {}; BALP = {}; WAFP = null; PARTY = null; BALW = false; SET = {}; PLAN = {}; QUEUE = []; MGQ = []; MGSH = null; TASKQ = []; MGC = {}; MGW = null; COIN = null; initBanana(); coinFrames(); [[.78, 0], [.42, 1], [.56, 2], [1.15, 2]].forEach(function (c) { TASKQ.push(function () { chimpPic(c[0], c[1]); }); }); Object.keys(TEXF).forEach(function (k) { TASKQ.push(function () { tex3(k); }); }); }   // the chimp pictures for the Oops and stage cards are built early, a few ms per frame
 function keep(list) { for (var key in SET) if (list.indexOf(+key) < 0) delete SET[key]; }
 
 /* ---------- the launch track: a huge loop-de-loop, drawn live as vectors (so it is big and sharp, and costs no memory) ----------
@@ -1961,7 +1971,7 @@ return { fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: cr
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1344';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1359';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -3056,7 +3066,8 @@ function update(dt) {
         o.passed = true; score++; rateGate(o); if (o.gold && !VAULT) warp = true;
         if (score === gateStart(stage + 1)) { if (pracN) pracWin(); else stageUp(); }
         if (!pracN && runStartBest > 0 && score === runStartBest + 1) { pop('NEW BEST!', '#ffd93b', 26); burst(CFG.bananaX + 30, by, 22, ['#ffd93b', '#ffffff', '#ff6b81'], 240, 240); }   // past the old record
-        else if (score - gateStart(stage) === 2) { if (themeOf(stage) === CFG.miniAfter) ART.mg.warm(); else if (themeOf(stage + 1) !== bgTheme) ART.warm(themeOf(stage + 1)); }   // build the next stage's pictures early, in a calm moment
+        if (score - gateStart(stage) === 1) { if (themeOf(stage) === CFG.miniAfter) ART.mg.warm(); else if (themeOf(stage + 1) !== bgTheme) ART.warm(themeOf(stage + 1)); }   // build the next stage's pictures early (right after the first gate, in small steps), in a calm moment
+        if (score - gateStart(stage) === 3) cardWarm();   // and the words for the stage card, one picture per frame, so the card does not land on one frame
       }
     }
     while (obs.length && obs[0].x + CFG.obW < -10) obs.shift();
@@ -3760,6 +3771,7 @@ function drawProgress() {   // ten pips for the ten gates of the stage, then "n 
   t = pracN ? 'Practice  -  ' + (gps - done) + ' to go' : 'Stage ' + stage + '  -  ' + (gps - done) + ' to go';
   if (rec > 0) t += score > rec ? '  -  new best!' : '  -  best ' + rec;
   outlined(t, W / 2, 131, 14, rec > 0 && score > rec ? '#ffd93b' : '#ffffff');
+  if (done + 1 < gps) { var t2 = pracN ? 'Practice  -  ' + (gps - done - 1) + ' to go' : 'Stage ' + stage + '  -  ' + (gps - done - 1) + ' to go'; if (rec > 0) t2 += score + 1 > rec ? '  -  new best!' : '  -  best ' + rec; txWarm(t2, 14, rec > 0 && score + 1 > rec ? '#ffd93b' : '#ffffff'); }   // the next gate's line is built a frame at a time while this one shows, so passing a gate costs nothing
 }
 var TESTFILE = false, labUsed = false;   // the tester build flips TESTFILE to true; its badge shows only once the Test Lab has changed something (labUsed). The player build never shows it
 var XSHORT = { practice: 'Practice Navy', wshield: 'Wafer shield', rope: 'Rope cutter', superleap: 'Super Leap' };
@@ -3880,6 +3892,12 @@ function drawShield() {
   if (shield <= 0 || (state !== 'play' && state !== 'launch')) return;
   for (var i = 0; i < shield; i++) { ctx.beginPath(); ctx.arc(bx, by, 24 + i * 4, 0, 7); ctx.fillStyle = 'rgba(150,235,170,0.18)'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(80,190,110,0.95)'; ctx.stroke(); }
   ctx.beginPath(); ctx.arc(bx, by, 20, Math.PI * 1.15, Math.PI * 1.6); ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.stroke();
+}
+function txWarm(text, size, fill, chars) { var i; if (chars) { for (i = 0; i < text.length; i++) textPic(text.charAt(i), size, fill, true); } else textPic(text, size, fill, true); }   // ask for a picture of text ahead of time (built one per frame, nothing is drawn)
+function cardWarm() {   // queue (lazily, one per frame) every picture of text the 'stage clear' card is about to need
+  var nx = themeOf(stage + 1);
+  txWarm('Stage ' + stage + ' clear!', 30, '#ffd93b', true); txWarm(CFG.friendsPerStage + ' banana friends escaped!', 17, '#ffffff');
+  txWarm('Bonus: Chimp\'s Navy!', 17, '#ffd93b'); txWarm('Bonus: Balloon Party!', 17, '#ffd93b'); txWarm('Next: ' + ART.names[nx], 17, '#ffd93b');
 }
 function stageCard() {
   var t = cardT, a = clamp(Math.min(t / 0.3, (CFG.cardSecs - t) / 0.3), 0, 1), e = a * a * (3 - 2 * a);
