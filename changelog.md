@@ -1,5 +1,6 @@
 # What's new
 
+- **2026.10.10.1743 (alpha):** The launch contraption's dark strip is now a **glowing neon tube**, and the bright lights are **white-hot starbursts** with long sparkling rays, like a bulb going off. (No stutter confirmed on the previous build.)
 - **2026.10.10.1730 (alpha):** A second attempt at the Silverware Drawer stutter: all of the game's behind-the-scenes picture canvases are now kept in ordinary memory instead of on the graphics card, so the card only receives finished pictures when they are really drawn.
 - **2026.10.10.1725 (alpha):** The launch contraption's **dark light strip is thinner and the bulbs are smaller**, with the same bright glow and sparkle.
 - **2026.10.10.1719 (alpha):** **Found the Silverware Drawer stutter** thanks to your Firefox profile: when the next stage's pictures were being prepared, the game sent dozens of pictures to the graphics card in a single frame and the AMD driver froze for about a fifth of a second. Pictures are now sent a few at a time. The **banana coins' glossy shine is back** (a long streak, a bright dot and deeper gold on one side) and it turns with the coin as it spins.

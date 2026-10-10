@@ -1953,37 +1953,46 @@ function tkBulb(c, lv) {   // a glass bulb in a metal cap at one of 4 brightness
   TKB = TKB || {}; var k = c + lv; if (TKB[k]) return TKB[k];
   var s = document.createElement('canvas'), sz = lv > 1 ? 128 : 88; s.width = s.height = sz; var g = s.getContext('2d', RF), q;
   g.translate(sz / 2, sz / 2); g.scale(2, 2);
-  if (lv > 0) { var hr = [0, 13, 21, 24][lv]; q = g.createRadialGradient(0, 0, 3, 0, 0, hr); q.addColorStop(0, lv > 1 ? '#ffffff' : c); q.addColorStop(.28, c); q.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = [0, .55, .95, 1][lv]; g.fillStyle = q; g.beginPath(); g.arc(0, 0, hr, 0, PI2); g.fill(); g.globalAlpha = 1; }
+  if (lv > 0) { var hr = [0, 13, 22, 30][lv]; q = g.createRadialGradient(0, 0, 3, 0, 0, hr); q.addColorStop(0, lv > 1 ? '#ffffff' : c); q.addColorStop(lv === 3 ? .2 : .28, lv === 3 ? 'rgba(255,255,255,.8)' : c); if (lv === 3) q.addColorStop(.5, c); q.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = [0, .55, .95, 1][lv]; g.fillStyle = q; g.beginPath(); g.arc(0, 0, hr, 0, PI2); g.fill(); g.globalAlpha = 1; }
+  if (lv < 3) {   // (the blazing bulbs have no visible socket: they are a white-hot burst)
   g.beginPath(); g.arc(0, 0, 6.4, 0, PI2); g.fillStyle = '#2b2140'; g.fill();                                           // socket ring and outline
   q = g.createLinearGradient(-5, -5, 5, 5); q.addColorStop(0, '#f2f5ff'); q.addColorStop(.5, '#9aa3bd'); q.addColorStop(1, '#4e5470'); g.beginPath(); g.arc(0, 0, 5.8, 0, PI2); g.fillStyle = q; g.fill();   // the metal cap
   g.beginPath(); g.arc(0, 0, 4.7, 0, PI2); g.fillStyle = lv ? c : mixc2(c); g.fill();
   q = g.createRadialGradient(-1.2, -1.4, .2, 0, 0, 5);
   if (lv === 0) { q.addColorStop(0, 'rgba(255,255,255,.55)'); q.addColorStop(.4, 'rgba(255,255,255,.06)'); q.addColorStop(1, 'rgba(20,10,40,.28)'); }
   else if (lv === 1) { q.addColorStop(0, 'rgba(255,255,255,.7)'); q.addColorStop(.45, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(20,10,40,.1)'); }
-  else { q.addColorStop(0, '#ffffff'); q.addColorStop(lv === 3 ? .4 : .22, '#ffffff'); q.addColorStop(lv === 3 ? .7 : .6, c); q.addColorStop(1, c); }
+  else { q.addColorStop(0, '#ffffff'); q.addColorStop(lv === 3 ? .8 : .3, '#ffffff'); q.addColorStop(lv === 3 ? 1 : .7, lv === 3 ? '#ffffff' : c); q.addColorStop(1, c); }
   g.beginPath(); g.arc(0, 0, 4.7, 0, PI2); g.fillStyle = q; g.fill();
+  }
+  if (lv === 3) { q = g.createRadialGradient(0, 0, 0, 0, 0, 6.5); q.addColorStop(0, '#ffffff'); q.addColorStop(.6, '#ffffff'); q.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = q; g.beginPath(); g.arc(0, 0, 6.5, 0, PI2); g.fill(); }
+  else {
   g.lineWidth = .9; g.strokeStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(0, 0, 3.3, 3.5, 4.9); g.stroke();   // the curved window shine
   g.beginPath(); g.arc(-1.7, -1.9, 1, 0, PI2); g.fillStyle = 'rgba(255,255,255,.95)'; g.fill();
   g.beginPath(); g.arc(1.8, 2.1, .55, 0, PI2); g.fillStyle = 'rgba(255,255,255,.55)'; g.fill();
-  if (lv >= 2) { var L = lv === 3 ? 30 : 17, ray = function (len, w, rot) { g.save(); g.rotate(rot); g.beginPath(); g.moveTo(-len, 0); g.quadraticCurveTo(0, -w, len, 0); g.quadraticCurveTo(0, w, -len, 0); var rg2 = g.createRadialGradient(0, 0, 0, 0, 0, len); rg2.addColorStop(0, 'rgba(255,255,255,1)'); rg2.addColorStop(.6, 'rgba(255,255,255,.75)'); rg2.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg2; g.fill(); g.restore(); }; ray(L, 1.7, 0); ray(L, 1.7, PI2 / 4); if (lv === 3) { ray(L * .6, 1.2, PI2 / 8); ray(L * .6, 1.2, -PI2 / 8); } }   // sparkle glints: a four-point star that flashes on the brightest bulbs
+  }
+  if (lv >= 2) { var L = lv === 3 ? 31 : 18, ray = function (len, w, rot) { g.save(); g.rotate(rot); g.beginPath(); g.moveTo(-len, 0); g.quadraticCurveTo(0, -w, len, 0); g.quadraticCurveTo(0, w, -len, 0); var rg2 = g.createRadialGradient(0, 0, 0, 0, 0, len); rg2.addColorStop(0, 'rgba(255,255,255,1)'); rg2.addColorStop(.6, 'rgba(255,255,255,.75)'); rg2.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg2; g.fill(); g.restore(); }; ray(L, lv === 3 ? 3.4 : 1.8, 0); ray(L, lv === 3 ? 3.4 : 1.8, PI2 / 4); if (lv === 3) { ray(L * .72, 2.4, PI2 / 8); ray(L * .72, 2.4, -PI2 / 8); ray(L * .4, 1.1, PI2 / 16); ray(L * .4, 1.1, -PI2 / 16); ray(L * .4, 1.1, PI2 * 3 / 16); ray(L * .4, 1.1, -PI2 * 3 / 16); } }   // sparkle glints: a four-point star that flashes on the brightest bulbs
   return TKB[k] = s;
 }
 function mixc2(c) { return drk(c, .3); }   // an unlit bulb: the same color, dark and dull
 var TKG = null;
 function tkGlow(c, lv) {   // the glare around a lit bulb, drawn with light ADDED to the scene: colored, with a white-hot middle
   TKG = TKG || {}; var k = c + lv; if (TKG[k]) return TKG[k];
-  var s = document.createElement('canvas'); s.width = s.height = 128; var g = s.getContext('2d', RF), hr = [0, 13, 19, 26][lv], q = g.createRadialGradient(64, 64, 2, 64, 64, hr * 2);
-  q.addColorStop(0, '#ffffff'); q.addColorStop(.18, lv === 3 ? '#ffffff' : c); q.addColorStop(.4, c); q.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = [0, .35, .7, .95][lv]; g.fillStyle = q; g.fillRect(0, 0, 128, 128);
+  var s = document.createElement('canvas'); s.width = s.height = 128; var g = s.getContext('2d', RF), hr = [0, 13, 19, 31][lv], q = g.createRadialGradient(64, 64, 2, 64, 64, hr * 2);
+  q.addColorStop(0, '#ffffff'); q.addColorStop(lv === 3 ? .1 : .28, lv === 3 ? '#ffffff' : c); if (lv === 3) q.addColorStop(.3, c); q.addColorStop(.4, c); q.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = [0, .35, .7, 1][lv]; g.fillStyle = q; g.fillRect(0, 0, 128, 128);
   return TKG[k] = s;
 }
 function tkDraw(g, c, lv, x, y, bz) {   // a bulb with its glare behind it (the dim ones are drawn from a smaller picture: less to paint)
-  if (lv > 2) { g.save(); g.globalCompositeOperation = 'lighter'; g.drawImage(tkGlow(c, lv), x - bz / 2, y - bz / 2, bz, bz); g.restore(); }   // only the blazing ones add light (cheap on slow drawing); the others carry their glow inside their picture
+  if (lv > 2) { g.save(); g.globalCompositeOperation = 'lighter'; var gz = bz * 1.3; g.drawImage(tkGlow(c, lv), x - gz / 2, y - gz / 2, gz, gz); g.restore(); }   // only the blazing ones add light (cheap on slow drawing); the others carry their glow inside their picture
   var z = lv > 1 ? bz : bz * 88 / 128; g.drawImage(tkBulb(c, lv), x - z / 2, y - z / 2, z, z);
 }
 function tkLv(i, n, t, flash) {   // the brightness level of bulb i of n: a bright head that races round with a fading tail, and a blink of the whole string now and then
   if (flash) return 3;
   var w = (((i - t * 9) % n) + n) % n;   // 0 at the head, growing behind it
   return w < 1.6 ? 3 : w < 4 ? 2 : w < 8 ? 1 : 0;
+}
+function neonTube(g) {   // strokes the current path as a neon tube
+  g.lineWidth = 17; g.strokeStyle = 'rgba(120,255,235,.22)'; g.stroke(); g.lineWidth = 12.5; g.strokeStyle = 'rgba(110,255,230,.4)'; g.stroke();
+  g.lineWidth = 8.2; g.strokeStyle = '#5ff7e4'; g.stroke(); g.lineWidth = 5.4; g.strokeStyle = '#b6fff4'; g.stroke(); g.lineWidth = 2.2; g.strokeStyle = '#ffffff'; g.stroke();
 }
 function tkBolt(g, x, y) { circ(g, x, y, 2.4); fs(g, '#cfd6e6', '#2b2140', 1); g.fillStyle = '#fff'; g.fillRect(x - 1.2, y - 1.4, 1.4, 1.2); }
 function tkPath(g, x, cx, ty) { g.beginPath(); g.moveTo(x - 400, ty); g.lineTo(cx + 70, ty); g.quadraticCurveTo(cx + 140, ty, cx + 200, ty - 85); }
@@ -2008,8 +2017,8 @@ function track(g, x, t, p, th) {
   g.strokeStyle = '#2b2140'; g.lineWidth = 1.6; g.strokeRect(cx + 30, ty - 15, 60, 30);
   q = g.createLinearGradient(0, ty - 15, 0, ty + 15); q.addColorStop(0, 'rgba(255,255,255,.35)'); q.addColorStop(.5, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(20,10,40,.3)'); g.fillStyle = q; g.fillRect(cx + 30, ty - 15, 60, 30);
   var fl2 = ((t * .62) % 1) < .13, nb = 22, lvl, bz = 62;
-  g.save(); g.lineCap = 'butt'; g.beginPath(); g.arc(cx, cy, r + 24, 0, PI2); g.lineWidth = 11.5; g.strokeStyle = '#2b2140'; g.stroke(); g.lineWidth = 8.6; g.strokeStyle = '#4a3a6c'; g.stroke(); g.lineWidth = 1.4; g.strokeStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.arc(cx, cy, r + 22, 0, PI2); g.stroke(); g.restore();   // a dark light strip behind the bulbs so they glow against it
-  g.save(); g.beginPath(); g.moveTo(Math.max(-20, cx - 270), ty - 26); g.lineTo(cx + 36, ty - 26); g.lineWidth = 11.5; g.lineCap = 'round'; g.strokeStyle = '#2b2140'; g.stroke(); g.lineWidth = 8.6; g.strokeStyle = '#4a3a6c'; g.stroke(); g.restore();   // every 1.6 s the whole string blinks for a moment
+  g.save(); g.lineCap = 'butt'; g.beginPath(); g.arc(cx, cy, r + 24, 0, PI2); neonTube(g); g.restore();   // a neon light tube behind the bulbs: a soft glow, a bright colored tube and a white-hot line down its middle
+  g.save(); g.beginPath(); g.moveTo(Math.max(-20, cx - 270), ty - 26); g.lineTo(cx + 36, ty - 26); g.lineCap = 'round'; neonTube(g); g.restore();   // every 1.6 s the whole string blinks for a moment
   for (i = 0; i < nb; i++) {                                                                                                    // a chasing ring of glowing bulbs
     a = i / nb * PI2; lvl = tkLv(i, nb, t, fl2); tkDraw(g, lc[i % 3], lvl, cx + Math.cos(a) * (r + 24), cy + Math.sin(a) * (r + 24), bz);
   }
@@ -2156,7 +2165,7 @@ return { get tlast() { return TLAST; }, tbmax: TBMAX, fightWarm: fightWarm, boss
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1730';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1743';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
