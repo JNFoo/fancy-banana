@@ -1847,6 +1847,7 @@ var MG = {
     ell(g, 92, 38, 27, 19); fs(g, lg(g, 0, 20, 0, 58, [[0, '#4a3ca6'], [1, '#1f1758']]), '#1d1747', 2.2);   // the tower's side
     ell(g, 92, 28, 27, 19); fs(g, rg(g, 84, 18, 1, 92, 28, 30, [[0, '#d8d0ff'], [.5, '#9084ee'], [1, '#5a49c8']]), '#1d1747', 2.4);   // the tower's top
     ell(g, 92, 28, 19, 13.8); fs(g, lg(g, 80, 16, 104, 40, [[0, '#f2f6ff'], [1, '#98a6c4']]), '#1d1747', 1.8); ell(g, 92, 28, 15, 10.6); fs(g, rg(g, 94, 31, 1, 92, 28, 15, [[0, '#46327a'], [1, '#1c1244']]), '#1d1747', 1.4);   // the hatch
+    rr(g, 14, 12.5, 152, 13, 6.5); fs(g, lg(g, 0, 12, 0, 26, [[0, 'rgba(255,255,255,.42)'], [1, 'rgba(255,255,255,0)']]), null); ell(g, 83, 19, 10, 4.4, -.45); fs(g, 'rgba(255,255,255,.6)', null);   // sheen on the hull and the tower
     g.save(); g.translate(92, 27); monkeyHead(g, .8, 'cap'); g.restore();
     g.strokeStyle = '#6b7487'; g.lineWidth = 3.4; g.lineCap = 'round'; g.beginPath(); g.moveTo(126, 29); g.lineTo(134, 20); g.stroke(); circ(g, 126, 29, 4); fs(g, rg(g, 125, 28, .3, 126, 29, 4.4, [[0, '#ffffff'], [1, '#9aa8c4']]), '#1d1747', 1.4); circ(g, 135, 19, 3.8); fs(g, rg(g, 134, 18, .3, 135, 19, 4, [[0, '#fff6c0'], [1, '#f0b020']]), '#1d1747', 1.3);   // periscope
     for (a = 0; a < 3; a++) { g.save(); g.translate(177, 29); g.rotate(a * 2.094 + .4); ell(g, 6, 0, 6.5, 2.8); fs(g, lg(g, 0, -3, 0, 3, [[0, '#ffffff'], [1, '#b4c0d8']]), '#1d1747', 1.2); g.restore(); } circ(g, 177, 29, 2.4); fs(g, '#ffd23a', '#1d1747', 1);   // propeller
@@ -1901,7 +1902,27 @@ var MG = {
       }
     }
   }); },
-  bubble: function () { return spr(44, 44, function (g) { circ(g, 22, 22, 20); fs(g, 'rgba(210,245,255,.38)', 'rgba(255,255,255,.95)', 1.8); friend(g, 22, 24, 0, .66, 0); circ(g, 14, 12, 3.4); g.fillStyle = 'rgba(255,255,255,.9)'; g.fill(); }); },
+  bubble: function () { return spr(48, 48, function (g) {   // a soap bubble with a friend in it: a thin rainbow skin, a bright window shine and a little sparkle
+    var q;
+    circ(g, 24, 24, 21.5); fs(g, rg(g, 20, 19, 3, 24, 24, 22, [[0, 'rgba(235,252,255,.22)'], [.7, 'rgba(190,235,255,.3)'], [.9, 'rgba(255,255,255,.5)'], [1, 'rgba(255,255,255,.8)']]), null);
+    friend(g, 24, 26, 0, .68, 0);
+    circ(g, 24, 24, 21.5); fs(g, 'rgba(210,245,255,.16)', null);
+    g.lineWidth = 1.8; g.strokeStyle = 'rgba(255,255,255,.95)'; g.beginPath(); g.arc(24, 24, 21.2, 0, PI2); g.stroke();
+    g.lineWidth = 2; g.strokeStyle = 'rgba(255,120,190,.55)'; g.beginPath(); g.arc(24, 24, 19.6, .5, 1.5); g.stroke(); g.strokeStyle = 'rgba(120,200,255,.6)'; g.beginPath(); g.arc(24, 24, 19.6, 3.7, 4.6); g.stroke(); g.strokeStyle = 'rgba(255,240,130,.55)'; g.beginPath(); g.arc(24, 24, 19.6, 1.7, 2.6); g.stroke();   // the rainbow skin
+    g.fillStyle = 'rgba(255,255,255,.95)'; ell(g, 14.5, 13.5, 5.2, 2.7, -.75); g.fill(); circ(g, 33.5, 34, 1.6); g.fill(); circ(g, 30, 36.5, .9); g.fill();
+  }); },
+  wake: function () { return spr(72, 130, function (g) {   // the foam trail behind a swimmer: two spreading lines of foam and a bubbly middle, fading away down the page (the nose is at the top)
+    var s, k, y, x, r = rnd(5);
+    for (s = -1; s <= 1; s += 2) {
+      for (k = 0; k < 2; k++) {
+        g.beginPath(); g.moveTo(36 + s * 3, 4); g.quadraticCurveTo(36 + s * 12, 36, 36 + s * 30, 124);
+        g.strokeStyle = k ? 'rgba(255,255,255,.75)' : 'rgba(190,240,255,.3)'; g.lineWidth = k ? 2.2 : 6; g.lineCap = 'round'; g.stroke();
+      }
+    }
+    for (k = 0; k < 26; k++) { y = 6 + r() * 112; x = 36 + (r() - .5) * (6 + y * .38); circ(g, x, y, 1 + r() * 2.6 * (1 - y / 150)); fs(g, 'rgba(255,255,255,' + (.8 - y / 170).toFixed(2) + ')', null); }
+    var q = g.createLinearGradient(0, 0, 0, 130); q.addColorStop(0, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(255,255,255,1)'); g.globalCompositeOperation = 'destination-out'; g.fillStyle = q; g.fillRect(0, 0, 72, 130); g.globalCompositeOperation = 'source-over';
+  }); },
+  ripple: function () { return spr(80, 48, function (g) { ell(g, 40, 24, 36, 20); g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2.4; g.stroke(); ell(g, 40, 24, 33, 17.6); g.strokeStyle = 'rgba(130,215,255,.5)'; g.lineWidth = 2.6; g.stroke(); }); },
   heart: function (full) { return spr(24, 22, function (g) { g.beginPath(); g.moveTo(12, 20); g.bezierCurveTo(-4, 9, 4, -2, 12, 5); g.bezierCurveTo(20, -2, 28, 9, 12, 20); g.closePath(); if (full) { fs(g, lg(g, 0, 0, 0, 20, [[0, '#ff7a90'], [1, '#d9254a']]), '#7a0f26', 1.8); g.fillStyle = 'rgba(255,255,255,.55)'; ell(g, 7.5, 6.5, 2.6, 1.6, -.6); g.fill(); } else fs(g, 'rgba(255,255,255,.35)', '#7a0f26', 1.8); }); },
   shore: function () { var s = mk(W, 230); SHORE.forEach(function (p) { p(s.g); }); return s; }   // Prince Chimp's beach: the finish line of the mini game (built in three parts, see SHORE)
 };
@@ -1911,7 +1932,7 @@ function mgs(k, a) { var key = k + (a === undefined ? '' : a); return MGC[key] |
 function mgdraw(g, k, x, y, a) { var s = mgs(k, a); put(g, s.c, x - s.w / 2, y - s.h / 2); }
 var MGW = null;
 var MGQ = [], MGSH = null;
-function mgwarm() { MGQ = [['sub'], ['barrels', 1], ['barrels', 2], ['barrels', 3], ['barrelsV', 2], ['barrelsV', 3], ['gull', 0], ['gull', 1], ['gull', 2], ['gull', 3], ['gullShadow', 0], ['gullShadow', 1], ['gullShadow', 2], ['gullShadow', 3], ['whirl'], ['whirlArms'], ['bubble'], ['heart', true], ['heart', false], ['wafer']].map(function (a) { return function () { mgs(a[0], a[1]); }; }); MGQ.push(function () { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } }); SHORE.forEach(function (st, n) { MGQ.push(function () { if (MGC.shore) return; if (n === 0) MGSH = mk(W, 230); if (!MGSH) return; st(MGSH.g); if (n === SHORE.length - 1) { MGC.shore = MGSH; MGSH = null; } }); }); }
+function mgwarm() { MGQ = [['sub'], ['barrels', 1], ['barrels', 2], ['barrels', 3], ['barrelsV', 2], ['barrelsV', 3], ['gull', 0], ['gull', 1], ['gull', 2], ['gull', 3], ['gullShadow', 0], ['gullShadow', 1], ['gullShadow', 2], ['gullShadow', 3], ['whirl'], ['whirlArms'], ['bubble'], ['wake'], ['ripple'], ['heart', true], ['heart', false], ['wafer']].map(function (a) { return function () { mgs(a[0], a[1]); }; }); MGQ.push(function () { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } }); [0, 1, 2, 3, 4].forEach(function (n) { MGQ.push(function () { if (MGCP === n) mgCausticPart(MGCP++); }); }); SHORE.forEach(function (st, n) { MGQ.push(function () { if (MGC.shore) return; if (n === 0) MGSH = mk(W, 230); if (!MGSH) return; st(MGSH.g); if (n === SHORE.length - 1) { MGC.shore = MGSH; MGSH = null; } }); }); }
 function mgdone() { while (MGQ.length) MGQ.shift()(); }
 function mgcol(a, b, w) { return 'rgb(' + Math.round(a[0] + (b[0] - a[0]) * w) + ',' + Math.round(a[1] + (b[1] - a[1]) * w) + ',' + Math.round(a[2] + (b[2] - a[2]) * w) + ')'; }
 /* The sea is light and teal at the start and the end of the level and deep blue in the middle. The color is a gradient up the screen (what is ahead is at the top), so a change is seen traveling toward Fancy instead of switching in steps. p0 = the level's progress at the bottom, p1 = at the top (0..1). */
@@ -1920,9 +1941,31 @@ function mgsea(g, p0, p1) {
   var q = g.createLinearGradient(0, 0, 0, 640), w0 = mgbell(p0), w1 = mgbell(p1), TEAL = [92, 222, 206], TEAL2 = [58, 196, 200], BLUE = [24, 86, 176], BLUE2 = [10, 40, 116];
   q.addColorStop(0, mgcol(TEAL, BLUE, w1)); q.addColorStop(1, mgcol(TEAL2, BLUE2, w0)); g.fillStyle = q; g.fillRect(0, 0, W, 640);
 }
+var MGCA = null, MGCP = 0;
+function mgCausticPart(n) {   // the net of bright light lines the sun throws through shallow water (a tile that repeats both ways), drawn in 5 slices so no single frame pays for all of it
+  var g, r = rnd(77 + n), i, k, a, cx, cy, rad, pts, ox, oy, m = 6;
+  if (!MGCA) MGCA = mk(W, 320); g = MGCA.g; g.lineJoin = 'round';
+  for (i = 0; i < 19; i++) {
+    cx = r() * W; cy = r() * 320; rad = 7 + r() * 10; pts = [];
+    for (k = 0; k < m; k++) { a = k / m * PI2; pts.push([Math.cos(a) * rad * (.75 + r() * .5), Math.sin(a) * rad * (.75 + r() * .5) * .8]); }
+    for (ox = -1; ox <= 1; ox++) for (oy = -1; oy <= 1; oy++) {
+      g.beginPath(); g.moveTo((pts[0][0] + pts[m - 1][0]) / 2 + cx + ox * W, (pts[0][1] + pts[m - 1][1]) / 2 + cy + oy * 320);
+      for (k = 0; k < m; k++) g.quadraticCurveTo(pts[k][0] + cx + ox * W, pts[k][1] + cy + oy * 320, (pts[k][0] + pts[(k + 1) % m][0]) / 2 + cx + ox * W, (pts[k][1] + pts[(k + 1) % m][1]) / 2 + cy + oy * 320);
+      g.closePath(); g.strokeStyle = 'rgba(255,255,255,.12)'; g.lineWidth = 3.4; g.stroke(); g.strokeStyle = 'rgba(235,255,255,.46)'; g.lineWidth = 1.1; g.stroke();
+    }
+  }
+}
+function mgcaustic(g, off, p) { var a = .6 * (1 - .75 * mgbell(p)); if (a < .02) return; while (MGCP < 5) mgCausticPart(MGCP++); var y = ((off * .6 % 320) + 320) % 320 - 320; g.globalAlpha = a; for (; y < 640; y += 320) put(g, MGCA.c, 0, y); g.globalAlpha = 1; }
+function mgglints(g, off, t, p) {   // sun sparkles twinkling on the water
+  var a = .95 * (1 - .55 * mgbell(p)); if (a < .02) return; var i, y0 = ((off % 320) + 320) % 320, q, x, y, ph, v, rr0 = rnd(33);
+  for (i = 0; i < 30; i++) {
+    x = rr0() * W; y = rr0() * 320; ph = rr0() * 6.28; v = Math.sin(t * 2.6 + ph); if (v < .55) continue; v = (v - .55) / .45 * a;
+    for (var o = 0; o < 3; o++) { var yy = (y + y0) % 320 + o * 320 - 320; if (yy < -10 || yy > 650) continue; g.fillStyle = 'rgba(255,255,255,' + v.toFixed(2) + ')'; g.fillRect(x - 1, yy - 1, 2.4, 2.4); g.fillRect(x - 4.5 * v - 1, yy - .4, 9 * v + 2.4, .9); g.fillRect(x - .4, yy - 4.5 * v - 1, .9, 9 * v + 2.4); }
+  }
+}
 function mgwater(g, off) { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } var y = ((off % 320) + 320) % 320 - 320; for (; y < 640; y += 320) put(g, MGW.c, 0, y); }
 
-function init(k) { K = k; CRP = null; CHP = {}; BALP = {}; WAFP = null; PARTY = null; BALW = false; SET = {}; PLAN = {}; QUEUE = []; MGQ = []; MGSH = null; TASKQ = []; MGC = {}; MGW = null; COIN = null; initBanana(); coinFrames(); [[.78, 0], [.42, 1], [.56, 2], [1.15, 2]].forEach(function (c) { TASKQ.push(function () { chimpPic(c[0], c[1]); }); }); Object.keys(TEXF).forEach(function (k) { TASKQ.push(function () { tex3(k); }); }); }   // the chimp pictures for the Oops and stage cards are built early, a few ms per frame
+function init(k) { K = k; MGCA = null; MGCP = 0; CRP = null; CHP = {}; BALP = {}; WAFP = null; PARTY = null; BALW = false; SET = {}; PLAN = {}; QUEUE = []; MGQ = []; MGSH = null; TASKQ = []; MGC = {}; MGW = null; COIN = null; initBanana(); coinFrames(); [[.78, 0], [.42, 1], [.56, 2], [1.15, 2]].forEach(function (c) { TASKQ.push(function () { chimpPic(c[0], c[1]); }); }); Object.keys(TEXF).forEach(function (k) { TASKQ.push(function () { tex3(k); }); }); }   // the chimp pictures for the Oops and stage cards are built early, a few ms per frame
 function keep(list) { for (var key in SET) if (list.indexOf(+key) < 0) delete SET[key]; }
 
 /* ---------- the launch track: a huge loop-de-loop, drawn live as vectors (so it is big and sharp, and costs no memory) ----------
@@ -1981,14 +2024,58 @@ function tkGlow(c, lv) {   // the glare around a lit bulb, drawn with light ADDE
   q.addColorStop(0, '#ffffff'); q.addColorStop(lv === 3 ? .1 : .28, lv === 3 ? '#ffffff' : c); if (lv === 3) q.addColorStop(.3, c); q.addColorStop(.4, c); q.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = [0, .35, .7, 1][lv]; g.fillStyle = q; g.fillRect(0, 0, 128, 128);
   return TKG[k] = s;
 }
-function tkDraw(g, c, lv, x, y, bz) {   // a bulb with its glare behind it (the dim ones are drawn from a smaller picture: less to paint)
-  if (lv > 2) { g.save(); g.globalCompositeOperation = 'lighter'; var gz = bz * 1.3; g.drawImage(tkGlow(c, lv), x - gz / 2, y - gz / 2, gz, gz); g.restore(); }   // only the blazing ones add light (cheap on slow drawing); the others carry their glow inside their picture
+var TKW = null, TKB2 = null;
+function tkWash() {   // a soft dark blue-violet patch under a flare, so the white-hot light has a night to shine out of (a flare on a pale picture would just vanish)
+  if (TKW) return TKW;
+  var s = document.createElement('canvas'); s.width = s.height = 64; var g = s.getContext('2d', RF), q = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  q.addColorStop(0, 'rgba(30,26,100,.55)'); q.addColorStop(.45, 'rgba(40,60,160,.3)'); q.addColorStop(1, 'rgba(40,70,190,0)'); g.fillStyle = q; g.fillRect(0, 0, 64, 64);
+  return TKW = s;
+}
+function tkBurn(v) {   // a burning-magnesium flare: a blown-out white core, a bloom, and long thin sparks and jagged filaments shooting out (two pictures to flicker between)
+  TKB2 = TKB2 || []; if (TKB2[v]) return TKB2[v];
+  var s = document.createElement('canvas'); s.width = s.height = 192; var g = s.getContext('2d', RF), seed = v * 17 + 3, k, q, a, len, w, R = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  g.translate(96, 96); g.scale(2, 2);
+  q = g.createRadialGradient(0, 0, 0, 0, 0, 46); q.addColorStop(0, 'rgba(255,255,255,.9)'); q.addColorStop(.1, 'rgba(225,240,255,.65)'); q.addColorStop(.3, 'rgba(110,170,255,.46)'); q.addColorStop(.65, 'rgba(60,110,230,.18)'); q.addColorStop(1, 'rgba(50,90,220,0)'); g.fillStyle = q; g.beginPath(); g.arc(0, 0, 46, 0, PI2); g.fill();
+  for (k = 0; k < 18; k++) {   // thin tapering rays of different lengths
+    a = k / 18 * PI2 + (R() - .5) * .35; len = k % 3 === 0 ? 40 + R() * 6 : k % 3 === 1 ? 24 + R() * 10 : 14 + R() * 8; w = .7 + R() * 1.4;
+    g.save(); g.rotate(a); g.beginPath(); g.moveTo(3, 0); g.quadraticCurveTo(len * .35, -w, len, 0); g.quadraticCurveTo(len * .35, w, 3, 0);
+    q = g.createLinearGradient(0, 0, len, 0); q.addColorStop(0, 'rgba(255,255,255,1)'); q.addColorStop(1, 'rgba(205,230,255,0)'); g.fillStyle = q; g.fill(); g.restore();
+  }
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  for (k = 0; k < 6; k++) {   // jagged crackling filaments
+    a = R() * PI2; len = 26 + R() * 18; g.save(); g.rotate(a); g.beginPath(); g.moveTo(5, 0);
+    for (var j = 1; j <= 4; j++) g.lineTo(5 + j * len / 4, (R() - .5) * 7 * (j < 4 ? 1 : .5));
+    g.lineWidth = .9; g.strokeStyle = 'rgba(232,244,255,.9)'; g.stroke(); g.lineWidth = .35; g.strokeStyle = '#ffffff'; g.stroke(); g.restore();
+  }
+  for (k = 0; k < 14; k++) { a = R() * PI2; len = 8 + R() * 38; g.beginPath(); g.arc(Math.cos(a) * len, Math.sin(a) * len, .6 + R() * 1.1, 0, PI2); g.fillStyle = 'rgba(245,250,255,' + (.95 - len / 55) + ')'; g.fill(); }
+  q = g.createRadialGradient(0, 0, 0, 0, 0, 10); q.addColorStop(0, '#ffffff'); q.addColorStop(.55, '#ffffff'); q.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = q; g.beginPath(); g.arc(0, 0, 10, 0, PI2); g.fill();
+  return TKB2[v] = s;
+}
+function tkHash(n) { var x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); }
+function tkSparks(g, x, y, t, i) {   // hot sparks thrown off the head bulb (worked out from the clock, nothing to keep; one path for all of them)
+  var k, u, a, d, m = i * 31, px, py;
+  g.strokeStyle = 'rgba(235,245,255,.8)'; g.lineWidth = 1.2; g.beginPath();
+  for (k = 0; k < 6; k++) {
+    u = (t * 1.7 + tkHash(m + k) + k / 6) % 1; a = tkHash(m + k + 50) * PI2 + u * .6; d = 8 + u * 36 * (.6 + tkHash(m + k + 90) * .7);
+    px = x + Math.cos(a) * d; py = y + Math.sin(a) * d - u * u * 10; g.moveTo(px - Math.cos(a) * 5 * (1 - u), py - Math.sin(a) * 5 * (1 - u)); g.lineTo(px, py);
+  }
+  g.stroke();
+}
+function tkDraw(g, c, lv, x, y, bz, ft) {   // a bulb with its glare behind it. Levels 0-2 are drawn from small pictures; 3 and 4 are flares of ADDED light that flicker (4 = the head: it also hazes the scene and throws sparks)
+  if (lv > 2) {
+    if (lv > 3) { var wz = bz * 2.6; g.drawImage(tkWash(), x - wz / 2, y - wz / 2, wz, wz); }
+    g.save(); g.globalCompositeOperation = 'lighter';
+    var gz = bz * 1.05, u = ft | 0, bs = bz * 1.5 * (.9 + .2 * ((u * 7) % 5) / 4);
+    g.drawImage(tkGlow(c, 3), x - gz / 2, y - gz / 2, gz, gz);
+    g.drawImage(tkBurn(u & 3), x - bs / 2, y - bs / 2, bs, bs); g.restore();
+    return;
+  }
   var z = lv > 1 ? bz : bz * 88 / 128; g.drawImage(tkBulb(c, lv), x - z / 2, y - z / 2, z, z);
 }
 function tkLv(i, n, t, flash) {   // the brightness level of bulb i of n: a bright head that races round with a fading tail, and a blink of the whole string now and then
-  if (flash) return 3;
   var w = (((i - t * 9) % n) + n) % n;   // 0 at the head, growing behind it
-  return w < 1.6 ? 3 : w < 4 ? 2 : w < 8 ? 1 : 0;
+  if (flash) return w < 1.6 ? 4 : i % 4 === 0 ? 3 : 2;
+  return w < 1.6 ? 4 : w < 3 ? 3 : w < 4.6 ? 2 : w < 8 ? 1 : 0;
 }
 function neonTube(g) {   // strokes the current path as a neon tube
   g.lineWidth = 17; g.strokeStyle = 'rgba(120,255,235,.22)'; g.stroke(); g.lineWidth = 12.5; g.strokeStyle = 'rgba(110,255,230,.4)'; g.stroke();
@@ -2020,11 +2107,11 @@ function track(g, x, t, p, th) {
   g.save(); g.lineCap = 'butt'; g.beginPath(); g.arc(cx, cy, r + 24, 0, PI2); neonTube(g); g.restore();   // a neon light tube behind the bulbs: a soft glow, a bright colored tube and a white-hot line down its middle
   g.save(); g.beginPath(); g.moveTo(Math.max(-20, cx - 270), ty - 26); g.lineTo(cx + 36, ty - 26); g.lineCap = 'round'; neonTube(g); g.restore();   // every 1.6 s the whole string blinks for a moment
   for (i = 0; i < nb; i++) {                                                                                                    // a chasing ring of glowing bulbs
-    a = i / nb * PI2; lvl = tkLv(i, nb, t, fl2); tkDraw(g, lc[i % 3], lvl, cx + Math.cos(a) * (r + 24), cy + Math.sin(a) * (r + 24), bz);
+    a = i / nb * PI2; lvl = tkLv(i, nb, t, fl2); var bx = cx + Math.cos(a) * (r + 24), by = cy + Math.sin(a) * (r + 24); tkDraw(g, lc[i % 3], lvl, bx, by, bz, Math.floor(t * 22) + i * 3); if (lvl > 3) { g.save(); g.globalCompositeOperation = 'lighter'; tkSparks(g, bx, by, t, i); g.restore(); }
   }
   for (i = 0; i < 9; i++) {   // and a row of bulbs along the run-up, chasing on from the ring
     var bx2 = cx - 250 + i * 32; if (bx2 < -30 || bx2 > W + 30) continue;
-    lvl = tkLv(nb + (8 - i), nb + 9, t * 1.0, fl2); tkDraw(g, lc[(i + 1) % 3], lvl, bx2, ty - 26, bz);
+    lvl = tkLv(nb + (8 - i), nb + 9, t * 1.0, fl2); tkDraw(g, lc[(i + 1) % 3], lvl, bx2, ty - 26, bz, Math.floor(t * 22) + i * 5); if (lvl > 3) { g.save(); g.globalCompositeOperation = 'lighter'; tkSparks(g, bx2, ty - 26, t, i + 40); g.restore(); }
   }
   [[cx - 70, ty], [cx, cy - r], [cx + 70, ty]].forEach(function (c2) {                                                          // bolted metal collars
     rr(g, c2[0] - 13, c2[1] - 26, 26, 52, 7); fs(g, P[10], '#2b2140', 2.2);
@@ -2159,13 +2246,13 @@ function balBack(g, off) { var P = party(); put(g, P.sky.c, 0, 0); layer(g, P.cl
 function balGround(g, off) { var F = party().floor, x; for (x = px(-(off % 72)); x < W; x += 72) put(g, F.c, x, GY); }
 function balWarm() { var i; if (BALW) return; BALW = true; TASKQ.push(party); for (i = 0; i < BALC.length; i++) (function (i) { TASKQ.push(function () { balloonPic(i); }); })(i); TASKQ.push(waferPic); }
 
-return { get tlast() { return TLAST; }, tbmax: TBMAX, fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: crownDraw, setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { draw: mgdraw, water: mgwater, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, pend: pend, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
+return { get tlast() { return TLAST; }, tbmax: TBMAX, fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: crownDraw, setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { draw: mgdraw, water: mgwater, caustic: mgcaustic, glints: mgglints, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, pend: pend, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
 })();
 
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1743';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1810';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -2579,6 +2666,7 @@ codeEl.addEventListener('input', function () { pending = null; bConfirm.hidden =
 /* ===== Game state ===== */
 var state = 'title';   // title, ready, launch, play, paused, dead
 var obs, score, stage, runTime, runFlaps, runStartBest, newBest;
+var clk = 0, clkSp = [];   // the run timer (starts when the countdown ends; stops while paused) and the split times at stage clears, bonus games and bosses
 var runSecs = 0, runPauses = 0, runHurts = 0, runFriends0 = 0, runPops = 0, runPopsOf = 0, VS = null;   // this run's story for the victory card: seconds flown, pauses, hits taken, friends at the start, balloons popped
 var by, vy, bx = CFG.bananaX, angle, flapAnim, time = 0, grace = 0, deadT = 0, fallD = 0, hurtT = 0;   // fallD: how far he has dropped since his last flap (a long drop makes him grit his teeth); hurtT: a short grit after a boing
 var dist = 0, spawned = 0, lastC = 0, nextX = 0;
@@ -2679,7 +2767,7 @@ function continueRun() { var n = save.cont.st; if (!(n > 1) || state !== 'title'
 function resetWorld() {
   var ci = pracN ? 0 : chalIdx(); runChal = ci ? CHAL[ci - 1][0] : ''; nightA = 0; FT = null; runFight = !pracN && fightOn() ? fightNext() : 0; if (runFight) { ART.fightWarm(runFight); ART.mg.sprite('wafer'); }
   windUsed = false; resT = -1; wasCtrl = true; tapFx.length = 0; obs = []; score = 0; stage = 1; runTime = 0; runFlaps = 0; spawned = 0; dist = 0; BAL = null; BALR = null; fl.length = 0; shd.length = 0; if (save.unlocks.balloons) ART.bal.warm();
-  runSecs = runPauses = runHurts = runPops = runPopsOf = 0; runFriends0 = save.stats.friends; VS = null;
+  clk = 0; clkSp = []; runSecs = runPauses = runHurts = runPops = runPopsOf = 0; runFriends0 = save.stats.friends; VS = null;
   lastC = GROUND_Y * 0.45; by = CFG.launchY; vy = 0; bx = CFG.bananaX; angle = 0; flapAnim = 0; grace = 0; fallD = 0; hurtT = 0;
   if (pracN) { stage = pracN; spawned = score = gateStart(pracN); }
   if (contN > 1 && !pracN) { stage = contN; spawned = score = gateStart(contN); contN = 0; }   // Continue: carry on from the stage the closed tab had reached
@@ -3158,8 +3246,15 @@ function pumpPlan() {   // [steps, ms] to build this frame when the next stage's
   return n > 0 ? [n, 0] : null;
 }
 function pumpFrame(fs) { var pp = pumpPlan(); if (pp) ART.pump(pp[1], pp[0]); else if (performance.now() - fs < 6 || ++pumpSkip >= 4) { pumpSkip = 0; ART.pump(CFG.pumpMs); } }
+function split(label) { if (!pracN) { clkSp.push([label, clk]); if (clkSp.length > 14) clkSp.shift(); } }
+function fmtClk(t) { var m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); }
+function drawClock(cx, ax) {   // the run timer under the pause button, with the last few split times under it
+  var lh = opt('lefty'), n = Math.min(4, clkSp.length), i;
+  outlinedC(fmtClk(clk), cx, 29 + PBR + 14, 16, '#ffffff');
+  for (i = 0; i < n; i++) { var e = clkSp[clkSp.length - n + i]; outlinedC(e[0] + ' ' + fmtClk(e[1]), ax !== undefined ? ax : lh ? 8 : W - 8, 29 + PBR + 33 + i * 15, 12.5, '#ffe9a0', lh ? 'left' : 'right'); }
+}
 function stageUp() {
-  var done = themeOf(stage); cardStage = stage; stage++; save.stats.friends += CFG.friendsPerStage;
+  var done = themeOf(stage); cardStage = stage; split('S' + stage); stage++; save.stats.friends += CFG.friendsPerStage;
   giveCoins(CFG.stageCoins, bx + 20, by); burst(bx + 20, by, 26, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 300, 340); pop('Stage bonus +' + CFG.stageCoins + '!', '#ffd93b', 22);   // a little fanfare
   pendNext = done === CFG.miniAfter ? 'mini' : done === CFG.finalTheme ? 'win' : done === CFG.balAfter && save.unlocks.balloons && !pracN ? 'balloons' : '';
   if (pendNext !== 'mini' && pendNext !== 'balloons') { bgFrom = bgTheme; bgTheme = themeOf(stage); bgT = bgFrom === bgTheme ? 1 : 0; if (bgTheme === ART.journeyTheme) gardenD0 = dist; }   // before the water bonus the scene stays put (no glimpse of the next stage): it washes out to white into the mini game
@@ -3213,7 +3308,7 @@ function hits(o) {
 function update(dt) {
   if (shd.length) shardStep(dt);
   nightA = clamp(nightA + (nightLive() ? 1 : -1) * dt * 2.5, 0, 1);
-  time += dt; if (state === 'launch' || state === 'play' || (state === 'mini' && MG && !MG.paused && MG.ph !== 'lose')) runSecs += dt; if (flapAnim > 0) flapAnim -= dt; if (punchT > 0) punchT -= dt; if (whooshT > 0) whooshT -= dt; if (invuln > 0) invuln -= dt; if (flashT > 0) flashT -= dt; if (celT > 0) celT = Math.max(0, celT - dt);
+  time += dt; if (state === 'launch' || state === 'play' || (state === 'mini' && MG && !MG.paused && MG.ph !== 'lose')) runSecs += dt; if (state === 'play' || (state === 'launch' && launchT >= 0) || (state === 'mini' && MG && !MG.paused && MG.ph !== 'lose')) clk += dt; if (flapAnim > 0) flapAnim -= dt; if (punchT > 0) punchT -= dt; if (whooshT > 0) whooshT -= dt; if (invuln > 0) invuln -= dt; if (flashT > 0) flashT -= dt; if (celT > 0) celT = Math.max(0, celT - dt);
   for (var ti = tapFx.length - 1; ti >= 0; ti--) { tapFx[ti].t += dt; if (tapFx[ti].t > 0.4) tapFx.splice(ti, 1); }
   for (var pi = pops.length - 1; pi >= 0; pi--) { pops[pi].t += dt; pops[pi].y -= 26 * dt; if (pops[pi].t > 1.1) pops.splice(pi, 1); }
   for (var si = smk.length - 1; si >= 0; si--) { var sm = smk[si]; sm.t += dt; if (sm.t > sm.l) { smk.splice(si, 1); continue; } if (sm.t > 0) { sm.x += sm.vx * dt; sm.y += sm.vy * dt; sm.vx -= sm.vx * 1.7 * dt; sm.vy -= (14 + sm.vy * 0.9) * dt; } }
@@ -3299,7 +3394,7 @@ function update(dt) {
     while (obs.length && obs[0].x + CFG.obW < -10) obs.shift();
     if (warp) startVault('gold');
     if (VAULT) vaultStep(dt, sp); else if (!rsgHold()) hugStep(dt);
-    while (nextX < W + CFG.obW && !pendNext && !BAL && !VAULT && !FT) { if (runFight && fightDue()) { FT = ftNew(); break; } spawnOb(nextX); }
+    while (nextX < W + CFG.obW && !pendNext && !BAL && !VAULT && !FT) { if (runFight && fightDue()) { FT = ftNew(); split('Boss'); break; } spawnOb(nextX); }
     if ((pendNext === 'mini' || pendNext === 'balloons') && nextT > 0) washA = clamp(1 - nextT / 0.55, 0, 1) * (calmOn() ? 0.4 : 1);
     if (nextT > 0) { nextT -= dt; if (nextT <= 0) { if (pendNext === 'mini') startMini(); else if (pendNext === 'balloons') startBalloons(); else if (pendNext === 'win') startVictory(); } }
   } else if (state === 'paused') {
@@ -3329,7 +3424,7 @@ var MG_PB = [318, 30];   // where the pause button sits
 var MG_INTRO = 2.6;   // seconds the title and instructions show before Ready, Set, Go
 var mgDn = null;      // where the finger went down, relative to Fancy: a tap only leaps, a drag steers
 function startMini(practice) {
-  CFG.mgSpeed = MG_V0 * relaxK() * plusK(); var h = CFG.mgHearts + lvl('heart'); state = 'mini'; setBar(false); cardT = -1; pendNext = ''; nextT = 0; rsgT = -1; celT = 0; fx.length = 0; ART.warm(themeOf(stage));
+  if (!practice) split('Water'); CFG.mgSpeed = MG_V0 * relaxK() * plusK(); var h = CFG.mgHearts + lvl('heart'); state = 'mini'; setBar(false); cardT = -1; pendNext = ''; nextT = 0; rsgT = -1; celT = 0; fx.length = 0; ART.warm(themeOf(stage));
   MG = { ph: 'intro', pt: 0, t: 0, scroll: 0, x: W / 2, y: CFG.mgY0, tx: W / 2, ty: CFG.mgY0, leap: -1, buf: 0, hearts: h, maxH: h, inv: 0, ents: [], plan: null, pi: 0, saved: 0, leaps: 0, slow: 0, practice: !!practice, wcd: 1.4, wc: 0, bonus: 0, wsh: lvl('wshield'), pl: 0, lh: h, lid: 0, lw: 0, lb: 0, pay: null, off: 0, boss: null, bossDone: false, cove: 70 + rng() * 220, coveHit: false };
   MG.plan = mgPlan();
 }
@@ -3375,14 +3470,14 @@ function mgLeapT() { return [CFG.mgLeap, 1.2, 1.45][lvl('superleap')] || 1.45; }
 function mgLeapHt() { return [CFG.mgLeapH, 44, 54][lvl('superleap')] || 54; }   // and higher
 function mgLeap() {
   var m = MG; if (m.ph !== 'play') return;
-  if (m.leap < 0) { m.leap = 0; m.leaps++; m.lid++; m.lh = m.hearts; m.lw = 0; m.lb = 0; flapAnim = 0.18; runFlaps++; burst(m.x, m.y + 8, 6, ['#ffffff', '#bfe8ff'], 90, 120); }
+  if (m.leap < 0) { m.leap = 0; m.leaps++; m.lid++; m.lh = m.hearts; m.lw = 0; m.lb = 0; flapAnim = 0.18; runFlaps++; burst(m.x, m.y + 8, 6, ['#ffffff', '#bfe8ff'], 90, 120); mgRip.push({ x: m.x, y: m.y, t: time }); }
   else if (m.leap > mgLeapT() - 0.14) m.buf = 0.14;   // a tap just before he lands leaps again as soon as he does
 }
 function mgOver(m) { var u = m.leap / mgLeapT(); return m.leap >= 0 && u > 0.12 && u < 0.88; }   // high enough to clear things on the water
 function mgHurt() {
   var m = MG; if (m.inv > 0 || m.ph !== 'play') return;
   if (m.boss) { if (!m.boss.end) { m.boss.end = 'fail'; m.boss.et = 0; m.inv = 1.6; burst(m.x, m.y, 22, ['#ffffff', '#7ad8ff'], 240, 260); pop('It got away!', '#ffffff', 22); } return; }   // the giant sub's round costs no heart: one hit and it simply sails off
-  m.hearts--; runHurts++; m.inv = 1.6; burst(m.x, m.y, 22, ['#ffffff', '#7ad8ff', '#ff6b81'], 240, 260);
+  m.hearts--; runHurts++; m.inv = 1.6; burst(m.x, m.y, 30, ['#ffffff', '#bfe8ff', '#7ad8ff', '#ff6b81'], 260, 280); mgRip.push({ x: m.x, y: m.y, t: time }, { x: m.x, y: m.y, t: time + .12 });
   if (m.hearts <= 0) { m.ph = 'lose'; m.pt = 0; }
 }
 function mgSpec(e) { return e.k === 'sub' ? [[10, 14, 160, 34]] : [[3, 4, e.w - 6, e.h - 8]]; }   // hit box in picture coordinates (subs and barrels)
@@ -3426,7 +3521,7 @@ function updateMini(dt) {
   mv = CFG.mgMoveV * (m.slow > 0 ? 0.55 : 1) * dt; m.slow = 0; dx = m.tx - m.x; dy = m.ty - m.y; d = Math.sqrt(dx * dx + dy * dy); if (d > mv) { dx *= mv / d; dy *= mv / d; } if (m.leap < 0) { m.x += dx; m.y += dy; }   // in mid-leap Fancy cannot steer: the timing is the whole game
   m.bk = (m.bk || 0) + ((m.leap >= 0 ? 0 : clamp((m.tx - m.x) / 110, -1, 1)) - (m.bk || 0)) * Math.min(1, dt * 9);   // how hard he is turning (smoothed): -1 full left .. 1 full right
   // the leap
-  if (m.leap >= 0) { m.leap += dt; if (m.buf > 0) m.buf -= dt; if (m.leap >= mgLeapT()) { m.pay = { lh: m.lh, w: m.lw, b: m.lb, bp: mgPerfect(m) }; m.leap = -1; burst(m.x, m.y + 8, 7, ['#ffffff', '#bfe8ff'], 110, 130); if (m.buf > 0) { m.buf = 0; mgLeap(); } } }
+  if (m.leap >= 0) { m.leap += dt; if (m.buf > 0) m.buf -= dt; if (m.leap >= mgLeapT()) { m.pay = { lh: m.lh, w: m.lw, b: m.lb, bp: mgPerfect(m) }; m.leap = -1; burst(m.x, m.y + 8, 7, ['#ffffff', '#bfe8ff'], 110, 130); mgRip.push({ x: m.x, y: m.y, t: time }); if (m.buf > 0) { m.buf = 0; mgLeap(); } } }
   flapAnim = m.leap >= 0 ? Math.max(flapAnim, 0.05) : 0.1; bx = m.x; by = m.y;   // (the pop-up words follow Fancy)
   // things come in at the top
   while (m.pi < m.plan.length && m.plan[m.pi].t <= lt) {
@@ -3521,22 +3616,41 @@ function mgPoint(e) {
   MG.tx = clamp(l[0] + ox, 24, W - 24); MG.ty = clamp(l[1] + oy, CFG.mgYmin, CFG.mgYmax);
 }
 /* Fancy seen from straight above (nose up the screen): a lemon-yellow banana with a red neck scarf and a red cape spread out behind him. bk (-1..1) is how hard he is turning: the whole hero leans into the turn, the banana bends, and the cape streams out to the other side. */
-function mgHero(g, x, y, sc, bk, t) {
-  var ab = Math.abs(bk), sh = -bk * 8, b = bk * 5 + 1.2, w = [Math.sin(t * 10) * 2.4, Math.sin(t * 10 + 1.7) * 2.4, Math.sin(t * 10 + 3.1) * 2.4, Math.sin(t * 10 + 4.6) * 2.4], O = '#3a1f10', q;
+function mgHero(g, x, y, sc, bk, t) {   // Fancy seen from above, swimming nose up: a glossy toy banana with white gloves paddling, a mask, a scarf and a cape (all plum-inked like the flying Fancy)
+  var ab = Math.abs(bk), sh = -bk * 8, b = bk * 5 + 1.2, w = [Math.sin(t * 10) * 2.4, Math.sin(t * 10 + 1.7) * 2.4, Math.sin(t * 10 + 3.1) * 2.4, Math.sin(t * 10 + 4.6) * 2.4], O = '#3a2a4d', q, pd = Math.sin(t * 9), d, B = b * .9;
   g.save(); g.translate(x, y); g.rotate(bk * 0.34); g.scale(sc * (1 - .08 * ab), sc); g.lineJoin = 'round'; g.lineCap = 'round';
   g.beginPath(); g.moveTo(-8, -10); g.bezierCurveTo(-16, 0, -25 + sh, 12, -24 + sh, 27 + w[0]); g.quadraticCurveTo(-17 + sh, 33 + w[1], -8 + sh, 28 + w[2]); g.quadraticCurveTo(0 + sh, 35 + w[3], 9 + sh, 29 + w[0]); g.quadraticCurveTo(18 + sh, 34 + w[1], 24 + sh, 27 + w[2]); g.bezierCurveTo(25 + sh, 12, 16, 0, 8, -10); g.closePath();   // the cape
-  q = g.createLinearGradient(-26, 0, 26, 0); q.addColorStop(0, '#b8182f'); q.addColorStop(.28, '#f2425a'); q.addColorStop(.55, '#ff6a7e'); q.addColorStop(1, '#b8182f'); g.fillStyle = q; g.fill(); g.strokeStyle = '#5a0f1c'; g.lineWidth = 2.4; g.stroke();
-  g.strokeStyle = 'rgba(110,10,30,.5)'; g.lineWidth = 1.5; [[-4, -9, -11, 29], [0, -9, 0, 31], [4, -9, 11, 30]].forEach(function (f) { g.beginPath(); g.moveTo(f[0], f[1]); g.quadraticCurveTo(f[0] * 2 + sh * .35, 10, f[2] + sh * .8, f[3]); g.stroke(); });
-  g.beginPath(); g.moveTo(-1, 29); g.lineTo(1, 34 + w[3]); g.strokeStyle = '#8a6a1c'; g.lineWidth = 4.4; g.stroke(); g.strokeStyle = '#d9b44a'; g.lineWidth = 2; g.stroke();   // the stem end peeking out under the cape
+  q = g.createLinearGradient(-26, 0, 26, 0); q.addColorStop(0, '#a3122c'); q.addColorStop(.22, '#e63a54'); q.addColorStop(.5, '#ff7a8e'); q.addColorStop(.78, '#e63a54'); q.addColorStop(1, '#a3122c'); g.fillStyle = q; g.fill();
+  q = g.createLinearGradient(0, -10, 0, 34); q.addColorStop(0, 'rgba(255,255,255,.22)'); q.addColorStop(.5, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(70,0,20,.3)'); g.fillStyle = q; g.fill(); g.strokeStyle = '#4a1230'; g.lineWidth = 2.4; g.stroke();
+  g.strokeStyle = 'rgba(100,10,40,.5)'; g.lineWidth = 1.5; [[-4, -9, -11, 29], [0, -9, 0, 31], [4, -9, 11, 30]].forEach(function (f) { g.beginPath(); g.moveTo(f[0], f[1]); g.quadraticCurveTo(f[0] * 2 + sh * .35, 10, f[2] + sh * .8, f[3]); g.stroke(); });
+  g.strokeStyle = 'rgba(255,200,210,.5)'; g.lineWidth = 1; [[-8, -7, -15, 26], [8, -7, 15, 26]].forEach(function (f) { g.beginPath(); g.moveTo(f[0], f[1]); g.quadraticCurveTo(f[0] * 1.8 + sh * .3, 10, f[2] + sh * .8, f[3]); g.stroke(); });   // lit folds
+  for (d = -1; d <= 1; d += 2) {   // two white gloves paddling alternately at his sides
+    var gx = d * 19 + b * .5, gy = 3 - d * pd * 5;
+    g.beginPath(); g.moveTo(d * 12 + b * .4, -2); g.lineTo(gx, gy); g.strokeStyle = O; g.lineWidth = 5.4; g.stroke(); g.strokeStyle = '#ffe14d'; g.lineWidth = 3; g.stroke();   // a short arm
+    g.beginPath(); g.arc(gx, gy, 5.6, 0, 7); g.fillStyle = g.createRadialGradient(gx - 1.8, gy - 2, .4, gx, gy, 6.6); g.fillStyle.addColorStop(0, '#ffffff'); g.fillStyle.addColorStop(.65, '#e8eef8'); g.fillStyle.addColorStop(1, '#a9b6cf'); g.fill(); g.strokeStyle = O; g.lineWidth = 1.7; g.stroke();
+    g.fillStyle = '#ffffff'; g.beginPath(); g.arc(gx - 1.8, gy - 2, 1.3, 0, 7); g.fill();
+    g.strokeStyle = 'rgba(255,255,255,' + (.35 + .3 * Math.abs(pd)).toFixed(2) + ')'; g.lineWidth = 1.6; g.beginPath(); g.arc(gx, gy + 1, 8.4, .5, 2.6); g.stroke();   // a little splash around the hand
+  }
+  g.beginPath(); g.moveTo(-1, 29); g.lineTo(1, 34 + w[3]); g.strokeStyle = '#6a4a1c'; g.lineWidth = 4.4; g.stroke(); g.strokeStyle = '#e8c24a'; g.lineWidth = 2; g.stroke();   // the stem end peeking out under the cape
   g.beginPath(); g.moveTo(0, -26); g.bezierCurveTo(19 + b, -20, 19 + b, 14, 1.5, 29); g.bezierCurveTo(-15 + b, 14, -17 + b, -20, 0, -26); g.closePath();   // the banana, seen from above
-  q = g.createLinearGradient(-15, 0, 16, 0); q.addColorStop(0, '#d8a912'); q.addColorStop(.25, '#fbe34e'); q.addColorStop(.5, '#fff39a'); q.addColorStop(1, '#cf9c0e'); g.fillStyle = q; g.fill(); g.strokeStyle = O; g.lineWidth = 2.4; g.stroke();
-  g.strokeStyle = 'rgba(170,120,0,.4)'; g.lineWidth = 1.2; [-6.4, 6.4].forEach(function (d) { g.beginPath(); g.moveTo(d * .25 + b * .2, -21); g.quadraticCurveTo(d * 1.7 + b, 2, d * .3 + b * .2, 24); g.stroke(); });   // the ridges
-  g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.ellipse(-5.6 + b * .5, -4, 2.3, 14, 0.05, 0, 7); g.fill();   // gloss
-  g.beginPath(); g.moveTo(-14 + b * .9, -20); g.quadraticCurveTo(-8 + b * .9, -26, b * .9, -23); g.quadraticCurveTo(8 + b * .9, -26, 14 + b * .9, -20); g.quadraticCurveTo(15 + b * .9, -13, 7 + b * .9, -12); g.quadraticCurveTo(b * .9, -14.6, -7 + b * .9, -12); g.quadraticCurveTo(-15 + b * .9, -13, -14 + b * .9, -20); g.closePath(); g.fillStyle = '#e22a40'; g.fill(); g.strokeStyle = '#8a1428'; g.lineWidth = 1.5; g.stroke();   // the red mask, peeking over the front
-  [-1, 1].forEach(function (d) { var ex = d * 5 + b * .9; g.beginPath(); g.ellipse(ex, -18.6, 3.6, 4.2, 0, 0, 7); g.fillStyle = '#fffdf6'; g.fill(); g.strokeStyle = O; g.lineWidth = 1.2; g.stroke(); g.beginPath(); g.arc(ex + d * .3, -19.6, 2.1, 0, 7); g.fillStyle = '#2a140c'; g.fill(); g.beginPath(); g.arc(ex + d * .3 + .7, -20.4, .8, 0, 7); g.fillStyle = '#fff'; g.fill(); });   // eyes looking ahead
-  g.beginPath(); g.moveTo(-12.4 + b * .7, -10); g.quadraticCurveTo(b * .7, -6.2, 12.4 + b * .7, -10); g.lineTo(13 + b * .7, -4.6); g.quadraticCurveTo(b * .7, -.8, -13 + b * .7, -4.6); g.closePath(); g.fillStyle = '#e22a40'; g.fill(); g.strokeStyle = '#8a1428'; g.lineWidth = 1.4; g.stroke();   // the red scarf round his neck
-  g.beginPath(); g.arc(b * .7, -1, 3.8, 0, 7); g.fillStyle = '#c41f35'; g.fill(); g.strokeStyle = '#6e0f20'; g.lineWidth = 1.2; g.stroke(); g.fillStyle = 'rgba(255,170,180,.7)'; g.beginPath(); g.arc(b * .7 - 1, -2, 1.2, 0, 7); g.fill();   // the knot
-  g.beginPath(); g.arc(b * 1.1, -27, 3.6, 0, 7); g.fillStyle = '#6a4220'; g.fill(); g.strokeStyle = O; g.lineWidth = 1.8; g.stroke();   // the dark tip of the banana
+  q = g.createLinearGradient(-15, 0, 16, 0); q.addColorStop(0, '#e2a812'); q.addColorStop(.2, '#ffd93b'); q.addColorStop(.48, '#fff08a'); q.addColorStop(.8, '#ffd22e'); q.addColorStop(1, '#d9980c'); g.fillStyle = q; g.fill();
+  g.save(); g.clip();
+  q = g.createLinearGradient(0, 8, 0, 30); q.addColorStop(0, 'rgba(200,120,0,0)'); q.addColorStop(1, 'rgba(190,110,0,.4)'); g.fillStyle = q; g.fillRect(-26, 8, 52, 24);   // a shade toward the stem
+  q = g.createLinearGradient(8, 0, 19 + b, 0); q.addColorStop(0, 'rgba(200,120,0,0)'); q.addColorStop(1, 'rgba(190,110,0,.45)'); g.fillStyle = q; g.fillRect(8, -28, 14, 60);   // the shaded right side
+  q = g.createRadialGradient(-5.6 + b * .5, -6, 1, -5.6 + b * .5, -6, 17); q.addColorStop(0, 'rgba(255,255,255,.8)'); q.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = q; g.beginPath(); g.ellipse(-5.6 + b * .5, -4, 6, 19, 0.05, 0, 7); g.fill();   // the soft light
+  g.restore(); g.strokeStyle = O; g.lineWidth = 2.4; g.beginPath(); g.moveTo(0, -26); g.bezierCurveTo(19 + b, -20, 19 + b, 14, 1.5, 29); g.bezierCurveTo(-15 + b, 14, -17 + b, -20, 0, -26); g.stroke();
+  g.strokeStyle = 'rgba(170,110,0,.4)'; g.lineWidth = 1.2; [-6.4, 6.4].forEach(function (dd) { g.beginPath(); g.moveTo(dd * .25 + b * .2, -21); g.quadraticCurveTo(dd * 1.7 + b, 2, dd * .3 + b * .2, 24); g.stroke(); });   // the ridges
+  g.fillStyle = 'rgba(255,255,255,.95)'; g.beginPath(); g.ellipse(-6.4 + b * .5, 3, 1.5, 9, 0.05, 0, 7); g.fill(); g.beginPath(); g.arc(-6 + b * .5, -9, 1.2, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.4)'; g.beginPath(); g.ellipse(9 + b * .5, 8, 1, 6, -.1, 0, 7); g.fill();   // the sharp gloss
+  g.fillStyle = 'rgba(255,255,255,.8)'; [[7, -3, 1.1], [-2, 14, .9], [5, 17, .8], [-9, 9, .7]].forEach(function (p) { g.beginPath(); g.arc(p[0] + b * .4, p[1], p[2], 0, 7); g.fill(); });   // water drops
+  g.beginPath(); g.moveTo(-14 + B, -20); g.quadraticCurveTo(-8 + B, -26, B, -23); g.quadraticCurveTo(8 + B, -26, 14 + B, -20); g.quadraticCurveTo(15 + B, -13, 7 + B, -12); g.quadraticCurveTo(B, -14.6, -7 + B, -12); g.quadraticCurveTo(-15 + B, -13, -14 + B, -20); g.closePath();   // the red mask, peeking over the front
+  q = g.createLinearGradient(0, -26, 0, -12); q.addColorStop(0, '#ff5a72'); q.addColorStop(1, '#c4162f'); g.fillStyle = q; g.fill(); g.strokeStyle = '#5a1030'; g.lineWidth = 1.6; g.stroke(); g.fillStyle = 'rgba(255,255,255,.45)'; g.beginPath(); g.ellipse(-5 + B, -21.4, 4.6, 1.3, -.15, 0, 7); g.fill();
+  [-1, 1].forEach(function (dd) { var ex = dd * 5 + B; g.beginPath(); g.ellipse(ex, -18.6, 3.6, 4.2, 0, 0, 7); g.fillStyle = '#fffdf6'; g.fill(); g.strokeStyle = O; g.lineWidth = 1.2; g.stroke(); g.beginPath(); g.arc(ex + dd * .3, -19.6, 2.1, 0, 7); g.fillStyle = '#2a1230'; g.fill(); g.beginPath(); g.arc(ex + dd * .3 + .7, -20.4, .9, 0, 7); g.fillStyle = '#fff'; g.fill(); g.beginPath(); g.arc(ex + dd * .3 - .6, -18.4, .45, 0, 7); g.fill(); });   // eyes looking ahead
+  g.fillStyle = 'rgba(255,120,140,.4)'; [-1, 1].forEach(function (dd) { g.beginPath(); g.ellipse(dd * 9.4 + B, -13.4, 2.1, 1.3, 0, 0, 7); g.fill(); });   // cheeks
+  g.beginPath(); g.moveTo(-12.4 + b * .7, -10); g.quadraticCurveTo(b * .7, -6.2, 12.4 + b * .7, -10); g.lineTo(13 + b * .7, -4.6); g.quadraticCurveTo(b * .7, -.8, -13 + b * .7, -4.6); g.closePath(); q = g.createLinearGradient(0, -10, 0, -1); q.addColorStop(0, '#ff4a66'); q.addColorStop(1, '#bc1830'); g.fillStyle = q; g.fill(); g.strokeStyle = '#5a1030'; g.lineWidth = 1.5; g.stroke();   // the red scarf round his neck
+  g.fillStyle = 'rgba(255,255,255,.4)'; g.beginPath(); g.ellipse(-4 + b * .7, -7.4, 4.4, 1, .1, 0, 7); g.fill();
+  g.beginPath(); g.arc(b * .7, -1, 3.8, 0, 7); g.fillStyle = '#c41f35'; g.fill(); g.strokeStyle = '#5a1030'; g.lineWidth = 1.3; g.stroke(); g.fillStyle = 'rgba(255,190,200,.8)'; g.beginPath(); g.arc(b * .7 - 1, -2, 1.2, 0, 7); g.fill();   // the knot
+  g.beginPath(); g.arc(b * 1.1, -27, 3.6, 0, 7); g.fillStyle = '#6a4220'; g.fill(); g.strokeStyle = O; g.lineWidth = 1.8; g.stroke(); g.fillStyle = 'rgba(255,255,255,.4)'; g.beginPath(); g.arc(b * 1.1 - 1, -28, 1, 0, 7); g.fill();   // the dark tip of the banana
+  g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2.2; g.beginPath(); g.moveTo(-12 + b, -33); g.quadraticCurveTo(b * 1.1, -40, 12 + b, -33); g.stroke(); g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(-17 + b, -29); g.quadraticCurveTo(b * 1.1, -44, 17 + b, -29); g.stroke();   // the bow wave: a bright crescent of foam in front of the nose
   g.restore();
 }
 function mgArch(x, y, hit) {   // the secret cove: a small rock arch in the water, with a dark opening
@@ -3557,9 +3671,10 @@ function mgBoss(b) {   // Prince Chimp's giant submarine, up at the top of the s
   ART.chimp(ctx, b.x, y - 40, 0.42, 1, time); ctx.globalAlpha = 1;
   if (!b.end) { ctx.fillStyle = 'rgba(30,20,50,0.55)'; rrect(110, 12, 140, 10, 5); ctx.fill(); ctx.fillStyle = '#ff6b81'; rrect(110, 12, 140 * clamp(1 - b.t / 12, 0, 1), 10, 5); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#ffffff'; rrect(110, 12, 140, 10, 5); ctx.stroke(); }
 }
+var mgRip = [];   // rings spreading on the water where Fancy leaps, lands or gets hit: {x, y, t}
 function renderMini() {
   var m = MG, i, e, lt = mgLT(m), rem = Math.max(0, CFG.mgSecs - lt) * CFG.mgSpeed, sb = H - rem, p = clamp(lt / CFG.mgSecs, 0, 1), z = m.leap >= 0 ? Math.sin(Math.PI * m.leap / mgLeapT()) : 0;
-  ART.mg.sea(ctx, p, p + H / CFG.mgSpeed / CFG.mgSecs); ART.mg.water(ctx, m.scroll); if (secretsOn() && !m.practice && sb > -300) mgArch(m.cove, sb + 70, m.coveHit);
+  ART.mg.sea(ctx, p, p + H / CFG.mgSpeed / CFG.mgSecs); ART.mg.water(ctx, m.scroll); ART.mg.caustic(ctx, m.scroll, p); ART.mg.glints(ctx, m.scroll, time, p); if (secretsOn() && !m.practice && sb > -300) mgArch(m.cove, sb + 70, m.coveHit);
   if (sb > 0) { ctx.fillStyle = '#2f8a3a'; ctx.fillRect(0, 0, W, Math.max(0, sb - 230)); ART.mg.draw(ctx, 'shore', W / 2, sb - 115); }
   for (i = 0; i < m.ents.length; i++) { e = m.ents[i]; if (e.k === 'whirl') { ctx.save(); ctx.translate(e.x, e.y); ctx.scale(1.2, 1.2); ART.mg.draw(ctx, 'whirl', 0, 0); ctx.rotate(e.spin * -2); ART.mg.draw(ctx, 'whirlArms', 0, 0); ctx.restore(); } }
   for (i = 0; i < m.ents.length; i++) {
@@ -3567,7 +3682,7 @@ function renderMini() {
     if (e.k === 'sub' || e.k === 'barrels') {
       if (e.sink >= 0) { var s = e.sink / 1.1; ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(s * 0.5); ctx.scale(1 - 0.5 * s, 1 - 0.5 * s); ctx.globalAlpha = 1 - s; ART.mg.draw(ctx, 'sub', 0, 0); ctx.restore(); ctx.globalAlpha = 1; }
       else if (e.k === 'barrels' && e.vx) { ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(e.spin * e.vx * 0.02); ART.mg.draw(ctx, e.vert ? 'barrelsV' : 'barrels', 0, 0, e.n); ctx.restore(); }
-      else ART.mg.draw(ctx, e.k === 'barrels' && e.vert ? 'barrelsV' : e.k, e.x, e.y + Math.sin(time * 3 + e.ph) * 1.2, e.n);
+      else { if (e.k === 'sub') { ctx.save(); ctx.globalAlpha = .8; ctx.translate(e.x + 90, e.y + 2); ctx.rotate(-1.5708); ctx.scale(1.15, 1.25); ART.mg.draw(ctx, 'wake', 0, 65); ctx.restore(); } ART.mg.draw(ctx, e.k === 'barrels' && e.vert ? 'barrelsV' : e.k, e.x, e.y + Math.sin(time * 3 + e.ph) * 1.2, e.n); }
     } else if (e.k === 'bubble') ART.mg.draw(ctx, 'bubble', e.x, e.y + Math.sin(time * 3 + e.ph) * 3);
     else if (e.k === 'raft') mgRaft(e.x, e.y + Math.sin(time * 3 + e.ph) * 2);
   }
@@ -3576,6 +3691,10 @@ function renderMini() {
     if (e.k === 'wafer') { ctx.fillStyle = 'rgba(0,30,60,0.28)'; ctx.beginPath(); ctx.ellipse(e.x + 5, e.y + 15, 14, 6, 0, 0, 7); ctx.fill(); ctx.save(); ctx.translate(e.x, e.y - 8 + Math.sin(e.spin * 9) * 1.5); ctx.rotate(e.spin * 5); ART.mg.draw(ctx, 'wafer', 0, 0); ctx.restore(); }
     else if ((e.k === 'sub' || e.k === 'barrels') && mgWinding(e)) { var wx = e.k === 'sub' ? e.x : e.vert ? e.x : e.x - e.w / 2 + 22 + 18 * Math.min(e.n - 1, 1), wy = (e.k === 'sub' ? e.y - 2 : e.vert ? e.y - e.h / 2 + 22 : e.y - 6) - 18 - Math.abs(Math.sin(time * 14)) * 5; ctx.save(); ctx.translate(wx, wy); ctx.scale(0.8, 0.8); ART.mg.draw(ctx, 'wafer', 0, 0); ctx.restore(); }
   }
+  for (i = mgRip.length - 1; i >= 0; i--) { e = mgRip[i]; var ru = (time - e.t) / .85; if (ru < 0) continue; if (ru >= 1) { mgRip.splice(i, 1); continue; } ctx.globalAlpha = (1 - ru) * .85; ctx.save(); ctx.translate(e.x, e.y + 8); ctx.scale(.45 + ru * 1.7, .45 + ru * 1.7); ART.mg.draw(ctx, 'ripple', 0, 0); ctx.restore(); }
+  ctx.globalAlpha = (1 - z * 1.6) * .8; if (ctx.globalAlpha > 0.02) { ctx.save(); ctx.translate(m.x - (m.bk || 0) * 5, m.y + 20); ctx.rotate((m.bk || 0) * .3); ART.mg.draw(ctx, 'wake', 0, 62); ctx.restore(); }
+  for (i = 0; i < 2; i++) { var hu = (time * .9 + i / 2) % 1; ctx.globalAlpha = (1 - hu) * .45 * (1 - z); ctx.save(); ctx.translate(m.x, m.y + 12); ctx.scale(.55 + hu * 1.1, .55 + hu * 1.1); ART.mg.draw(ctx, 'ripple', 0, 0); ctx.restore(); }
+  ctx.globalAlpha = 1;
   ctx.fillStyle = 'rgba(0,30,60,' + (0.22 - 0.1 * z).toFixed(2) + ')'; ctx.beginPath(); ctx.ellipse(m.x, m.y + 14, 15 - 4 * z, 6 - 1.5 * z, 0, 0, 6.3); ctx.fill();   // Fancy's shadow stays on the water while he leaps
   if (!(m.inv > 0 && !calmOn() && Math.floor(time * 14) % 2)) { if (calmOn() && m.inv > 0) ctx.globalAlpha = 0.6; mgHero(ctx, m.x, m.y - mgLeapHt() * z, 0.9 * (1 + 0.45 * z), m.bk || 0, time); ctx.globalAlpha = 1; }   // Fancy seen from above, nose up the screen, leaning into a turn
   if (m.boss) mgBoss(m.boss);
@@ -3585,8 +3704,9 @@ function renderMini() {
   for (i = 0; i < m.maxH; i++) ART.mg.draw(ctx, 'heart', mhx(26 + i * 28), 30, i < m.hearts, 1);
   if (m.wsh > 0) { ctx.lineWidth = 3; ctx.strokeStyle = '#ffffff'; ctx.fillStyle = '#4a9bd8'; ctx.beginPath(); ctx.arc(mhx(26 + m.maxH * 28 + 6), 30, 10, 0, 7); ctx.fill(); ctx.stroke(); }   // the wafer shield is ready
   ctx.fillStyle = 'rgba(30,20,50,0.55)'; rrect(mhx(350), 70, 10, 480, 5); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#ffffff'; ctx.stroke();
-  ctx.beginPath(); ctx.arc(mhx(345), 540 - clamp(lt / CFG.mgSecs, 0, 1) * 470, 9, 0, 7); ctx.fillStyle = '#ffd93b'; ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.stroke();
-  if (m.ph === 'intro' || m.ph === 'play') drawPauseBtn(MG_PB, .55);   // the pause button
+  var ry = 540 - clamp(lt / CFG.mgSecs, 0, 1) * 470; ctx.fillStyle = '#ffd93b'; rrect(mhx(350), ry, 10, 540 - ry + 10, 5); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(mhx(350) + 2.4, ry + 4, 2, Math.max(0, 540 - ry - 4));   // the way done so far fills with gold
+  ART.coin(ctx, mhx(342), ry, time);
+  if (m.ph === 'intro' || m.ph === 'play') { drawPauseBtn(MG_PB, .55); drawClock(MG_PB[0], opt('lefty') ? 26 : 334); }   // the pause button
   if (m.ph === 'intro') { if (m.pt < MG_INTRO) { outlined('Chimp\'s Navy!', W / 2, 150, 40, '#ffd93b'); outlined('Drag or move the mouse to steer.', W / 2, 196, 17, '#ffffff'); outlined('Tap or click to LEAP subs and barrels.', W / 2, 222, 17, '#ffffff'); outlined('No steering in mid-leap: time it!', W / 2, 248, 17, '#ffd93b'); outlined('Seagulls can\'t be leapt: dodge them!', W / 2, 274, 17, '#ffffff'); outlined('Free the friends in bubbles!', W / 2, 300, 17, '#ffffff'); } else rsgWord(m.pt - MG_INTRO, W / 2, 190); }
   else if (m.ph === 'play' && m.pt < 0.6) rsgWord(CFG.rsgBeat * 2 + m.pt, W / 2, 190);
   else if (m.practice && (m.ph === 'win' || m.ph === 'lose')) practiceCard(m);
@@ -3608,7 +3728,7 @@ function startVictory() {
   var s = save.stats, secs = Math.max(1, Math.round(runSecs)), pz = runPauses;
   if (fightNew) { toast(fightNew, 6000); fightNew = ''; }
   if (badgeNew) { toast('Challenge badge earned: ' + badgeNew + '! New scarf and mask colors are in Costume.', 7000); badgeNew = ''; }
-  state = 'victory'; setBar(false); vicT = 0; pendNext = ''; nextT = 0; cardT = -1; BAL = null; fwk.length = 0; fwkT = 0.4; recordRun();
+  split('Win'); state = 'victory'; setBar(false); vicT = 0; pendNext = ''; nextT = 0; cardT = -1; BAL = null; fwk.length = 0; fwkT = 0.4; recordRun();
   VS = { secs: secs, pauses: pz, flaps: runFlaps, coins: runCoins, hurts: runHurts, friends: s.friends - runFriends0, pops: runPops, popsOf: runPopsOf, prevTime: s.bestWin, prevPz: s.bestPz ? s.bestPz - 1 : -1, recT: !s.bestWin || secs < s.bestWin, recP: !s.bestPz || pz + 1 < s.bestPz };
   if (VS.recT) s.bestWin = secs; if (VS.recP) s.bestPz = pz + 1;
   persist(); ART.bal.warm(); burst(W / 2, 200, 50, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 320, 400); }
@@ -3683,7 +3803,7 @@ function balPlan() {
 }
 function startBalloons() {
   state = 'play'; pendNext = ''; nextT = 0; cardT = -1; celT = 0; obs = []; fx.length = 0; trail.length = 0; fl.length = 0; pops.length = 0; shd.length = 0;
-  BAL = { t: 0, ph: 'play', plan: balPlan(), pi: 0, list: [], popped: 0, total: 0, combo: 0, comboT: 0, coins: 0, pw: [] }; BAL.total = BAL.plan.length;
+  split('Balloons'); BAL = { t: 0, ph: 'play', plan: balPlan(), pi: 0, list: [], popped: 0, total: 0, combo: 0, comboT: 0, coins: 0, pw: [] }; BAL.total = BAL.plan.length;
   rsgT = 0; rsgGo = false; vy = 0; grace = 0; boost = 0; boostT = 99; trackOn = false; invuln = 0; spinT = 0; by = CFG.rsgY; bx = CFG.bananaX; washA = calmOn() ? 0.4 : 1;
 }
 function balPop(b) {
@@ -4297,7 +4417,7 @@ function render() {
       drawTapIcon(hx(24), 58); outlinedC(String(runFlaps), hx(42), 59, 20, '#ffffff', ha);   // taps this run
       if (streak >= 2) outlinedC('x' + streak + ' perfect', hx(14), 86, 16, '#ffd93b', ha);
     }
-    if (state === 'play' || state === 'paused') { drawPauseBtn(PB, .5); ctx.save(); ctx.translate(0, -HUDUP); if (BAL) drawBalHud(); else if (FT && FT.ph !== 'wait') drawFtHud(); else drawProgress(); if (state === 'play') drawExtrasRow(); ctx.restore(); }   // the pause button, and how far along the stage is
+    if (state === 'play' || state === 'paused') { drawPauseBtn(PB, .5); drawClock(PB[0]); ctx.save(); ctx.translate(0, -HUDUP); if (BAL) drawBalHud(); else if (FT && FT.ph !== 'wait') drawFtHud(); else drawProgress(); if (state === 'play') drawExtrasRow(); ctx.restore(); }   // the pause button, and how far along the stage is
     lap('hud');
   }
   if (state === 'title') {
