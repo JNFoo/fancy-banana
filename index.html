@@ -1881,7 +1881,7 @@ return { fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: cr
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.0934';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1040';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -3146,9 +3146,10 @@ function openWin() {
   $('wKeep').textContent = np > save.stats.plus ? 'Keep my upgrades and credits (+10% speed)' : 'Keep my upgrades and credits';
   $('winNote').textContent = np > save.stats.plus ? 'Keeping your stuff makes every run 10% faster from now on. Speed bonus: +' + np * 10 + '% (the most is +' + CFG.plusMax * 10 + '%).' : 'Your speed bonus is already at its most: +' + CFG.plusMax * 10 + '%.';
 }
-function afterWin() { toReady(); if (!save.unlocks.balloons) startGift(); else if (pcBeaten(4) && !save.unlocks.crown) startGift(1); }
+function giftNeeded() { return !save.unlocks.balloons ? 1 : pcBeaten(4) && !save.unlocks.crown ? 2 : 0; }   // 1: Prince Chimp's balloons (first win), 2: the crown (Crown Duel won)
+function afterWin() { toReady(); giftTitle = false; var g = giftNeeded(); if (g) startGift(g === 2 ? 1 : 0); }
 var freshArmed = false;
-function winTitle() { save.stats.plus = Math.min(CFG.plusMax, save.stats.plus + 1); persist(); pWin.hidden = true; if (!save.unlocks.balloons) { startGift(); return; } resetWorld(); state = 'title'; titleT = 5; setBar(true); toast('Saved. Welcome back to the title screen!', 3000); }   // keep everything, save, and rest at the title screen instead of going straight to the launch pad
+function winTitle() { save.stats.plus = Math.min(CFG.plusMax, save.stats.plus + 1); persist(); pWin.hidden = true; var g = giftNeeded(); if (g) { giftTitle = true; startGift(g === 2 ? 1 : 0); return; } resetWorld(); state = 'title'; titleT = 5; setBar(true); toast('Saved. Welcome back to the title screen!', 3000); }   // keep everything, save, and rest at the title screen instead of going straight to the launch pad
 function winKeep() { save.stats.plus = Math.min(CFG.plusMax, save.stats.plus + 1); persist(); pWin.hidden = true; afterWin(); }
 function winFresh() {
   if (!freshArmed) { freshArmed = true; $('wFresh').textContent = 'Tap again to confirm: reset upgrades and credits'; $('winMsg').textContent = 'Your best score, records and costumes always stay. Your current save is kept as a backup on this device.'; return; }
@@ -3176,14 +3177,19 @@ function flagStep(dt, sp) {
   var i, p; for (i = 0; i < fl.length; i++) fl[i].x -= sp * dt * 0.6;   // the string drags behind Fancy, a little slower than the world
   flAcc += dt; if (flAcc >= 0.03) { flAcc = 0; p = fl.length >= 44 ? fl.shift() : { x: 0, y: 0 }; p.x = bx - 17; p.y = by + 3; fl.push(p); }
 }
-function drawFlags() {
-  var n = fl.length, i, c = 0, p, sw;
+function drawFlags() {   // a thin string drawn as one smooth curve, with small pennants that stream back and flutter more toward the loose end
+  var n = fl.length, i, c = 0, p, a, b, tx, ty, tl, w, d, calm = calmOn();
   if (n < 4) return;
-  ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(fl[n - 1].x, fl[n - 1].y); for (i = n - 2; i >= 0; i--) ctx.lineTo(fl[i].x, fl[i].y);
-  ctx.strokeStyle = INK; ctx.lineWidth = 3.4; ctx.stroke(); ctx.strokeStyle = '#fffdf6'; ctx.lineWidth = 1.5; ctx.stroke();
-  for (i = n - 4; i >= 2; i -= 6, c++) {
-    p = fl[i]; sw = calmOn() ? 0 : Math.sin(time * 9 + c * 1.3) * 2;
-    ctx.beginPath(); ctx.moveTo(p.x - 5.5, p.y); ctx.lineTo(p.x + 5.5, p.y); ctx.lineTo(p.x + sw, p.y + 14); ctx.closePath(); ctx.fillStyle = FLC[c % FLC.length]; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = INK; ctx.stroke();
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(fl[n - 1].x, fl[n - 1].y);
+  for (i = n - 2; i > 0; i--) ctx.quadraticCurveTo(fl[i].x, fl[i].y, (fl[i].x + fl[i - 1].x) / 2, (fl[i].y + fl[i - 1].y) / 2);
+  ctx.lineTo(fl[0].x, fl[0].y); ctx.strokeStyle = INK; ctx.lineWidth = 2.6; ctx.stroke(); ctx.strokeStyle = '#fffdf6'; ctx.lineWidth = 1; ctx.stroke();
+  for (i = n - 4; i >= 3; i -= 5, c++) {
+    p = fl[i]; a = fl[i + 1]; b = fl[i - 1]; tx = a.x - b.x; ty = a.y - b.y; tl = Math.sqrt(tx * tx + ty * ty) || 1; tx = tx / tl * 3.8; ty = ty / tl * 3.8;
+    d = (n - 1 - i) / n; w = calm ? 0 : Math.sin(time * 11 + c * 1.7) * (0.8 + 3 * d);
+    ctx.beginPath(); ctx.moveTo(p.x + tx, p.y + ty);
+    ctx.quadraticCurveTo(p.x - 1 + w * 0.2, p.y + 3.8 + w * 0.5, p.x - 8.2 + w * 0.3, p.y + 5.4 + w);
+    ctx.quadraticCurveTo(p.x - 5.5 + w * 0.2, p.y + 1.4 + w * 0.3, p.x - tx, p.y - ty); ctx.closePath();
+    ctx.fillStyle = FLC[c % FLC.length]; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = INK; ctx.stroke();
   }
 }
 
@@ -3282,7 +3288,7 @@ function balResultCard() {
 
 /* --- Prince Chimp gives up his balloons (the first time the game is beaten) --- */
 var GIFT_LINES = ['Fine! You win, Banana!', 'Take every balloon I own... and please leave me alone!'];
-var giftK = 0, CROWN_LINES = ['Fair and square, Banana!', 'Take my crown...', 'it looks better on you!'];
+var giftK = 0, giftTitle = false, CROWN_LINES = ['Fair and square, Banana!', 'Take my crown...', 'it looks better on you!'];
 function startGift(k) { giftK = k || 0; state = 'gift'; giftT = 0; giftS = 0; giftSt = 0; setBar(false); ART.bal.warm(); }
 function giftTap() { if ((giftS === 1 || giftS === 2) && giftSt > 0.45) { giftS++; giftSt = 0; } }
 function giftUpdate(dt) {
@@ -3292,7 +3298,7 @@ function giftUpdate(dt) {
   else if (giftS === 3 && giftSt > 2.4) {
     giftS = 4; giftSt = 0; if (giftK) { save.unlocks.crown = 1; save.unlocks.crownOff = 0; } else { save.unlocks.balloons = 1; save.unlocks.flags = 1; } persist();
     burst(bx + 10, by - 10, 36, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 300, 320);
-  } else if (giftS === 4 && giftSt > 2.2) { toReady(); if (giftK) toast('The true ending! Fancy now has the Banana Crown (see Costume).', 7000); else toast('Secret unlocked! A Balloon Party now follows the Ice Cream Parlor, and Fancy has pennant flags (see Costume).', 7000); }
+  } else if (giftS === 4 && giftSt > 2.2) { if (giftTitle) { giftTitle = false; resetWorld(); state = 'title'; titleT = 5; setBar(true); } else toReady(); if (giftK) toast('The true ending! Fancy now has the Banana Crown (see Costume).', 7000); else toast('Secret unlocked! A Balloon Party now follows the Ice Cream Parlor, and Fancy has pennant flags (see Costume).', 7000); }
 }
 function drawBunch(x, y, t, s, up) {   // a bunch of balloons held at (x, y), the strings gathered in the hand
   var offs = [[-34, -92], [-12, -112], [14, -100], [36, -84], [-46, -62], [0, -72], [28, -58]], i, px2, py2;
