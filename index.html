@@ -148,6 +148,7 @@ textarea{width:100%;height:calc(96*var(--u));font:calc(12*var(--u))/1.3 ui-monos
 <button class="opt" id="wBow"><canvas id="cvBow" width="176" height="120"></canvas><span>Bow tie<small id="bowNote"></small></span></button>
 <button class="opt" id="wRain"><span>Rainbow trail<small id="rainNote"></small></span></button>
 <button class="opt" id="wBunch"><span>Banana Bunch<small id="bunchNote"></small></span></button>
+<button class="opt" id="wCrown"><span>Banana Crown<small id="crownNote"></small></span></button>
 <button class="opt" id="wFlags"><span>Pennant flags<small id="flagNote"></small></span></button>
 <h3>Scarf color</h3><div class="swr" id="scRow"></div>
 <h3>Mask color</h3><div class="swr" id="mkRow"></div>
@@ -157,6 +158,7 @@ textarea{width:100%;height:calc(96*var(--u));font:calc(12*var(--u))/1.3 ui-monos
 <h2>Challenges</h2>
 <p>Pick one for your next run. Reach the end of the game in it to earn its badge and a new scarf and mask color. Normal runs never change.</p>
 <div id="chList"></div>
+<button class="opt cmp" id="pcFight" aria-pressed="false"><span>Prince Chimp fight<small id="pcNote"></small></span><b id="pcN"></b></button>
 <p id="chNote"></p>
 <div class="row"><button id="chClose">Close</button></div>
 </section>
@@ -470,7 +472,8 @@ function banana(g, x, y, rot, sc, flap, t, bow, vy, up, gaze, roll, face) {
   g.save(); if (up) { g.translate(KX, KY); g.rotate(-1.45); g.translate(-KX, -KY); } g.beginPath(); tailPath(g, t, flap, vy, 40, 13, 0, 7); tailPath(g, t, flap, vy, 31, 11.5, 2.1, -3); g.fillStyle = PAL.s; g.fill(); g.strokeStyle = OUTK; g.lineWidth = 2.4; g.stroke(); g.restore();
   g.drawImage(pic.c, -BOX, -BOY, BW, BH);
   if (e < 2 && !spin) { gy = 1.5 * Math.max(-1, Math.min(1, gaze || 0)); g.drawImage(BAN.iris.c, EYES[0][0] - 10 + .4, EYES[0][1] - 10 + gy + .4, 20, 20); g.drawImage(BAN.iris.c, EYES[1][0] - 10 + .4, EYES[1][1] - 10 + gy + .4, 20, 20); }   // eyes: the pupils follow the gaze
-  if (bow && !spin) bowTie(g, BOWP[0], BOWP[1], .85);
+  if ((bow & 1) && !spin) bowTie(g, BOWP[0], BOWP[1], .85);
+  if ((bow & 2) && !spin) { g.save(); g.translate((EYES[0][0] + EYES[1][0]) / 2 - 2, EYES[0][1] - 17); g.rotate(-.2); crownDraw(g, .72); g.restore(); }
   g.restore();
 }
 /* banana friends: same body, a plain face, and small accessories so each one is different */
@@ -523,6 +526,82 @@ function chimpPic(s, mood) {
   return p;
 }
 function chimp(g, cx, cy, s, mood) { put(g, chimpPic(s, mood).c, cx - 52 * s, cy - 54 * s); }
+
+/* Prince Chimp's fights (build 4): the four bosses, a gold crown, and the things they throw. Each picture is built once, then stamped. They face left. */
+var BOSSP = {}, FXP = {};
+function crownDraw(g, sc) {   // a small gold crown, its band centered on (0, 0), the points rising up
+  g.save(); g.scale(sc, sc); g.lineJoin = 'round';
+  g.beginPath(); g.moveTo(-17, 0); g.lineTo(-19, -18); g.lineTo(-9, -9); g.lineTo(0, -22); g.lineTo(9, -9); g.lineTo(19, -18); g.lineTo(17, 0); g.closePath(); fs(g, gold(g, -22, 0), OUTK, 2.4);
+  rr(g, -17, -3.5, 34, 6.4, 2.4); fs(g, '#f0b83a', OUTK, 2);
+  circ(g, 0, -13, 3); fs(g, '#ff4a6a', OUTK, 1.2); circ(g, -14, -9, 2.3); fs(g, '#4fb8ff', OUTK, 1.1); circ(g, 14, -9, 2.3); fs(g, '#4fe0a0', OUTK, 1.1);
+  g.restore();
+}
+function chimpAt(g, x, y, s, mood) { g.save(); g.translate(x, y); g.scale(s, s); chimpDraw(g, mood); g.restore(); }
+function bossDraw(g, n) {
+  var O = OUTK, i;
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  if (n === 1) {   // the Wafer Cannon wagon
+    [-30, 32].forEach(function (x) { circ(g, x, 54, 18); fs(g, rg(g, x - 4, 50, 2, x, 54, 19, [[0, '#c89058'], [1, '#8a5a30']]), O, 3); circ(g, x, 54, 6); fs(g, '#5a3a1c', O, 2); for (i = 0; i < 4; i++) { g.beginPath(); g.moveTo(x, 54); g.lineTo(x + Math.cos(i * 1.571 + .4) * 16, 54 + Math.sin(i * 1.571 + .4) * 16); g.lineWidth = 2; g.strokeStyle = '#5a3a1c'; g.stroke(); } });
+    rr(g, -56, 18, 112, 34, 9); fs(g, lg(g, 0, 18, 0, 52, [[0, '#ff9dbb'], [1, '#d4467a']]), O, 3);
+    g.fillStyle = 'rgba(255,255,255,.35)'; rr(g, -50, 22, 100, 5, 2.5); g.fill();
+    rr(g, -88, 14, 52, 22, 9); fs(g, lg(g, 0, 14, 0, 36, [[0, '#a8aec4'], [.5, '#6a7088'], [1, '#444a60']]), O, 3);
+    rr(g, -94, 8, 14, 34, 6); fs(g, '#3a3f52', O, 3); circ(g, -87, 25, 7); fs(g, '#14161f', null);
+    rr(g, 18, 6, 30, 14, 4); fs(g, '#f2d894', O, 2); g.beginPath(); for (i = 1; i < 4; i++) { g.moveTo(18 + i * 7.5, 6); g.lineTo(18 + i * 7.5, 20); } g.lineWidth = 1.4; g.stroke();
+    chimpAt(g, -2, -14, .62, 1);
+  } else if (n === 2) {   // Mecha-Chimp
+    [-24, 8].forEach(function (x) { rr(g, x, 44, 18, 30, 6); fs(g, lg(g, 0, 44, 0, 74, [[0, '#a4adc4'], [1, '#5f6985']]), O, 3); rr(g, x - 4, 68, 26, 11, 5); fs(g, '#4a5268', O, 3); });
+    [-1, 1].forEach(function (d) { rr(g, d * 46 - 9, -4, 18, 44, 8); fs(g, lg(g, 0, -4, 0, 40, [[0, '#b4bcd2'], [1, '#6a7490']]), O, 3); circ(g, d * 46, 42, 9); fs(g, '#4a5268', O, 2.6); });
+    rr(g, -42, -8, 84, 62, 15); fs(g, lg(g, 0, -8, 0, 54, [[0, '#d4dae8'], [.5, '#97a2bc'], [1, '#68728e']]), O, 3.4);
+    g.fillStyle = 'rgba(255,255,255,.4)'; rr(g, -34, -3, 68, 6, 3); g.fill();
+    circ(g, -22, 28, 11); fs(g, rg(g, -22, 28, 1, -22, 28, 12, [[0, '#ffffff'], [.4, '#ff8a8a'], [1, '#d01818']]), O, 2.6);
+    rr(g, 2, 18, 30, 20, 4); fs(g, '#3a4258', O, 2); for (i = 0; i < 3; i++) { circ(g, 10 + i * 9, 28, 2.6); fs(g, ['#ff4a6a', '#ffd93b', '#4fe0a0'][i], null); }
+    [[-36, 0], [36, 0]].forEach(function (r) { circ(g, r[0], r[1], 2.4); fs(g, '#4a5268', null); });
+    g.beginPath(); g.moveTo(0, -64); g.lineTo(0, -80); g.lineWidth = 3; g.strokeStyle = O; g.stroke(); circ(g, 0, -82, 5); fs(g, '#ff4a6a', O, 2);
+    chimpAt(g, 0, -30, .72, 1);
+    circ(g, 0, -30, 36); fs(g, 'rgba(170,225,255,.28)', O, 3.4);
+    g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 3; g.beginPath(); g.arc(0, -30, 28, 3.6, 4.5); g.stroke();
+  } else if (n === 3) {   // Gorilla Guard
+    ell(g, 0, 34, 54, 56); fs(g, rg(g, -14, 8, 4, 0, 34, 62, [[0, '#6a5444'], [1, '#2e221a']]), O, 3.6);
+    ell(g, -4, 38, 30, 36); fs(g, rg(g, -8, 26, 2, -4, 38, 38, [[0, '#a48a70'], [1, '#6e5842']]), O, 2.4);
+    [[18, 84], [-28, 84]].forEach(function (f) { ell(g, f[0], f[1], 20, 12); fs(g, '#3a2c22', O, 3); });
+    ell(g, 52, 36, 15, 40, -.2); fs(g, rg(g, 48, 20, 2, 52, 36, 42, [[0, '#6a5444'], [1, '#2e221a']]), O, 3); circ(g, 58, 76, 17); fs(g, '#3a2c22', O, 3);
+    ell(g, -46, 4, 14, 38, .6); fs(g, rg(g, -46, -10, 2, -46, 4, 42, [[0, '#6a5444'], [1, '#2e221a']]), O, 3); circ(g, -62, -24, 18); fs(g, '#3a2c22', O, 3);
+    for (i = 0; i < 3; i++) { g.beginPath(); g.moveTo(-70 + i * 6, -34); g.lineTo(-68 + i * 6, -26); g.lineWidth = 1.6; g.strokeStyle = '#150e08'; g.stroke(); }
+    ell(g, 0, -26, 29, 27); fs(g, rg(g, -8, -38, 2, 0, -26, 34, [[0, '#6a5444'], [1, '#2e221a']]), O, 3.4);
+    ell(g, 0, -18, 20, 16); fs(g, '#cfae86', O, 2); [-1, 1].forEach(function (d) { ell(g, d * 9, -22, 5, 4.4); fs(g, '#ffffff', O, 1.6); circ(g, d * 9 - 1.4, -21.6, 2.2); g.fillStyle = '#1a0e08'; g.fill(); g.beginPath(); g.moveTo(d * 3, -30); g.lineTo(d * 15, -26 + d * 0); g.lineWidth = 3.2; g.strokeStyle = O; g.stroke(); });
+    circ(g, -3, -13, 1.6); g.fillStyle = O; g.fill(); circ(g, 3, -13, 1.6); g.fill(); g.beginPath(); g.moveTo(-9, -6); g.quadraticCurveTo(0, -2, 9, -7); g.lineWidth = 2.4; g.strokeStyle = O; g.stroke();
+    g.beginPath(); g.moveTo(-30, -38); g.quadraticCurveTo(0, -80, 30, -38); g.lineTo(26, -34); g.quadraticCurveTo(0, -48, -26, -34); g.closePath(); fs(g, gold(g, -66, -34), O, 3);
+    g.beginPath(); g.moveTo(-5, -62); g.lineTo(0, -80); g.lineTo(5, -62); g.closePath(); fs(g, '#e8394f', O, 2);
+    chimpAt(g, 34, -66, .46, 1);
+  } else {   // the Crown Duel: Prince Chimp himself, on a floating throne disc, scepter in hand
+    ell(g, 0, 72, 56, 14); fs(g, rg(g, 0, 70, 2, 0, 72, 58, [[0, 'rgba(255,240,170,.9)'], [1, 'rgba(255,200,80,0)']]), null);
+    ell(g, 0, 64, 44, 10); fs(g, lg(g, 0, 54, 0, 74, [[0, '#fff3b0'], [.5, '#f0bf45'], [1, '#a8701a']]), O, 3);
+    g.beginPath(); g.moveTo(-34, 4); g.quadraticCurveTo(-60, 40, -38, 62); g.lineTo(38, 62); g.quadraticCurveTo(60, 40, 34, 4); g.closePath(); fs(g, lg(g, 0, 4, 0, 62, [[0, '#d0343c'], [1, '#78101c']]), O, 3);
+    chimpAt(g, 0, 0, 1.12, 1);
+    g.beginPath(); g.moveTo(-58, 58); g.lineTo(-50, -30); g.lineWidth = 6; g.strokeStyle = O; g.stroke(); g.lineWidth = 3; g.strokeStyle = '#e8c458'; g.stroke();
+    circ(g, -50, -36, 9); fs(g, rg(g, -53, -39, 1, -50, -36, 10, [[0, '#ffffff'], [.4, '#ff6b81'], [1, '#c01838']]), O, 2.4);
+    circ(g, -56, 22, 10); fs(g, '#a8744c', O, 2.6);
+  }
+}
+function bossPic(n) { var p = BOSSP[n]; if (!p) { p = BOSSP[n] = mk(170, 190); p.g.translate(85, 100); bossDraw(p.g, n); } return p; }
+function boss(g, n, cx, cy) { put(g, bossPic(n).c, cx - 85, cy - 100); }
+function fxPic(k) {   // 'coco': a coconut with a worried face; 'fist': a rocket fist (fingers point left)
+  var p = FXP[k];
+  if (!p) {
+    p = FXP[k] = mk(44, 44); var g = p.g, i; g.translate(22, 22); g.lineJoin = 'round'; g.lineCap = 'round';
+    if (k === 'coco') {
+      circ(g, 0, 0, 15); fs(g, rg(g, -5, -6, 1, 0, 0, 17, [[0, '#a8744c'], [1, '#4e2e18']]), OUTK, 2.6);
+      g.fillStyle = 'rgba(255,255,255,.35)'; ell(g, -6, -8, 4, 2, -.6); g.fill(); circ(g, -4.5, -2, 2); g.fillStyle = '#1a0e08'; g.fill(); circ(g, 4.5, -2, 2); g.fill(); g.beginPath(); g.moveTo(-4, 6); g.quadraticCurveTo(0, 3, 4, 6); g.lineWidth = 1.8; g.strokeStyle = '#1a0e08'; g.stroke();
+    } else {
+      rr(g, -2, -11, 22, 22, 6); fs(g, lg(g, 0, -11, 0, 11, [[0, '#c2c9dc'], [1, '#6a7490']]), OUTK, 2.6);
+      for (i = 0; i < 4; i++) { rr(g, -16, -13 + i * 7, 18, 7, 3.4); fs(g, lg(g, 0, -13 + i * 7, 0, -6 + i * 7, [[0, '#d8deec'], [1, '#8690aa']]), OUTK, 2.2); }
+      rr(g, 12, -5, 8, 10, 3); fs(g, '#ff8a3c', OUTK, 1.6);
+    }
+  }
+  return p;
+}
+function fightWarm(n) { TASKQ.push(function () { bossPic(n); }); TASKQ.push(function () { fxPic('coco'); }); TASKQ.push(function () { fxPic('fist'); }); TASKQ.push(function () { chimpPic([.62, .72, .46, 1.12][n - 1], 2); }); }
+function fxs(g, k, x, y, rot) { var p = fxPic(k); g.save(); g.translate(x, y); if (rot) g.rotate(rot); g.drawImage(p.c, -22, -22, 44, 44); g.restore(); }
 
 /* ============================ STAGE SETS ============================ */
 var DEF = [];
@@ -1794,13 +1873,13 @@ function balBack(g, off) { var P = party(); put(g, P.sky.c, 0, 0); layer(g, P.cl
 function balGround(g, off) { var F = party().floor, x; for (x = px(-(off % 72)); x < W; x += 72) put(g, F.c, x, GY); }
 function balWarm() { var i; if (BALW) return; BALW = true; TASKQ.push(party); for (i = 0; i < BALC.length; i++) (function (i) { TASKQ.push(function () { balloonPic(i); }); })(i); TASKQ.push(waferPic); }
 
-return { setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { draw: mgdraw, water: mgwater, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
+return { fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: crownDraw, setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { draw: mgdraw, water: mgwater, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
 })();
 
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.0049';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.0545';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -1993,6 +2072,7 @@ function helpSecrets() {   // before the first win: a teaser; after it: a rumor 
   add('friend', 'Psst! The game is full of secrets now: shimmering edges, glowing gates, and a little door on the title screen. Five quick taps on Fancy there open the Banana Museum.');
   add('friend', huntOn() ? 'Six banana friends are lost in the stages: ' + frCount() + ' of 6 found. Look in the top and bottom corners, halfway between two gates.' : 'Rumor: six banana friends got lost around the stages. They only start hiding once the game has been beaten twice.');
   add('star', 'Challenges: a Challenges button on the title screen turns on Night flashlight, Tiny gaps, Wafer storm or Mirror for your next run. Reach the end in one to earn its badge and a new scarf and mask color for Costume.');
+  if (save.stats.wins >= 2) add('balloon', 'Prince Chimp fights: turn on "Prince Chimp fight" in Challenges. The last two gates of the final stage become a boss with three rounds, and a hit only repeats the round. Beat the first three for crown pieces, then the Crown Duel.');
   MUSE.forEach(function (r) { if (!save.unlocks[r[0]]) add(SEC_ICON[r[0]] || 'star', 'Rumor: ' + r[1] + '. ' + r[2]); });
 }
 function refreshCode() {
@@ -2087,6 +2167,7 @@ function refreshMuse() {
   rows.push(['bunch', 'Banana Bunch', 'Find all six lost friends.']);
   rows.forEach(function (r) { var f = r[0] === 'bunch' ? bunchOk() : !!save.unlocks[r[0]], p = document.createElement('p'), b = document.createElement('b'), sm = document.createElement('small'); p.className = 'mrow'; b.textContent = r[1] + (f ? ': found' : ': not yet'); sm.textContent = r[2]; p.appendChild(b); p.appendChild(sm); sec.appendChild(p); });
 }
+function wearFlags() { return (wearsBow() ? 1 : 0) | (wearsCrown() ? 2 : 0); }
 function wearsBow() { var u = save.unlocks; return !!u.bow && u.wear !== 0; }
 function refreshWear() {
   var bow = !!save.unlocks.bow, on = wearsBow();
@@ -2099,6 +2180,7 @@ function refreshWear() {
   $('wRain').disabled = !rainOk(); $('wRain').classList.toggle('on', rainOn()); $('rainNote').textContent = rainOk() ? (rainOn() ? 'A rainbow behind Fancy' : 'Off') : 'A secret: a perfect streak of 10';
   var fu = !!save.unlocks.flags; $('wFlags').disabled = !fu; $('wFlags').classList.toggle('on', flagsOn()); $('flagNote').textContent = fu ? (flagsOn() ? 'Flying behind Fancy' : 'Off') : 'A secret: beat Prince Chimp';
   $('wBunch').disabled = !bunchOk(); $('wBunch').classList.toggle('on', bunchOn()); $('bunchNote').textContent = bunchOk() ? (bunchOn() ? 'Flying with Fancy' : 'Off') : 'A secret: find all six lost friends';
+  var cu = !!save.unlocks.crown; $('wCrown').disabled = !cu; $('wCrown').classList.toggle('on', wearsCrown()); $('crownNote').textContent = cu ? (wearsCrown() ? 'Wearing it' : 'Off') : 'A secret: win the Crown Duel';
   $('wBow').disabled = !bow; $('bowNote').textContent = bow ? (on ? 'Wearing it' : 'Unlocked') : 'Reach stage ' + CFG.bowStage + ' to unlock';
 }
 function pickWear(v) { save.unlocks.wear = v; persist(); refreshWear(); }
@@ -2156,6 +2238,10 @@ function refreshChal() {
     b.addEventListener('click', function () { save.unlocks.chal = cur === i + 1 ? 0 : i + 1; persist(); refreshChal(); });
     box.appendChild(b);
   });
+  var pb = $('pcFight'), nx = fightNext(), fo = fightOn(), need = 0, n, np = 0;
+  for (n = 1; n <= 4; n++) { if (!pcBeaten(n) && !need) need = n + 1 - save.stats.wins; if (n < 4 && pcBeaten(n)) np++; }
+  pb.disabled = !nx; pb.setAttribute('aria-pressed', fo ? 'true' : 'false'); pb.classList.toggle('on', fo); $('pcN').textContent = fo ? 'ON' : '';
+  $('pcNote').textContent = nx ? 'Next: ' + FIGHTS[nx - 1][0] + (pcBeaten(nx) ? ' (rematch)' : '') + '. Crown pieces: ' + np + ' of 3.' : 'Win ' + Math.max(1, need) + ' more time' + (need > 1 ? 's' : '') + ' to meet the next fight.';
   $('chNote').textContent = cur ? 'Your next run is in ' + CHAL[cur - 1][1] + '. Tap it again to turn it off.' : 'No challenge is on, so runs are normal.';
 }
 function refreshColors() {
@@ -2180,8 +2266,10 @@ function refreshPrac() {
 $('wClose').addEventListener('click', closePanels); $('uClose').addEventListener('click', closePanels);
 $('wPlain').addEventListener('click', function () { pickWear(0); }); $('wBow').addEventListener('click', function () { pickWear(1); });
 $('wRain').addEventListener('click', function () { if (rainOk()) { save.unlocks.rainOff = rainOn() ? 1 : 0; persist(); refreshWear(); } });
+$('wCrown').addEventListener('click', function () { if (save.unlocks.crown) { save.unlocks.crownOff = wearsCrown() ? 1 : 0; persist(); refreshWear(); } });
 $('wBunch').addEventListener('click', function () { if (bunchOk()) { save.unlocks.bunchOff = bunchOn() ? 1 : 0; persist(); refreshWear(); } });
-$('mClose').addEventListener('click', closePanels); $('chClose').addEventListener('click', closePanels); $('bChal').addEventListener('click', function () { if (state === 'title') openPanel(pChal); });
+$('mClose').addEventListener('click', closePanels); $('pcFight').addEventListener('click', function () { if (fightNext()) { save.unlocks.pcf = save.unlocks.pcf ? 0 : 1; persist(); refreshChal(); } });
+$('chClose').addEventListener('click', closePanels); $('bChal').addEventListener('click', function () { if (state === 'title') openPanel(pChal); });
 $('wFlags').addEventListener('click', function () { if (save.unlocks.flags) { save.unlocks.flagsOff = flagsOn() ? 1 : 0; persist(); refreshWear(); } });
 
 $('bHelp').addEventListener('click', function () { openPanel(pHelp); });
@@ -2283,7 +2371,7 @@ function rateGate(o) {   // called as Fancy clears a gate: perfect (through the 
 var contN = 0;
 function continueRun() { var n = save.cont.st; if (!(n > 1) || state !== 'title') return; contN = n; closePanels(); ART.warm(themeOf(n)); toReady(); toast('Carrying on from stage ' + n + '. Tap to launch!', 3500); }
 function resetWorld() {
-  var ci = pracN ? 0 : chalIdx(); runChal = ci ? CHAL[ci - 1][0] : ''; nightA = 0;
+  var ci = pracN ? 0 : chalIdx(); runChal = ci ? CHAL[ci - 1][0] : ''; nightA = 0; FT = null; runFight = !pracN && fightOn() ? fightNext() : 0; if (runFight) { ART.fightWarm(runFight); ART.mg.sprite('wafer'); }
   windUsed = false; resT = -1; wasCtrl = true; tapFx.length = 0; obs = []; score = 0; stage = 1; runTime = 0; runFlaps = 0; spawned = 0; dist = 0; BAL = null; BALR = null; fl.length = 0; shd.length = 0; if (save.unlocks.balloons) ART.bal.warm();
   runSecs = runPauses = runHurts = runPops = runPopsOf = 0; runFriends0 = save.stats.friends; VS = null;
   lastC = GROUND_Y * 0.45; by = CFG.launchY; vy = 0; bx = CFG.bananaX; angle = 0; flapAnim = 0; grace = 0; fallD = 0; hurtT = 0;
@@ -2322,7 +2410,7 @@ function boing(v) { runHurts++; invuln = 1.3; hurtT = 0.9; fallD = 0; vy = v; fl
 function flap() { vy = CFG.flapV; flapAnim = 0.18; runFlaps++; fallD = 0; }
 function toReady() { resetWorld(); state = 'ready'; setBar(false); if (runChal === 'storm') ART.mg.sprite('wafer'); }
 function rsgGoAt() { return CFG.cardSecs + CFG.rsgBeat * 2; }   // seconds after the stage clear when control comes back
-function rsgHold() { return rsgT >= 0 && rsgT < rsgGoAt(); }
+function rsgHold() { return (rsgT >= 0 && rsgT < rsgGoAt()) || !!(FT && FT.hold > 0); }
 function startLaunch() { state = 'launch'; launchT = -CFG.countSecs; if (stage === 1 && save.cont.st) { save.cont = {}; persist(); } }   // a 3-2-1 countdown first, then the run
 var wasCtrl = true, RES_SECS = 1.2, resT = -1, tapBufT = -9, tapFx = [];   // resume countdown (seconds left, -1 = none); when the last tap that could not flap happened; ripples where taps landed
 function resume() { state = 'play'; grace = resT === -1 ? CFG.graceSecs : 0.1; resT = -1; vy = 0; }   // after a countdown the player is ready, so the hover is short
@@ -2350,8 +2438,8 @@ function onAction() {
 
 var windUsed = false;
 function secondWind() {   // the Second wind upgrade: once per run, a crash restarts the stage you are in, with a fresh Ready, Set, GO
-  if (pracN || windUsed || !lvl('wind') || BAL) return false;
-  windUsed = true; obs = []; spawned = score = gateStart(stage); by = CFG.rsgY; bx = CFG.bananaX; vy = 0; angle = 0; grace = 0; rsgT = CFG.cardSecs; rsgGo = false; cardT = -1; topT = 0; invuln = 0; fallD = 0; hurtT = 0; streak = 0; pendNext = ''; nextT = 0; celT = 0; lastAfter = 0;
+  if (pracN || windUsed || !lvl('wind') || BAL || (FT && FT.ph !== 'wait')) return false;
+  windUsed = true; FT = null; obs = []; spawned = score = gateStart(stage); by = CFG.rsgY; bx = CFG.bananaX; vy = 0; angle = 0; grace = 0; rsgT = CFG.cardSecs; rsgGo = false; cardT = -1; topT = 0; invuln = 0; fallD = 0; hurtT = 0; streak = 0; pendNext = ''; nextT = 0; celT = 0; lastAfter = 0;
   nextX = W + CFG.obW + speedFor(stage) * (rsgGoAt() - rsgT + 0.4); burst(CFG.bananaX, by, 30, ['#7ad8ff', '#ffffff', '#ffd93b'], 260, 260); pop('SECOND WIND!', '#7ad8ff', 28); return true;
 }
 /* ===== Secrets (build 2): hidden rooms open from the second playthrough, the lost-friend hunt from the third ===== */
@@ -2367,7 +2455,119 @@ function chalIdx() { var c = save.unlocks.chal; return secretsOn() && c >= 1 && 
 function badgeOf(i) { return !!save.unlocks['b_' + CHAL[i][0]]; }
 function mirOn() { return runChal === 'mirror' && !BAL && (state === 'play' || state === 'paused' || state === 'dead' || state === 'launch' || state === 'ready'); }
 function mirY(y) { return mirOn() ? H - y : y; }
-function nightLive() { return runChal === 'night' && state === 'play' && !BAL && !VAULT && cardT < 0 && !rsgHold() && spinT <= 0; }
+/* ===== Prince Chimp fights (build 4): in the last stage the final two gates give way to a boss. Three rounds of 12 seconds; a hit repeats only that round. ===== */
+var FIGHTS = [['Wafer Cannon', 'Prince Chimp rolls in with a wafer cannon!', 'Dodge the wafers.'], ['Mecha-Chimp', 'Prince Chimp is inside a giant robot!', 'Dodge the lasers and rocket fists.'], ['Gorilla Guard', 'Prince Chimp brought his gorilla!', 'Dodge coconuts. Hop the shockwaves.'], ['Crown Duel', 'Prince Chimp wants his crown back!', 'Everything at once!']];
+var FT = null, runFight = 0, fightNew = '', FT_ROUND = 12, FT_BX = 280;
+function pcBeaten(n) { return !!save.unlocks['pc' + n]; }
+function fightNext() { if (!secretsOn()) return 0; for (var n = 1; n <= 4; n++) if (!pcBeaten(n)) return save.stats.wins >= n + 1 ? n : 0; return 4; }
+function fightOn() { return !!save.unlocks.pcf && fightNext() > 0; }
+function wearsCrown() { var u = save.unlocks; return !!u.crown && !u.crownOff; }
+function fightDue() { var gs = stageOfGate(spawned); return themeOf(gs) === CFG.finalTheme && spawned === gateStart(gs + 1) - 2; }
+function ftNew() { return { n: runFight, ph: 'wait', r: 0, rt: 0, t: 0, hold: 0, nx: 0, list: [], hits: 0, by: 300, pc: 0, slide: 0, shake: 0 }; }
+function ftBoss(F) { return { x: FT_BX + (1 - ss(F.slide)) * 160, y: F.by + (calmOn() ? 0 : Math.sin(time * 1.6) * 6) }; }
+function ftWaf(F, y, d, K, fist) { var p = ftBoss(F); F.list.push({ k: fist ? 'fist' : 'waf', x: p.x - 66, y: clamp(y, 40, GROUND_Y - 40), vx: -((fist ? 300 : 262) + 18 * F.r) * K, r: fist ? 15 : 13, d: d, d0: d }); }
+function ftLane(F, y, d) { F.list.push({ k: 'lane', y: clamp(y, 100, GROUND_Y - 70), d: d, d0: d, act: 0.5 }); }
+function ftCoco(F, ty, T, d, K) { var p = ftBoss(F), x0 = p.x - 50, y0 = p.y - 36, T2 = T / K, g = 560; F.list.push({ k: 'coco', x: x0, y: y0, vx: -(x0 - bx) / T2, vy: (ty - y0 - 0.5 * g * T2 * T2) / T2, g: g, r: 15, d: d, d0: d }); }
+function ftWave(F, d, K) { var p = ftBoss(F); F.list.push({ k: 'wave', x: p.x - 30, vx: -(236 + 14 * F.r) * K, d: d, d0: d }); }
+function ftPattern(F, K) {   // push one volley and say how long until the next
+  var k = F.n === 4 ? 1 + (F.pc++ + (F.r > 0 && rng() < 0.35 ? 1 : 0)) % 3 : F.n, r = F.r, y = clamp(by + vy * 0.2, 110, GROUND_Y - 60), d = 0.6 / K, i, gi, y2;
+  if (k === 1) {
+    if (r === 0) { ftWaf(F, y + (rng() - 0.5) * 40, d, K); return 1.35 / K; }
+    if (r === 1) { ftWaf(F, y - 80, d, K); ftWaf(F, y, d + 0.3, K); ftWaf(F, y + 80, d + 0.6, K); return 2.0 / K; }
+    gi = clamp(Math.round((by - 110) / 80) + (rng() < 0.5 ? 0 : rng() < 0.5 ? -1 : 1), 0, 4); for (i = 0; i < 5; i++) if (i !== gi) ftWaf(F, 110 + i * 80, d + 0.3, K); return 2.5 / K;
+  }
+  if (k === 2) {
+    if (r === 0) { ftLane(F, y + (rng() - 0.5) * 100, d + 0.4); return 2.0 / K; }
+    if (r === 1) { ftLane(F, y, d + 0.5); ftLane(F, y > 300 ? y - 190 : y + 190, d + 0.5); ftWaf(F, y, d + 0.9, K, true); return 2.8 / K; }
+    ftWaf(F, y, d, K, true); ftWaf(F, y + (rng() < 0.5 ? -110 : 110), d + 0.45, K, true); ftLane(F, y + (rng() < 0.5 ? -150 : 150), d + 0.9); return 2.4 / K;
+  }
+  if (r === 0) { ftCoco(F, y, 0.85, 0.7 / K, K); return 1.7 / K; }
+  if (r === 1) { ftWave(F, 0.9 / K, K); ftCoco(F, y, 0.85, 0.7 / K, K); return 2.4 / K; }
+  ftCoco(F, y - 80, 0.85, 0.7 / K, K); ftCoco(F, y + 80, 1.2, 1.2 / K, K); ftWave(F, 1.5 / K, K); return 3.0 / K;
+}
+function ftHit() {
+  var F = FT; if (!F || invuln > 0 || F.hold > 0 || F.ph !== 'round') return false;
+  if (shield > 0) { shield--; boing(-CFG.bounceVy); F.list.length = 0; return true; }
+  runHurts++; F.hits++; F.list.length = 0; F.ph = 'retry'; F.hold = 1.7; F.shake = 0.4; invuln = 2.2; hurtT = 0.9; vy = -180; fallD = 0; streak = 0;
+  burst(bx, by, 26, ['#ff6b81', '#ffffff', '#ffd93b'], 260, 240); pop('Oops! Again!', '#ff6b81', 26); return true;
+}
+function ftStep(dt, sp) {
+  var F = FT, i, a, p, K = relaxK(), goal = clamp(by, 170, GROUND_Y - 110), best = 9, dx, dy, rr2;
+  if (F.shake > 0) F.shake -= dt;
+  if (F.ph === 'wait') { if (!obs.length) { F.ph = 'intro'; rsgT = 0; rsgGo = false; vy = 0; celT = 0; lastAfter = 0; } return; }
+  F.slide = Math.min(1, F.slide + dt);
+  if (F.hold > 0 && F.ph !== 'won') { F.hold -= dt; if (F.hold <= 0) { F.hold = 0; F.ph = 'round'; F.rt = 0; F.nx = 0.5; grace = 0.25; vy = 0; flapAnim = 0.18; pop('Go!', '#7be07b', 28); } }
+  if (F.ph === 'intro') { if (!rsgHold()) { F.ph = 'round'; F.rt = 0; F.nx = 0.5; } }
+  for (i = 0; i < F.list.length; i++) { a = F.list[i]; if (a.d > 0 && a.d < best && a.y !== undefined) { best = a.d; goal = clamp(a.y, 110, GROUND_Y - 90); } }
+  F.by += (goal - F.by) * Math.min(1, dt * (best < 9 ? 5 : 1.3));
+  if (F.ph === 'won') {
+    F.t += dt; if (!calmOn() && F.t < 2.4 && Math.floor(F.t * 6) !== Math.floor((F.t - dt) * 6)) { p = ftBoss(F); burst(p.x + (rng() - 0.5) * 80, p.y + (rng() - 0.5) * 100, 8, ['#ffd93b', '#ff8a3c', '#ffffff'], 200, 120); }
+    if (F.t >= 3.2) ftFinish();
+    return;
+  }
+  if (F.ph !== 'round') return;
+  F.rt += dt;
+  if (F.rt < FT_ROUND - 1.6) { F.nx -= dt; if (F.nx <= 0) F.nx = ftPattern(F, K); }
+  p = ftBoss(F);
+  for (i = F.list.length - 1; i >= 0; i--) {
+    a = F.list[i];
+    if (a.d > 0) { a.d -= dt; if (a.k === 'waf' || a.k === 'fist') a.x = p.x - 66; if (a.d > 0) continue; a.d = 0; }
+    if (a.k === 'lane') { a.act -= dt; if (invuln <= 0 && Math.abs(by - a.y) < 30 && ftHit()) break; if (a.act <= 0) F.list.splice(i, 1); continue; }
+    a.x += a.vx * dt;
+    if (a.k === 'coco') { a.y += a.vy * dt; a.vy += a.g * dt; if (a.y > GROUND_Y - 10) { burst(a.x, GROUND_Y - 6, 8, ['#a8744c', '#e8d0a0'], 120, 100); F.list.splice(i, 1); continue; } }
+    if (a.x < -50) { F.list.splice(i, 1); continue; }
+    if (invuln > 0) continue;
+    if (a.k === 'wave') { if (by + CFG.bananaR - 2 > GROUND_Y - 46 && Math.abs(a.x - bx) < 20 + CFG.bananaR && ftHit()) break; }
+    else { dx = a.x - bx; dy = a.y - by; rr2 = a.r + CFG.bananaR - 3; if (dx * dx + dy * dy < rr2 * rr2 && ftHit()) break; }
+  }
+  if (F.ph === 'round' && F.rt >= FT_ROUND && !F.list.length) {
+    if (F.r < 2) { F.r++; F.ph = 'between'; F.hold = 1.5; invuln = Math.max(invuln, 1.7); pop('Round ' + (F.r + 1) + '!', '#ffd93b', 32); burst(bx + 40, by, 20, ['#ffd93b', '#ffffff'], 240, 200); }
+    else {
+      F.ph = 'won'; F.t = 0; F.hold = 99; invuln = 99; F.list.length = 0; var n = F.n, bonus = F.hits ? 0 : 15;
+      giveCoins(25 + bonus, bx + 20, by); burst(bx + 40, by, 40, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 320, 360);
+      if (!pracN) { save.unlocks['pc' + n] = 1; persist(); }
+      fightNew = FIGHTS[n - 1][0] + ' beaten!' + (n < 4 ? ' Crown piece ' + n + ' of 3.' : ' The Crown is yours soon...') + (bonus ? ' No hits: +15 bonus.' : '');
+    }
+  }
+}
+function ftFinish() {
+  FT = null; invuln = 0; hurtT = 0; runFight = 0; grace = 1.4; vy = 0; score = spawned = gateStart(stage + 1); pendNext = ''; stageUp();
+}
+function drawFight() {
+  var F = FT, p = ftBoss(F), i, a, f, g, sh = F.shake > 0 && !calmOn() ? Math.sin(time * 80) * 4 : 0, cl = calmOn(), al;
+  for (i = 0; i < F.list.length; i++) {   // warnings first, behind everything
+    a = F.list[i]; f = a.d > 0 ? 1 - a.d / a.d0 : 1;
+    if (a.k === 'coco' && a.d > 0) { ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.55; for (g = 1; g < 14; g++) { al = g * 0.07; if (a.x + a.vx * al < 20) break; ctx.beginPath(); ctx.arc(a.x + a.vx * al, a.y + a.vy * al + 0.5 * a.g * al * al, 3.2, 0, 7); ctx.fill(); } ctx.globalAlpha = 1; }
+    else if (a.k === 'lane') { al = a.d > 0 ? (cl ? 0.28 : 0.18 + 0.16 * Math.abs(Math.sin(time * 14))) : 0.95; ctx.globalAlpha = al; ctx.fillStyle = a.d > 0 ? '#ff4a4a' : '#fff6a0'; ctx.fillRect(0, a.y - 30, p.x - 30, 60); if (a.d <= 0) { ctx.fillStyle = '#ff3b3b'; ctx.fillRect(0, a.y - 12, p.x - 30, 24); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, a.y - 4, p.x - 30, 8); } ctx.globalAlpha = 1; if (a.d > 0) outlined('!', 30, a.y + 2, 30, '#ffffff'); }
+    else if (a.d > 0 && (a.k === 'waf' || a.k === 'fist')) { ctx.globalAlpha = 0.25 + 0.3 * f; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.setLineDash([8, 10]); ctx.beginPath(); ctx.moveTo(p.x - 80, a.y); ctx.lineTo(0, a.y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+    else if (a.k === 'wave' && a.d > 0) { ctx.globalAlpha = 0.5 + 0.4 * f; outlined('!', W - 26, GROUND_Y - 30, 30, '#ffd93b'); ctx.fillStyle = '#e8d0a0'; for (g = 0; g < 4; g++) { ctx.beginPath(); ctx.arc(p.x - 40 - g * 16 + Math.sin(time * 20 + g) * 2, GROUND_Y - 6 - f * 8, 6 + g, 0, 7); ctx.fill(); } ctx.globalAlpha = 1; }
+  }
+  var py = p.y + (F.ph === 'won' && F.t > 2.4 ? (F.t - 2.4) * (F.t - 2.4) * 500 : 0), co = [[-2, -14, 0.62], [0, -30, 0.72], [34, -66, 0.46], [0, 0, 1.12]][F.n - 1];
+  ART.boss(ctx, F.n, p.x + sh, py);
+  if (F.ph === 'won') cryChimp(p.x + sh + co[0], py + co[1], co[2]);
+  for (i = 0; i < F.list.length; i++) {
+    a = F.list[i];
+    if (a.d > 0 && a.k !== 'wave' && a.k !== 'lane') { if (a.k === 'coco') continue; f = a.d / a.d0; ctx.globalAlpha = 1 - f * 0.4; ctx.fillStyle = '#fff2a0'; ctx.beginPath(); ctx.arc(p.x - 70, a.y, 8 + (1 - f) * 14, 0, 7); ctx.fill(); ctx.globalAlpha = 1; continue; }
+    if (a.d > 0) continue;
+    if (a.k === 'waf') ART.mg.draw(ctx, 'wafer', a.x, a.y, undefined, 1);
+    else if (a.k === 'fist') { ctx.fillStyle = 'rgba(255,160,60,0.7)'; ctx.beginPath(); ctx.moveTo(a.x + 12, a.y - 8); ctx.lineTo(a.x + 44 + Math.sin(time * 40) * 5, a.y); ctx.lineTo(a.x + 12, a.y + 8); ctx.fill(); ART.fxs(ctx, 'fist', a.x, a.y, 0); }
+    else if (a.k === 'coco') ART.fxs(ctx, 'coco', a.x, a.y, time * 8);
+    else if (a.k === 'wave') { ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(a.x - 22, GROUND_Y); ctx.quadraticCurveTo(a.x - 6, GROUND_Y - 62, a.x + 8, GROUND_Y - 46); ctx.quadraticCurveTo(a.x + 16, GROUND_Y - 20, a.x + 24, GROUND_Y); ctx.closePath(); ctx.fillStyle = '#ffe27a'; ctx.fill(); ctx.stroke(); }
+  }
+}
+function drawFtHud() {
+  var F = FT, w = 170, x0 = W / 2 - w / 2, u = clamp((F.r * FT_ROUND + Math.min(F.rt, FT_ROUND)) / (3 * FT_ROUND), 0, 1);
+  if (F.ph === 'intro') return;
+  ctx.lineWidth = 2.5; ctx.strokeStyle = INK; rrect(x0, 108, w, 11, 5.5); ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fill(); ctx.stroke();
+  if (u > 0 || F.ph === 'won') { rrect(x0 + 1, 109, Math.max(8, (w - 2) * (F.ph === 'won' ? 1 : u)), 9, 4.5); ctx.fillStyle = '#ff6b81'; ctx.fill(); }
+  outlined(FIGHTS[F.n - 1][0] + '  -  ' + (F.ph === 'won' ? 'Beaten!' : 'Round ' + (F.r + 1) + ' of 3'), W / 2, 133, 14, '#ffffff');
+}
+function ftCards() {
+  var F = FT, t = rsgT, a, n = F.n;
+  if (F.ph === 'intro' && t >= 0 && t < CFG.cardSecs) { a = clamp(Math.min(t / 0.3, (CFG.cardSecs - t) / 0.3), 0, 1); ctx.globalAlpha = a; outlined(FIGHTS[n - 1][0] + '!', W / 2, 168, 38, '#ffd93b'); outlined(FIGHTS[n - 1][1], W / 2, 212, 15, '#ffffff'); outlined(FIGHTS[n - 1][2], W / 2, 236, 16, '#ffffff'); outlined('Survive 3 rounds. A hit only repeats the round.', W / 2, 260, 13, '#ffffff'); ctx.globalAlpha = 1; }
+  else if (F.ph === 'won') { a = clamp(F.t / 0.4, 0, 1); ctx.globalAlpha = a; outlined(n < 4 ? 'Crown piece ' + n + ' of 3!' : 'Crown Duel won!', W / 2, 190, 34, '#ffd93b'); outlined(n < 4 ? 'Prince Chimp gives up... for now!' : 'Prince Chimp is crying again.', W / 2, 228, 16, '#ffffff'); if (!F.hits) outlined('No hits! +15 bonus', W / 2, 256, 18, '#7be07b'); ctx.globalAlpha = 1; }
+}
+function nightLive() { return runChal === 'night' && state === 'play' && !BAL && !(FT && FT.ph !== 'wait') && !VAULT && cardT < 0 && !rsgHold() && spinT <= 0; }
 function colorIdx(k) { var i = save.unlocks[k]; return i >= 1 && i <= 4 && badgeOf(i - 1) ? i : 0; }
 function applyColors() { ART.setColors(MASKS[colorIdx('mask')][1], SCARFS[colorIdx('scarf')][1]); }
 function drawNight() {   // darkness with a soft flashlight round Fancy
@@ -2591,9 +2791,9 @@ function update(dt) {
     sparkT -= dt; if (sparkT <= 0) { sparkT = 0.07; fxAdd(bx - 30, by + 4 + (frng() - 0.5) * 12, -40 - frng() * 40, (frng() - 0.5) * 30, 0.45, frng() < 0.5 ? '#ffe27a' : '#ffffff', 1.6 + frng() * 1.6, true, 0); }
     if (trackOn) { trackX -= sp * dt; if (trackX < -520) trackOn = false; }
     for (var i = 0; i < obs.length; i++) obs[i].x -= sp * dt;
-    if (BAL) { if (washA > 0) washA = Math.max(0, washA - dt / 0.7); updateBalloons(dt, sp); } if (flagsOn()) flagStep(dt, sp);
+    if (FT) ftStep(dt, sp); if (BAL) { if (washA > 0) washA = Math.max(0, washA - dt / 0.7); updateBalloons(dt, sp); } if (flagsOn()) flagStep(dt, sp);
     if (BALR && (rsgT < 0 || rsgT >= CFG.cardSecs)) BALR = null;
-    if (by + CFG.bananaR > GROUND_Y - 2) { by = GROUND_Y - CFG.bananaR; if (VAULT) { vy = VAULT.kind === 'drawer' ? -600 : -330; VAULT.bz = 1; burst(CFG.bananaX, by + 8, 8, ['#ffffff', '#ffd93b'], 120, 140); } else if (shield > 0) { shield--; boing(-CFG.bounceVy); } else { die(); return; } }
+    if (by + CFG.bananaR > GROUND_Y - 2) { by = GROUND_Y - CFG.bananaR; if (FT && FT.ph !== 'wait') { vy = -420; ftHit(); } else if (VAULT) { vy = VAULT.kind === 'drawer' ? -600 : -330; VAULT.bz = 1; burst(CFG.bananaX, by + 8, 8, ['#ffffff', '#ffd93b'], 120, 140); } else if (shield > 0) { shield--; boing(-CFG.bounceVy); } else { die(); return; } }
     var bonk = null;
     for (i = 0; i < obs.length && !bonk; i++) { var o = obs[i]; if (((o.x < CFG.bananaX + CFG.bananaR && o.x + CFG.obW > CFG.bananaX - CFG.bananaR) || (o.waf && Math.abs(o.x + o.waf.dx - CFG.bananaX) < 44)) && hits(o)) bonk = o; }
     if (bonk && invuln <= 0) {
@@ -2621,7 +2821,7 @@ function update(dt) {
     while (obs.length && obs[0].x + CFG.obW < -10) obs.shift();
     if (warp) startVault('gold');
     if (VAULT) vaultStep(dt, sp); else if (!rsgHold()) hugStep(dt);
-    while (nextX < W + CFG.obW && !pendNext && !BAL && !VAULT) spawnOb(nextX);
+    while (nextX < W + CFG.obW && !pendNext && !BAL && !VAULT && !FT) { if (runFight && fightDue()) { FT = ftNew(); break; } spawnOb(nextX); }
     if ((pendNext === 'mini' || pendNext === 'balloons') && nextT > 0) washA = clamp(1 - nextT / 0.55, 0, 1) * (calmOn() ? 0.4 : 1);
     if (nextT > 0) { nextT -= dt; if (nextT <= 0) { if (pendNext === 'mini') startMini(); else if (pendNext === 'balloons') startBalloons(); else if (pendNext === 'win') startVictory(); } }
   } else if (state === 'paused') {
@@ -2919,6 +3119,7 @@ function recordRun() {
 /* ===== The finale: Prince Chimp is beaten. The player chooses to keep their upgrades and banana credits, or start fresh. Either way the game is exactly as hard as before. ===== */
 function startVictory() {
   var s = save.stats, secs = Math.max(1, Math.round(runSecs)), pz = runPauses;
+  if (fightNew) { toast(fightNew, 6000); fightNew = ''; }
   if (badgeNew) { toast('Challenge badge earned: ' + badgeNew + '! New scarf and mask colors are in Costume.', 7000); badgeNew = ''; }
   state = 'victory'; setBar(false); vicT = 0; pendNext = ''; nextT = 0; cardT = -1; BAL = null; fwk.length = 0; fwkT = 0.4; recordRun();
   VS = { secs: secs, pauses: pz, flaps: runFlaps, coins: runCoins, hurts: runHurts, friends: s.friends - runFriends0, pops: runPops, popsOf: runPopsOf, prevTime: s.bestWin, prevPz: s.bestPz ? s.bestPz - 1 : -1, recT: !s.bestWin || secs < s.bestWin, recP: !s.bestPz || pz + 1 < s.bestPz };
@@ -2930,7 +3131,7 @@ function openWin() {
   $('wKeep').textContent = np > save.stats.plus ? 'Keep my upgrades and credits (+10% speed)' : 'Keep my upgrades and credits';
   $('winNote').textContent = np > save.stats.plus ? 'Keeping your stuff makes every run 10% faster from now on. Speed bonus: +' + np * 10 + '% (the most is +' + CFG.plusMax * 10 + '%).' : 'Your speed bonus is already at its most: +' + CFG.plusMax * 10 + '%.';
 }
-function afterWin() { toReady(); if (!save.unlocks.balloons) startGift(); }
+function afterWin() { toReady(); if (!save.unlocks.balloons) startGift(); else if (pcBeaten(4) && !save.unlocks.crown) startGift(1); }
 var freshArmed = false;
 function winTitle() { save.stats.plus = Math.min(CFG.plusMax, save.stats.plus + 1); persist(); pWin.hidden = true; if (!save.unlocks.balloons) { startGift(); return; } resetWorld(); state = 'title'; titleT = 5; setBar(true); toast('Saved. Welcome back to the title screen!', 3000); }   // keep everything, save, and rest at the title screen instead of going straight to the launch pad
 function winKeep() { save.stats.plus = Math.min(CFG.plusMax, save.stats.plus + 1); persist(); pWin.hidden = true; afterWin(); }
@@ -3066,16 +3267,17 @@ function balResultCard() {
 
 /* --- Prince Chimp gives up his balloons (the first time the game is beaten) --- */
 var GIFT_LINES = ['Fine! You win, Banana!', 'Take every balloon I own... and please leave me alone!'];
-function startGift() { state = 'gift'; giftT = 0; giftS = 0; giftSt = 0; setBar(false); ART.bal.warm(); }
+var giftK = 0, CROWN_LINES = ['Fair and square, Banana!', 'Take my crown...', 'it looks better on you!'];
+function startGift(k) { giftK = k || 0; state = 'gift'; giftT = 0; giftS = 0; giftSt = 0; setBar(false); ART.bal.warm(); }
 function giftTap() { if ((giftS === 1 || giftS === 2) && giftSt > 0.45) { giftS++; giftSt = 0; } }
 function giftUpdate(dt) {
   giftT += dt; giftSt += dt;
   if (giftS === 0 && giftSt > 1.6) { giftS = 1; giftSt = 0; }
   else if ((giftS === 1 || giftS === 2) && giftSt > 9) { giftS++; giftSt = 0; }
   else if (giftS === 3 && giftSt > 2.4) {
-    giftS = 4; giftSt = 0; save.unlocks.balloons = 1; save.unlocks.flags = 1; persist();
+    giftS = 4; giftSt = 0; if (giftK) { save.unlocks.crown = 1; save.unlocks.crownOff = 0; } else { save.unlocks.balloons = 1; save.unlocks.flags = 1; } persist();
     burst(bx + 10, by - 10, 36, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 300, 320);
-  } else if (giftS === 4 && giftSt > 2.2) { toReady(); toast('Secret unlocked! A Balloon Party now follows the Ice Cream Parlor, and Fancy has pennant flags (see Costume).', 7000); }
+  } else if (giftS === 4 && giftSt > 2.2) { toReady(); if (giftK) toast('The true ending! Fancy now has the Banana Crown (see Costume).', 7000); else toast('Secret unlocked! A Balloon Party now follows the Ice Cream Parlor, and Fancy has pennant flags (see Costume).', 7000); }
 }
 function drawBunch(x, y, t, s, up) {   // a bunch of balloons held at (x, y), the strings gathered in the hand
   var offs = [[-34, -92], [-12, -112], [14, -100], [36, -84], [-46, -62], [0, -72], [28, -58]], i, px2, py2;
@@ -3086,7 +3288,7 @@ function drawBunch(x, y, t, s, up) {   // a bunch of balloons held at (x, y), th
   for (i = 0; i < offs.length; i++) { px2 = x + offs[i][0] * s + Math.sin(t * 1.3 + i) * 3; py2 = y + offs[i][1] * s - up + Math.cos(t * 1.1 + i * 2) * 2; ART.bal.draw(ctx, (i + 3) % 9, px2, py2, 0.78 * s, undefined, true); }
 }
 function drawGift() {
-  var S = giftS, st = giftSt, cx, cy = 452, lean = 0, up = 0, hx, hy, line = S === 1 ? GIFT_LINES[0] : S === 2 ? GIFT_LINES[1] : '', u;
+  var S = giftS, st = giftSt, cx, cy = 452, lean = 0, up = 0, hx, hy, line = S === 1 ? (giftK ? CROWN_LINES[0] : GIFT_LINES[0]) : S === 2 ? GIFT_LINES[1] : '', u;
   cx = S === 0 ? W + 90 - (W + 90 - 262) * easeOutBack(clamp(st / 1.4, 0, 1)) : S === 4 ? 262 + st * st * 90 : 262;
   hx = cx - 84; hy = cy + 40;
   if (S === 3) { u = clamp(st / 2.2, 0, 1); u = u * u * (3 - 2 * u); hx += (bx + 8 - hx) * u; hy += (by - 26 - hy) * u; }
@@ -3096,16 +3298,16 @@ function drawGift() {
     var fx0 = cx + 46, fy0 = cy + 40; ctx.lineWidth = 4; ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(fx0, fy0 + 40); ctx.lineTo(fx0, fy0 - 60); ctx.stroke(); ctx.lineWidth = 2; ctx.strokeStyle = '#d8c8a0'; ctx.stroke();
     ctx.beginPath(); ctx.moveTo(fx0, fy0 - 58); ctx.quadraticCurveTo(fx0 + 16, fy0 - 62 + Math.sin(time * 7) * 5, fx0 + 32, fy0 - 52 + Math.sin(time * 7 + 1) * 4); ctx.quadraticCurveTo(fx0 + 16, fy0 - 38 + Math.sin(time * 7 + 2) * 5, fx0, fy0 - 34); ctx.closePath(); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.lineWidth = 2.5; ctx.strokeStyle = INK; ctx.stroke();
   }
-  drawBunch(hx, hy, time, 1, 0);
+  if (giftK) { if (S < 4) { ctx.save(); ctx.translate(hx, hy - 28 + Math.sin(time * 3) * 3); ART.crown(ctx, 2.3); ctx.restore(); } } else drawBunch(hx, hy, time, 1, 0);
   if (line) {
     var ba = clamp(st / 0.25, 0, 1); ctx.globalAlpha = ba; ctx.lineWidth = 3; ctx.strokeStyle = INK; rrect(20, 90, 320, 92, 20); ctx.fillStyle = 'rgba(58,42,77,0.9)'; ctx.fill(); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(cx - 28, 182); ctx.lineTo(cx - 6, 182); ctx.lineTo(cx - 14, 214); ctx.closePath(); ctx.fill(); ctx.stroke();
     outlined('Prince Chimp', W / 2, 108, 15, '#ffd93b');
-    if (S === 1) outlined(line, W / 2, 144, 22, '#ffffff'); else { outlined('Take every balloon I own...', W / 2, 136, 20, '#ffffff'); outlined('and please leave me alone!', W / 2, 162, 20, '#ffffff'); }
+    if (S === 1) outlined(line, W / 2, 144, 22, '#ffffff'); else { outlined(giftK ? CROWN_LINES[1] : 'Take every balloon I own...', W / 2, 136, 20, '#ffffff'); outlined(giftK ? CROWN_LINES[2] : 'and please leave me alone!', W / 2, 162, 20, '#ffffff'); }
     if (st > 0.5 && Math.floor(time * 2) % 2) outlined('tap', W - 40, 168, 14, '#ffd93b');
     ctx.globalAlpha = 1;
   }
-  if (S === 4) { var ta = clamp(st / 0.4, 0, 1); ctx.globalAlpha = ta; outlined('Balloon Party unlocked!', W / 2, 200, 26, '#ffd93b'); outlined('and pennant flags!', W / 2, 232, 20, '#ffffff'); ctx.globalAlpha = 1; }
+  if (S === 4) { var ta = clamp(st / 0.4, 0, 1); ctx.globalAlpha = ta; outlined(giftK ? 'Banana Crown unlocked!' : 'Balloon Party unlocked!', W / 2, 200, 26, '#ffd93b'); outlined(giftK ? 'The true ending!' : 'and pennant flags!', W / 2, 232, 20, '#ffffff'); ctx.globalAlpha = 1; }
 }
 
 /* --- the big victory card --- */
@@ -3169,7 +3371,7 @@ function victoryCard() {
   }
   ART.coin(ctx, 44, 58, time); ART.coin(ctx, W - 44, 58, time + 0.5);
   u = clamp((t - 0.6) / 0.5, 0, 1); drawMedal(W / 2, 118, 0.8 * easeOutBack(u));
-  if (u > 0) { ART.banana(ctx, 72, 128 - Math.abs(Math.sin(time * 5)) * 12, -0.12 + Math.sin(time * 5) * 0.08, 1.0, Math.sin(time * 5) > 0.6 ? 0.18 : 0, time, wearsBow(), -200, false, 0, -1); cryChimp(286, 140, 0.72); if (u >= 1) outlined('Boo hoo!', 288 + Math.sin(time * 9) * 2, 92, 14, '#8fdcff'); }
+  if (u > 0) { ART.banana(ctx, 72, 128 - Math.abs(Math.sin(time * 5)) * 12, -0.12 + Math.sin(time * 5) * 0.08, 1.0, Math.sin(time * 5) > 0.6 ? 0.18 : 0, time, wearFlags(), -200, false, 0, -1); cryChimp(286, 140, 0.72); if (u >= 1) outlined('Boo hoo!', 288 + Math.sin(time * 9) * 2, 92, 14, '#8fdcff'); }
   rows = [['clock', 'Time', S.secs, 'time', S.prevTime ? (S.recT ? 'NEW RECORD!' : 'best ' + fmtM(S.prevTime)) : 'First win!'],
     ['pause', 'Pauses', S.pauses, 'n', S.pauses === 0 ? 'Never paused!' : S.prevPz < 0 ? '' : S.recP ? 'NEW RECORD!' : 'fewest ' + S.prevPz],
     ['tap', 'Taps', S.flaps, 'n', ''], ['coin', 'Banana credits', S.coins, 'n', ''],
@@ -3203,7 +3405,7 @@ var TICKS = ['BREAKING NEWS: Evil Prince Chimp has banana-napped every banana fr
   'Why did the banana go to the doctor? It wasn\'t peeling well!', 'What do you call two bananas? A pair of slippers!', 'Why did the banana wear sunscreen? So it wouldn\'t peel!', 'What\'s a banana\'s favorite game? Hide and go peel!',
   'Why are bananas never lonely? They hang out in bunches!', 'What did the banana say to the vacuum? I\'m not afraid of you, I\'m a-peeling!', 'How do you make a banana split? Cut it in half!'];
 var RUMOR_A = ['RUMOR: Win once and Prince Chimp may give up a big surprise!', 'RUMOR: Winners say the game keeps secrets. Can you find them?'];
-var RUMOR_B = ['RUMOR: A shimmer at the very top of the sky hides a vault!', 'RUMOR: A long PERFECT streak can make one gate glow gold!', 'RUMOR: Stay low before the Silverware Drawer. Something rattles!', 'RUMOR: In Chimp\'s Navy, three perfect barrel leaps call up a raft!', 'RUMOR: A rock arch near the Navy\'s end hides a secret cove!', 'RUMOR: Sail the whole Navy with no hits and the Boss Sub awaits!', 'RUMOR: Five quick taps on Fancy open a little secret door!', 'RUMOR: Six banana friends are still lost. Look closely!', 'RUMOR: Beat the game in a Challenge for a badge and new colors!'];
+var RUMOR_B = ['RUMOR: A shimmer at the very top of the sky hides a vault!', 'RUMOR: A long PERFECT streak can make one gate glow gold!', 'RUMOR: Stay low before the Silverware Drawer. Something rattles!', 'RUMOR: In Chimp\'s Navy, three perfect barrel leaps call up a raft!', 'RUMOR: A rock arch near the Navy\'s end hides a secret cove!', 'RUMOR: Sail the whole Navy with no hits and the Boss Sub awaits!', 'RUMOR: Five quick taps on Fancy open a little secret door!', 'RUMOR: Six banana friends are still lost. Look closely!', 'RUMOR: Beat the game in a Challenge for a badge and new colors!', 'RUMOR: Prince Chimp wants a rematch. Look in Challenges after your second win!', 'RUMOR: Beat all his machines and his crown might be yours!'];
 var TKLIST = null, TKW = -1;
 function tickList() {   // the headlines: the news, a few jokes (a different few each time you play), and rumors that hint at the secrets
   var w = save.stats.wins > 0 ? 1 : 0, j = TICKS.slice(3), o = TICKS.slice(0, 3), i, st = save.stats.runs % j.length;
@@ -3278,7 +3480,7 @@ function spinPhase() { return (1 - spinT / CFG.spinSecs) * CFG.spinRolls * 6.283
 function drawFancy(x, y, rot, sc) {   // a little squash and stretch: taller on a flap, long and thin in the launch
   var f = flapAnim > 0 ? flapAnim / 0.18 : 0, st = state === 'launch' ? clamp((launchT / CFG.launchSecs - 0.3) / 0.5, 0, 1) : 0;
   ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(1 - 0.07 * f + 0.14 * st, 1 + 0.1 * f - 0.1 * st);
-  ART.banana(ctx, 0, 0, 0, sc, flapAnim > 0 ? flapAnim : 0, time, wearsBow(), state === 'play' || state === 'dead' ? vy : 0, false, gazeS, state === 'play' && spinT > 0 ? spinPhase() : state === 'play' && celT > 0 ? (1 - celT / CFG.celSecs) * 6.2832 : -1, (state === 'dead' && pracEnd !== 'win') || hurtT > 0 || (state === 'play' && fallD > CFG.gritFall) ? 2 : 0); ctx.restore();
+  ART.banana(ctx, 0, 0, 0, sc, flapAnim > 0 ? flapAnim : 0, time, wearFlags(), state === 'play' || state === 'dead' ? vy : 0, false, gazeS, state === 'play' && spinT > 0 ? spinPhase() : state === 'play' && celT > 0 ? (1 - celT / CFG.celSecs) * 6.2832 : -1, (state === 'dead' && pracEnd !== 'win') || hurtT > 0 || (state === 'play' && fallD > CFG.gritFall) ? 2 : 0); ctx.restore();
 }
 function zoomOn() { if (zoomK <= 1.001) return false; ctx.save(); ctx.translate(zoomX, GROUND_Y); ctx.scale(zoomK, zoomK); ctx.translate(-zoomX, -GROUND_Y); return true; }
 function drawCount() {   // the big 3 - 2 - 1
@@ -3477,7 +3679,7 @@ function render() {
   drawBack(); lap('back'); drawLife(); lap('life'); drawWind(); lap('wind');
   drawVaultBack();
   for (i = 0; i < obs.length; i++) { ART.obstacle(ctx, obs[i]); if (obs[i].gold && !obs[i].passed) drawGold(obs[i]); if (obs[i].waf) drawWafer(obs[i]); }
-  if (BAL || shd.length) drawBalloons();
+  if (BAL || shd.length) drawBalloons(); if (FT && FT.ph !== 'wait') drawFight();
   lap('obstacles'); drawCoins(); lap('coins');
   var zm = zoomOn();
   if (state === 'ready' || state === 'gift' || state === 'launch' || (state === 'play' && trackOn)) ART.track(ctx, trackX, calmOn() ? time * 0.15 : time, state === 'launch' ? Math.max(0, launchT) / CFG.launchSecs : 0, bgTheme);
@@ -3496,7 +3698,7 @@ function render() {
   if (mir) ctx.restore();
   if (nightA > 0.01) drawNight();
   lap('fx'); drawHug(); drawPops(); drawCount(); drawRSG(); drawTaps(); lap('pops');
-  if (state === 'gift') drawGift(); else if (state === 'play') { if (BAL) balIntro(); if (BALR && rsgT >= 0 && rsgT < CFG.cardSecs) balResultCard(); }
+  if (state === 'gift') drawGift(); else if (state === 'play') { if (BAL) balIntro(); if (FT) ftCards(); if (BALR && rsgT >= 0 && rsgT < CFG.cardSecs) balResultCard(); }
   if (whooshT > 0) { ctx.globalAlpha = clamp(whooshT / 0.5, 0, 1); outlined('WHOOSH!', 190, mirY(by) - 52 - (0.9 - whooshT) * 40, 34, '#ffd93b'); ctx.globalAlpha = 1; }
   if (pe > 0) ctx.restore();
   if (flashT > 0) { ctx.globalAlpha = 0.6 * flashT / 0.25; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
@@ -3514,7 +3716,7 @@ function render() {
       drawTapIcon(hx(24), 58); outlinedC(String(runFlaps), hx(42), 59, 20, '#ffffff', ha);   // taps this run
       if (streak >= 2) outlinedC('x' + streak + ' perfect', hx(14), 86, 16, '#ffd93b', ha);
     }
-    if (state === 'play' || state === 'paused') { drawPauseBtn(PB, .5); if (BAL) drawBalHud(); else drawProgress(); }   // the pause button, and how far along the stage is
+    if (state === 'play' || state === 'paused') { drawPauseBtn(PB, .5); if (BAL) drawBalHud(); else if (FT && FT.ph !== 'wait') drawFtHud(); else drawProgress(); }   // the pause button, and how far along the stage is
     lap('hud');
   }
   if (state === 'title') {
