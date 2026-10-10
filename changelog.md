@@ -1,5 +1,6 @@
 # What's new
 
+- **2026.10.10.1810 (alpha):** **Launch lights are now burning-magnesium flares**: a blown-out white core, a cool blue glow, long crackling sparks and flicker, with hot sparks flying off the leading bulb. **New run timer** under the pause button (it counts from the end of the 3-2-1 and stops while paused) with split times for each stage clear, the water bonus, boss fights, Balloon Party and the win. **The water bonus game is polished**: a new glossy Fancy with paddling gloves, foam wakes behind Fancy and the subs, ripples when you leap, land or get hit, sunlight patterns and sparkles on the water, rainbow soap bubbles around your friends, shinier subs and a gold progress bar.
 - **2026.10.10.1743 (alpha):** The launch contraption's dark strip is now a **glowing neon tube**, and the bright lights are **white-hot starbursts** with long sparkling rays, like a bulb going off. (No stutter confirmed on the previous build.)
 - **2026.10.10.1730 (alpha):** A second attempt at the Silverware Drawer stutter: all of the game's behind-the-scenes picture canvases are now kept in ordinary memory instead of on the graphics card, so the card only receives finished pictures when they are really drawn.
 - **2026.10.10.1725 (alpha):** The launch contraption's **dark light strip is thinner and the bulbs are smaller**, with the same bright glow and sparkle.
