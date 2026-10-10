@@ -2339,7 +2339,7 @@ return { get tlast() { return TLAST; }, tbmax: TBMAX, fightWarm: fightWarm, boss
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1900';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1916';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -2655,6 +2655,7 @@ var UPS = [
   { id: 'sweet', name: 'Sweet spot', desc: 'A wider PERFECT zone in the middle of every gap (+25% per level)', costs: [20, 40, 60] },
   { id: 'dare', name: 'Daredevil', desc: 'A wider Close call zone (+3 px per level)', costs: [15, 30, 45] },
   { id: 'golden', name: 'Golden touch', desc: 'PERFECT gates and streak bonuses pay +1 more banana per level', costs: [30, 60] },
+  { id: 'potassium', name: 'Potassium Power!', desc: 'Hold when 3+ gates line up: Fancy glides straight through, a bit faster', costs: [120] },
   { id: 'wind', name: 'Second wind', desc: 'Once per run, a crash restarts the current stage instead of ending the run', costs: [100] },
   { id: 'rope', name: 'Rope cutter', desc: 'In Chimp\'s Navy, a helper chimp snips the rope: barrel groups split apart before they reach you', costs: [40] },
   { id: 'wshield', name: 'Wafer shield', desc: 'In Chimp\'s Navy, blocks one thrown wafer per run', costs: [30] },
@@ -2845,6 +2846,7 @@ function clearance(o) {   // how far Fancy is from touching this obstacle (px be
   return m;
 }
 function rateGate(o) {   // called as Fancy clears a gate: perfect (through the middle), or a close call (skimmed an edge)
+  if (o.kg) return;   // gates he glided through with Potassium Power count for nothing extra (and cost nothing either)
   var cy = (o.gt + o.gb) / 2, gap = o.gb - o.gt, y = by;
   if (o.mid && Math.abs(o.yAt - cy) < gap * CFG.perfectFrac * (1 + 0.25 * lvl('sweet'))) {
     streak++; if (streak > bestStreak) bestStreak = streak; giveCoins(1 + lvl('golden'), CFG.bananaX, y);
@@ -2859,7 +2861,7 @@ var contN = 0;
 function continueRun() { var n = save.cont.st; if (!(n > 1) || state !== 'title') return; contN = n; closePanels(); ART.warm(themeOf(n)); toReady(); toast('Carrying on from stage ' + n + '. Tap to launch!', 3500); }
 function resetWorld() {
   var ci = pracN ? 0 : chalIdx(); runChal = ci ? CHAL[ci - 1][0] : ''; nightA = 0; FT = null; runFight = !pracN && fightOn() ? fightNext() : 0; if (runFight) { ART.fightWarm(runFight); ART.mg.sprite('wafer'); }
-  windUsed = false; resT = -1; wasCtrl = true; tapFx.length = 0; obs = []; score = 0; stage = 1; runTime = 0; runFlaps = 0; spawned = 0; dist = 0; BAL = null; BALR = null; fl.length = 0; shd.length = 0; if (save.unlocks.balloons) ART.bal.warm();
+  kReset(); windUsed = false; resT = -1; wasCtrl = true; tapFx.length = 0; obs = []; score = 0; stage = 1; runTime = 0; runFlaps = 0; spawned = 0; dist = 0; BAL = null; BALR = null; fl.length = 0; shd.length = 0; if (save.unlocks.balloons) ART.bal.warm();
   clk = 0; clkSp = []; runSecs = runPauses = runHurts = runPops = runPopsOf = 0; runFriends0 = save.stats.friends; VS = null;
   lastC = GROUND_Y * 0.45; by = CFG.launchY; vy = 0; bx = CFG.bananaX; angle = 0; flapAnim = 0; grace = 0; fallD = 0; hurtT = 0;
   if (pracN) { stage = pracN; spawned = score = gateStart(pracN); }
@@ -2886,8 +2888,12 @@ function spawnOb(x) {
   var lo = CFG.minObH + gap / 2, hi = GROUND_Y - CFG.minObH - gap / 2;
   var pc = lastC, c = clamp(lastC + (rng() * 2 - 1) * CFG.maxShift, lo, hi);
   if (spawned > 0 && spawned === gateStart(gs)) c = clamp(CFG.rsgY + (rng() * 2 - 1) * 25, lo, hi);   // the first gate after a stage break opens right where Fancy waits, so GO never starts with a scramble
+  if (lvl('potassium') && !BAL && !runFight && spawned > gateStart(gs)) {   // with Potassium Power, now and then a few gates in a row line up (so the move has something to ride)
+    if (kRunN > 0) { kRunN--; c = clamp(kRunC + (rng() * 2 - 1) * 13, lo, hi); }
+    else if (rng() < 0.2) { kRunN = 2; kRunC = lastC; c = clamp(kRunC + (rng() * 2 - 1) * 13, lo, hi); }
+  }
   lastC = c;
-  var o = { x: x, th: themeOf(gs), gt: c - gap / 2, gb: c + gap / 2, kt: Math.floor(rng() * 4), kb: Math.floor(rng() * 4), col: Math.floor(rng() * 4), passed: false, after: CFG.spacing, cc: 1e9, mid: false, yAt: 0, coins: [{ dx: CFG.obW / 2, y: clamp(c + (rng() * 2 - 1) * gap * 0.2, o_lo(c, gap), c + gap * 0.3), got: false, ph: rng() * 3 }] };
+  var o = { x: x, gs: gs, th: themeOf(gs), gt: c - gap / 2, gb: c + gap / 2, kt: Math.floor(rng() * 4), kb: Math.floor(rng() * 4), col: Math.floor(rng() * 4), passed: false, after: CFG.spacing, cc: 1e9, mid: false, yAt: 0, coins: [{ dx: CFG.obW / 2, y: clamp(c + (rng() * 2 - 1) * gap * 0.2, o_lo(c, gap), c + gap * 0.3), got: false, ph: rng() * 3 }] };
   if (spawned > 0 && lastAfter === CFG.spacing) {
     o.coins.push({ dx: CFG.obW / 2 - CFG.spacing / 2, y: (pc + c) / 2, got: false, ph: rng() * 3 });   // a coin halfway between two gates, on the way
     if (runChal === 'storm' && spawned > gateStart(gs)) o.waf = { dx: CFG.obW / 2 - CFG.spacing / 2, y: clamp((pc + c) / 2 + (rng() < 0.5 ? -92 : 92), 52, GROUND_Y - 52) };   // Wafer storm: a vanilla wafer floats in the open air, clear of the line between the two gaps
@@ -2904,6 +2910,76 @@ function spawnOb(x) {
 function bd(th) { return th === ART.journeyTheme ? Math.max(0, dist - gardenD0) : dist; }   // the garden's backdrop is one long journey from the beach to the jungle, so it counts from where that stage began
 function boing(v) { runHurts++; invuln = 1.3; hurtT = 0.9; fallD = 0; vy = v; flapAnim = 0.18; burst(CFG.bananaX, by, 28, ['#8ae28a', '#ffffff', '#ffd93b'], 240, 200); pop('BOING!', '#7be07b', 26); }
 function flap() { vy = CFG.flapV; flapAnim = 0.18; runFlaps++; fallD = 0; }
+
+/* ===== Potassium Power! (upgrade). Hold Space or the mouse while 3+ gates line up (their openings within 40 px of each other): Fancy charges up, glides straight through
+   the lane and flies up to 25% faster, leaving fading echoes of himself. Not in the water level, boss fights, the balloon stage or the vault. */
+var kHeld = { ptr: false, key: false, pad: false }, kHoldT = 0, kOn = false, kCh = 0, kLane = null, kAvail = null, kEcho = [], kEchoT = 0, kRunN = 0, kRunC = 0, kHint = 0, kBy0 = 0;
+function kHolding() { return kHeld.ptr || kHeld.key || kHeld.pad; }
+function kOk() { return lvl('potassium') > 0 && state === 'play' && !BAL && !FT && !VAULT && !runFight && spinT <= 0 && !rsgHold() && grace <= 0 && !MG; }
+function kLook() {   // how far ahead gates are made: with the upgrade, enough of them are in place to see a lane coming (never past the end of a stage, and not near the boss)
+  if (!lvl('potassium') || BAL || FT || runFight || stageOfGate(spawned) !== stage) return 0;
+  if (themeOf(stage) === CFG.finalTheme && spawned >= gateStart(stage + 1) - 4) return 0;
+  return 2 * CFG.spacing;
+}
+function kCenter(o) { return (o.gt + o.gb) / 2; }
+function kLaneFind() {   // the gates ahead, from the first one he has not cleared: 3 or more in a row whose openings stay within 40 px of each other
+  var L = [], i, o, c, lo = 0, hi = 0;
+  for (i = 0; i < obs.length; i++) {
+    o = obs[i]; if (o.passed) continue;
+    c = (o.gt0 !== undefined ? o.gt0 + o.gb0 : o.gt + o.gb) / 2;
+    if (o.gold || (L.length && (o.gs !== L[0].gs || Math.max(hi, c) - Math.min(lo, c) > 40))) break;
+    if (!L.length) lo = hi = c; else { lo = Math.min(lo, c); hi = Math.max(hi, c); }
+    L.push(o);
+  }
+  return L.length >= 3 ? L : null;
+}
+function kReach(L) {   // can he get to the first opening in time (the glide eases in; he must not be asked to cross a wall to start)?
+  var o = L[0], d = Math.abs(kCenter(o) - by), tg = Math.max(0, o.x - CFG.bananaX - CFG.bananaR) / Math.max(60, curSpeed), t1, e;
+  if (d > 68) { t1 = (d - 68) / 540; e = tg <= t1 ? d - 540 * tg : 68 * Math.exp(-8 * (tg - t1)); } else e = d * Math.exp(-8 * tg);
+  return e < (o.gb - o.gt) / 2 - CFG.bananaR - 8;
+}
+function kEnd() { kOn = false; kLane = null; grace = 0.2; vy = clamp(vy, -120, 120); }
+function kStep(dt) {   // runs once per step while flying; returns the speed multiplier
+  var ok = kOk(), i, o, a = null, b = null, u, tgt, mv, k;
+  if (kHolding() && state === 'play') kHoldT += dt; else kHoldT = 0;
+  if (ok && !kOn) {
+    kAvail = kLaneFind(); if (kAvail && !kReach(kAvail)) kAvail = null;
+    if (kAvail && kHoldT >= 0.15) { kOn = true; kLane = kAvail; for (i = 0; i < kLane.length; i++) kLane[i].kg = true; kEchoT = 0; pop('POTASSIUM POWER!', '#ffe27a', 22); burst(CFG.bananaX, by, 16, ['#ffe27a', '#ffffff', '#fff2a0'], 220, 180); }
+  } else if (!ok) kAvail = null;
+  if (kOn) {
+    if (!ok || !kHolding()) kEnd();
+    else {
+      for (i = 0; i < kLane.length; i++) if (!kLane[i].passed) { if (!a) a = kLane[i]; else { b = kLane[i]; break; } }
+      if (!a) kEnd();
+      else {
+        tgt = kCenter(a);
+        if (b) { u = clamp((bx - (a.x + CFG.obW / 2)) / (b.x - a.x), 0, 1); tgt += (kCenter(b) - tgt) * u * u * (3 - 2 * u); }
+        mv = clamp((tgt - kBy0) * 8 * dt, -540 * dt, 540 * dt); by = kBy0 + mv; vy = mv / dt; fallD = 0; angle = clamp(vy / 700, -0.5, 1.1);
+      }
+    }
+  }
+  kCh = clamp(kCh + (kOn ? dt / 0.6 : -dt / 0.45), 0, 1); k = kCh * kCh * (3 - 2 * kCh);
+  for (i = 0; i < kEcho.length; i++) { kEcho[i].t += dt; kEcho[i].x -= curSpeed * dt; }
+  while (kEcho.length && kEcho[0].t > 0.5) kEcho.shift();
+  if (kCh > 0.12) { kEchoT -= dt; if (kEchoT <= 0) { kEchoT = 0.07; kEcho.push({ x: bx, y: by, r: angle, t: 0, k: k }); if (kEcho.length > (qLvl >= 1 ? 4 : 7)) kEcho.shift(); } }
+  kHint += ((kAvail && !kOn ? 1 : 0) - kHint) * Math.min(1, dt * 8);
+  return 1 + 0.25 * k;
+}
+function kReset() { kOn = false; kCh = 0; kHoldT = 0; kLane = null; kAvail = null; kEcho.length = 0; kRunN = 0; kHint = 0; }
+function kEchoes() {   // fading copies of Fancy, left behind where he was: they stay in the world, so the faster he goes the further apart they sit
+  for (var i = 0; i < kEcho.length; i++) { var e = kEcho[i]; ctx.globalAlpha = 0.6 * e.k * (1 - e.t / 0.5); drawFancy(e.x, e.y, e.r, 1); }
+  ctx.globalAlpha = 1;
+}
+function kRing(ey) {   // the potassium meter, filling in a ring around Fancy
+  if (!kOn && kCh <= 0.02) return;
+  var r = 27, f = kCh, full = f >= 0.999, pu = full ? 0.5 + 0.5 * Math.sin(time * 24) : 1;
+  ctx.lineCap = 'round'; ctx.lineWidth = 7; ctx.strokeStyle = 'rgba(58,42,77,0.7)'; ctx.beginPath(); ctx.arc(bx, by + ey, r, -Math.PI / 2, -Math.PI / 2 + 6.2832 * f); ctx.stroke();
+  ctx.lineWidth = 4; ctx.strokeStyle = full ? (pu > 0.5 ? '#ffffff' : '#ffe27a') : '#ffd93b'; ctx.stroke(); ctx.lineCap = 'butt';
+}
+function drawKHint() {
+  if (kHint < 0.05) return;
+  ctx.globalAlpha = Math.min(1, kHint); outlined('Hold: Potassium Power!', W / 2, GROUND_Y - 26 + Math.sin(time * 6) * 2, 15, '#ffe27a'); ctx.globalAlpha = 1;
+}
 function toReady() { resetWorld(); backStage = pracN ? 0 : 2 + Math.floor(Math.random() * 3); flipV = flipWant(); state = 'ready'; setBar(false); if (runChal === 'storm') ART.mg.sprite('wafer'); }
 function rsgGoAt() { return CFG.cardSecs + CFG.rsgBeat * 2; }   // seconds after the stage clear when control comes back
 function rsgHold() { return (rsgT >= 0 && rsgT < rsgGoAt()) || !!(FT && FT.hold > 0); }
@@ -3345,6 +3421,7 @@ function drawHug() {   // a hint for those who look: a faint shimmer on the edge
 }
 function die() {
   if (secondWind()) return;
+  kOn = false; kCh = 0; kEcho.length = 0; kHint = 0;
   state = 'dead'; deadT = 0; vy = -200; cardT = -1; pendNext = ''; nextT = 0; rsgT = -1; celT = 0;
   
   if (pracN) { pracEnd = 'lose'; newBest = false; } else recordRun(); 
@@ -3475,9 +3552,9 @@ function update(dt) {
     } else if (grace > 0) { grace -= dt; vy = 0; } else { vy = Math.min(CFG.maxFall, vy + CFG.gravity * (1 - 0.06 * lvl('gentle')) * dt); }
     // soft ceiling: Fancy may pop off the top of the screen for a moment, then is pulled back down (obstacles up there still hurt)
     if (by < 0) { topT += dt; if (topT > CFG.topFreeSecs) vy = Math.max(vy, CFG.topPull); } else topT = Math.max(0, topT - 2 * dt);
-    by += vy * dt; if (vy > 0 && grace <= 0) fallD += vy * dt; else fallD = 0; if (hurtT > 0) hurtT -= dt;
+    kBy0 = by; by += vy * dt; if (vy > 0 && grace <= 0) fallD += vy * dt; else fallD = 0; if (hurtT > 0) hurtT -= dt;
     angle = clamp(vy / 700, -0.5, 1.1);
-    var sp = (speedFor(stage) + boost) * (VAULT && VAULT.kind === 'gold' ? 1.35 : 1); if (boostT < CFG.boostSecs) { boostT += dt; boost = boostT >= CFG.boostSecs ? 0 : CFG.boostV * (0.5 + 0.5 * Math.cos(Math.PI * boostT / CFG.boostSecs)); }   // the blast-off speed eases away slowly and smoothly (no sudden slow-down)
+    var sp = (speedFor(stage) + boost) * (VAULT && VAULT.kind === 'gold' ? 1.35 : 1) * (lvl('potassium') ? kStep(dt) : 1); if (boostT < CFG.boostSecs) { boostT += dt; boost = boostT >= CFG.boostSecs ? 0 : CFG.boostV * (0.5 + 0.5 * Math.cos(Math.PI * boostT / CFG.boostSecs)); }   // the blast-off speed eases away slowly and smoothly (no sudden slow-down)
     dist += sp * dt; nextX -= sp * dt; curSpeed = sp; trailStep(dt, -sp * dt); windStep(dt);
     sparkT -= dt; if (sparkT <= 0) { sparkT = 0.07; fxAdd(bx - 30, by + 4 + (frng() - 0.5) * 12, -40 - frng() * 40, (frng() - 0.5) * 30, 0.45, frng() < 0.5 ? '#ffe27a' : '#ffffff', 1.6 + frng() * 1.6, true, 0); }
     if (trackOn) { trackX -= sp * dt; if (trackX < -520) trackOn = false; }
@@ -3513,7 +3590,7 @@ function update(dt) {
     while (obs.length && obs[0].x + CFG.obW < -10) obs.shift();
     if (warp) startVault('gold');
     if (VAULT) vaultStep(dt, sp); else if (!rsgHold()) hugStep(dt);
-    while (nextX < W + CFG.obW && !pendNext && !BAL && !VAULT && !FT) { if (runFight && fightDue()) { FT = ftNew(); split('Boss'); break; } spawnOb(nextX); }
+    while (nextX < W + CFG.obW + kLook() && !pendNext && !BAL && !VAULT && !FT) { if (runFight && fightDue()) { FT = ftNew(); split('Boss'); break; } spawnOb(nextX); }
     if ((pendNext === 'mini' || pendNext === 'balloons') && nextT > 0) washA = clamp(1 - nextT / 0.55, 0, 1) * (calmOn() ? 0.4 : 1);
     if (nextT > 0) { nextT -= dt; if (nextT <= 0) { if (pendNext === 'mini') startMini(); else if (pendNext === 'balloons') startBalloons(); else if (pendNext === 'win') startVictory(); } }
   } else if (state === 'paused') {
@@ -4301,8 +4378,8 @@ function drawProgress() {   // ten pips for the ten gates of the stage, then "n 
   if (done + 1 < gps) { var t2 = pracN ? 'Practice  -  ' + (gps - done - 1) + ' to go' : 'Stage ' + stage + '  -  ' + (gps - done - 1) + ' to go'; if (rec > 0) t2 += score + 1 > rec ? '  -  new best!' : '  -  best ' + rec; txWarm(t2, 14, rec > 0 && score + 1 > rec ? '#ffd93b' : '#ffffff'); }   // the next gate's line is built a frame at a time while this one shows, so passing a gate costs nothing
 }
 var TESTFILE = false, labUsed = false;   // the tester build flips TESTFILE to true; its badge shows only once the Test Lab has changed something (labUsed). The player build never shows it
-var XSHORT = { practice: 'Practice Navy', wshield: 'Wafer shield', rope: 'Rope cutter', superleap: 'Super Leap' };
-var XCHIP = { roomy: ['R', '#7be07b'], gentle: ['G', '#6ec6ff'], shield: ['B', '#ff6b81'], magnet: ['M', '#b45cff'], sweet: ['P', '#ffd93b'], dare: ['D', '#ff8a1f'], golden: ['$', '#f2b81f'], wind: ['W', '#4ad6c8'], limes: ['L', '#9be84a'] };   // the letters of the small row shown while flying (Chimp's Navy extras only appear on the pause list)
+var XSHORT = { potassium: 'Potassium Power', practice: 'Practice Navy', wshield: 'Wafer shield', rope: 'Rope cutter', superleap: 'Super Leap' };
+var XCHIP = { roomy: ['R', '#7be07b'], gentle: ['G', '#6ec6ff'], shield: ['B', '#ff6b81'], magnet: ['M', '#b45cff'], sweet: ['P', '#ffd93b'], dare: ['D', '#ff8a1f'], golden: ['$', '#f2b81f'], wind: ['W', '#4ad6c8'], potassium: ['K', '#ffe27a'], limes: ['L', '#9be84a'] };   // the letters of the small row shown while flying (Chimp's Navy extras only appear on the pause list)
 function extrasList() {   // everything switched on for this run, as [text, color] lines for the pause list
   var L = [], i, u, l, t;
   for (i = 0; i < UPS.length; i++) {
@@ -4366,7 +4443,7 @@ var BUD = [];
 function budPic(i) { var c = BUD[i], g; if (!c || c.kk !== k) { c = document.createElement('canvas'); c.width = Math.round(40 * k); c.height = Math.round(30 * k); g = c.getContext('2d', CRF); g.scale(k, k); ART.friend(g, 20, 16, 0, 0.62, FR_V[i]); c.kk = k; BUD[i] = c; } return c; }
 function drawBuddies() { for (var i = 0; i < 6; i++) put0(budPic(i), bx - 46 - (i >> 1) * 24 - 20, by + (i % 2 ? 20 : -20) + Math.sin(time * 5 + i * 1.3) * 5 - 15, 40, 30); }   // the Banana Bunch: six little friends flying along behind Fancy
 function drawTrail() {
-  var n = trail.length, i, p, q, a, pw = state === 'launch' ? clamp((launchT / CFG.launchSecs - 0.12) / 0.4, 0, 1) : state === 'play' ? 0.25 + 0.75 * clamp(boost / CFG.boostV, 0, 1) : 0, qa;
+  var n = trail.length, i, p, q, a, pw = state === 'launch' ? clamp((launchT / CFG.launchSecs - 0.12) / 0.4, 0, 1) : state === 'play' ? 0.25 + 0.75 * clamp(boost / CFG.boostV + kCh, 0, 1) : 0, qa;
   if (n < 2 || pw <= 0) return;
   ctx.lineCap = 'round'; var rb = rainOn();
   for (i = 1; i < n; i++) {
@@ -4562,7 +4639,8 @@ function render() {
     if (cardT >= 0 && state === 'play') { if (mir) { ctx.save(); ctx.translate(0, H); ctx.scale(1, -1); } stageCard(); if (mir) ctx.restore(); lap('card'); }   // drawn before Fancy, so Fancy always stays in view
     fl2 = flipB();   // ...and so are Fancy, his trail and the sparkles (the stage card, the counters and every word are not)
     zm = zoomOn(); drawTrail(); if ((state === 'play' || state === 'paused') && flagsOn()) drawFlags(); if ((state === 'play' || state === 'paused') && bunchOn()) drawBuddies(); lap('trail'); drawSpeedLines(); lap('speedlines');
-    if (!zm && !blinkOff()) { if (calmOn() && invuln > 0 && spinT <= 0) ctx.globalAlpha = 0.6; drawFancy(bx, by + ey, angle, 1); ctx.globalAlpha = 1; }
+    if (kEcho.length && !zm) kEchoes();
+    if (!zm && !blinkOff()) { if (calmOn() && invuln > 0 && spinT <= 0) ctx.globalAlpha = 0.6; drawFancy(bx, by + ey, angle, 1); ctx.globalAlpha = 1; if (kCh > 0.02 && state === 'play') kRing(ey); }
     lap('fancy'); drawShield();
     if (zm) { ctx.restore(); if (!blinkOff()) drawFancy(zoomX + (bx - zoomX) * zoomK, GROUND_Y + (by - GROUND_Y) * zoomK, angle, 1); }   // in the swoop-in Fancy follows the zoomed track but is stamped at his normal size (a scaled stamp was the costly one)
   }
@@ -4589,7 +4667,7 @@ function render() {
       drawTapIcon(hx(24), 58); outlinedC(String(runFlaps), hx(42), 59, 20, '#ffffff', ha);   // taps this run
       if (streak >= 2) outlinedC('x' + streak + ' perfect', hx(14), 86, 16, '#ffd93b', ha);
     }
-    if (state === 'play' || state === 'paused') { drawPauseBtn(PB, .5); drawClock(PB[0]); ctx.save(); ctx.translate(0, -HUDUP); if (BAL) drawBalHud(); else if (FT && FT.ph !== 'wait') drawFtHud(); else drawProgress(); if (state === 'play') drawExtrasRow(); ctx.restore(); }   // the pause button, and how far along the stage is
+    if (state === 'play' || state === 'paused') { drawPauseBtn(PB, .5); drawClock(PB[0]); ctx.save(); ctx.translate(0, -HUDUP); if (BAL) drawBalHud(); else if (FT && FT.ph !== 'wait') drawFtHud(); else drawProgress(); if (state === 'play') drawExtrasRow(); ctx.restore(); if (state === 'play') drawKHint(); }   // the pause button, and how far along the stage is
     lap('hud');
   }
   if (state === 'title') {
@@ -4638,9 +4716,11 @@ addEventListener('resize', function () {
 
 /* ===== Input ===== */
 var PB = [326, 30];   // the pause button (top right while flying)
-cv.addEventListener('pointerdown', function (e) { e.preventDefault(); var pl = mgLogical(e); if (!panelOpen() && ((state === 'paused' && resT < 0) || (state === 'mini' && MG && MG.paused)) && mgIn(pl, PS_BT)) { refreshSet(); openPanel(pSet); return; } if (pracN && !panelOpen() && ((state === 'dead' && deadT >= CFG.retryDelay) || (state === 'paused' && resT < 0)) && mgIn(pl, MG_BT)) { practiceExit(); return; } if (state === 'play' && Math.abs(pl[0] - PB[0]) < PBR + 8 && Math.abs(pl[1] - PB[1]) < PBR + 8) { onHidden(); return; } if (state === 'title' && museHit(pl)) return; if (contCan() && stage > 1 && mgIn([pl[0], pl[1] - DOFF], DC_B)) { payContinue(); return; } if (state === 'mini') mgPointerDown(e); else { if (state === 'play' || state === 'ready' || state === 'launch' || state === 'paused') tapRipple(pl[0], pl[1], tapIgnored()); onAction(); } });
+cv.addEventListener('pointerdown', function (e) { e.preventDefault(); if (e.button === 0) kHeld.ptr = true; var pl = mgLogical(e); if (!panelOpen() && ((state === 'paused' && resT < 0) || (state === 'mini' && MG && MG.paused)) && mgIn(pl, PS_BT)) { refreshSet(); openPanel(pSet); return; } if (pracN && !panelOpen() && ((state === 'dead' && deadT >= CFG.retryDelay) || (state === 'paused' && resT < 0)) && mgIn(pl, MG_BT)) { practiceExit(); return; } if (state === 'play' && Math.abs(pl[0] - PB[0]) < PBR + 8 && Math.abs(pl[1] - PB[1]) < PBR + 8) { onHidden(); return; } if (state === 'title' && museHit(pl)) return; if (contCan() && stage > 1 && mgIn([pl[0], pl[1] - DOFF], DC_B)) { payContinue(); return; } if (state === 'mini') mgPointerDown(e); else { if (state === 'play' || state === 'ready' || state === 'launch' || state === 'paused') tapRipple(pl[0], pl[1], tapIgnored()); onAction(); } });
 cv.addEventListener('pointermove', function (e) { if (state === 'mini' && (e.pointerType === 'mouse' || e.buttons)) mgPoint(e); });
+addEventListener('pointerup', function () { kHeld.ptr = false; }); addEventListener('pointermove', function (e) { if (kHeld.ptr && !e.buttons) kHeld.ptr = false; }); addEventListener('pointercancel', function () { kHeld.ptr = false; }); addEventListener('blur', function () { kHeld.ptr = kHeld.key = kHeld.pad = false; });
 addEventListener('keydown', function (e) {
+  if (e.key === ' ') kHeld.key = true;
   if (e.key === 'Escape') { if (pracN && (state === 'dead' || state === 'paused') && !panelOpen()) { practiceExit(); return; } if (state === 'mini' && MG && MG.practice && (MG.paused || mgCard(MG))) practiceExit(); else closePanels(); return; }
   var kk = { ArrowLeft: 'l', a: 'l', ArrowRight: 'r', d: 'r', ArrowUp: 'u', w: 'u', ArrowDown: 'd', s: 'd' }[e.key]; if (kk) keys[kk] = true;
   if (state === 'mini' && e.key === 'ArrowUp') { e.preventDefault(); return; }
@@ -4651,7 +4731,7 @@ addEventListener('keydown', function (e) {
   if (t === 'BUTTON' || t === 'TEXTAREA' || t === 'INPUT') return;
   e.preventDefault(); if (!e.repeat) { if (state === 'play' || state === 'launch') tapRipple(mx(bx), mirY(by), tapIgnored()); onAction(); }
 });
-addEventListener('keyup', function (e) { var kk = { ArrowLeft: 'l', a: 'l', ArrowRight: 'r', d: 'r', ArrowUp: 'u', w: 'u', ArrowDown: 'd', s: 'd' }[e.key]; if (kk) keys[kk] = false; });
+addEventListener('keyup', function (e) { if (e.key === ' ') kHeld.key = false; var kk = { ArrowLeft: 'l', a: 'l', ArrowRight: 'r', d: 'r', ArrowUp: 'u', w: 'u', ArrowDown: 'd', s: 'd' }[e.key]; if (kk) keys[kk] = false; });
 document.addEventListener('contextmenu', function (e) { if (e.target === cv) e.preventDefault(); });
 
 /* ===== Game controller. In play: any face button or trigger flaps or leaps, Start pauses, the stick or d-pad steers in the water level.
@@ -4727,7 +4807,7 @@ function padStep() {
     else if (E.act && !((D.xy || D.sel) && canPause && !D.a)) { if (state === 'play' || state === 'launch') tapRipple(mx(bx), mirY(by), tapIgnored()); onAction(); }
     if (E.pz && !panelOpen()) { if (state === 'mini') mgPause(); else if (state === 'play') onHidden(); else if (state === 'paused') beginResume(); else if (state === 'title') { padNavT = false; toReady(); } }
   }
-  padPrev = D;
+  kHeld.pad = !!D.a; padPrev = D;
 }
 
 /* ===== Start ===== */
