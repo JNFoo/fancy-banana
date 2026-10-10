@@ -542,7 +542,13 @@ function chimpAt(g, x, y, s, mood) { g.save(); g.translate(x, y); g.scale(s, s);
 function bossDraw(g, n) {
   var O = OUTK, i;
   g.lineJoin = 'round'; g.lineCap = 'round';
-  if (n === 1) {   // the Wafer Cannon wagon
+  if (n === 1) {   // the Wafer Cannon wagon, hung from three balloons so it can rise and sink
+    [[-40, -74, '#ff6b81', '#c01838'], [40, -74, '#4fb8ff', '#1a6cc0'], [0, -98, '#ffd93b', '#d99a10']].forEach(function (b, k) {
+      g.beginPath(); g.moveTo(b[0] * (k < 2 ? 1.1 : 0), 20); g.lineTo(b[0] * .95, b[1] + 25); g.lineWidth = 3; g.strokeStyle = O; g.stroke(); g.lineWidth = 1.2; g.strokeStyle = '#fffdf6'; g.stroke();
+      ell(g, b[0], b[1], 22, 26); fs(g, rg(g, b[0] - 8, b[1] - 10, 2, b[0], b[1], 28, [[0, '#ffffff'], [.3, b[2]], [1, b[3]]]), O, 2.6);
+      g.beginPath(); g.moveTo(b[0] - 3, b[1] + 25); g.lineTo(b[0] + 3, b[1] + 25); g.lineTo(b[0], b[1] + 30); g.closePath(); fs(g, b[3], O, 1.4);
+      g.fillStyle = 'rgba(255,255,255,.55)'; ell(g, b[0] - 9, b[1] - 12, 5, 8, -.5); g.fill();
+    });
     [-30, 32].forEach(function (x) { circ(g, x, 54, 18); fs(g, rg(g, x - 4, 50, 2, x, 54, 19, [[0, '#c89058'], [1, '#8a5a30']]), O, 3); circ(g, x, 54, 6); fs(g, '#5a3a1c', O, 2); for (i = 0; i < 4; i++) { g.beginPath(); g.moveTo(x, 54); g.lineTo(x + Math.cos(i * 1.571 + .4) * 16, 54 + Math.sin(i * 1.571 + .4) * 16); g.lineWidth = 2; g.strokeStyle = '#5a3a1c'; g.stroke(); } });
     rr(g, -56, 18, 112, 34, 9); fs(g, lg(g, 0, 18, 0, 52, [[0, '#ff9dbb'], [1, '#d4467a']]), O, 3);
     g.fillStyle = 'rgba(255,255,255,.35)'; rr(g, -50, 22, 100, 5, 2.5); g.fill();
@@ -585,8 +591,8 @@ function bossDraw(g, n) {
     circ(g, -56, 22, 10); fs(g, '#a8744c', O, 2.6);
   }
 }
-function bossPic(n) { var p = BOSSP[n]; if (!p) { p = BOSSP[n] = mk(170, 190); p.g.translate(85, 100); bossDraw(p.g, n); } return p; }
-function boss(g, n, cx, cy) { put(g, bossPic(n).c, cx - 85, cy - 100); }
+function bossPic(n) { var p = BOSSP[n]; if (!p) { p = BOSSP[n] = mk(170, 214); p.g.translate(85, 124); bossDraw(p.g, n); } return p; }
+function boss(g, n, cx, cy) { put(g, bossPic(n).c, cx - 85, cy - 124); }
 function fxPic(k) {   // 'coco': a coconut with a worried face; 'fist': a rocket fist (fingers point left)
   var p = FXP[k];
   if (!p) {
@@ -1881,7 +1887,7 @@ return { fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: cr
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1040';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1122';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -2466,27 +2472,37 @@ function fightNext() { if (!secretsOn()) return 0; for (var n = 1; n <= 4; n++) 
 function fightOn() { return !!save.unlocks.pcf && fightNext() > 0; }
 function wearsCrown() { var u = save.unlocks; return !!u.crown && !u.crownOff; }
 function fightDue() { var gs = stageOfGate(spawned); return themeOf(gs) === CFG.finalTheme && spawned === gateStart(gs + 1) - 2; }
-function ftNew() { return { n: runFight, ph: 'wait', r: 0, rt: 0, t: 0, hold: 0, nx: 0, list: [], hits: 0, by: 300, pc: 0, slide: 0, shake: 0 }; }
-function ftBoss(F) { return { x: FT_BX + (1 - ss(F.slide)) * 160, y: F.by + (calmOn() ? 0 : Math.sin(time * 1.6) * 6) }; }
-function ftWaf(F, y, d, K, fist) { var p = ftBoss(F); F.list.push({ k: fist ? 'fist' : 'waf', x: p.x - 66, y: clamp(y, 40, GROUND_Y - 40), vx: -((fist ? 300 : 262) + 18 * F.r) * K, r: fist ? 15 : 13, d: d, d0: d }); }
-function ftLane(F, y, d) { F.list.push({ k: 'lane', y: clamp(y, 100, GROUND_Y - 70), d: d, d0: d, act: 0.5 }); }
-function ftCoco(F, ty, T, d, K) { var p = ftBoss(F), x0 = p.x - 50, y0 = p.y - 36, T2 = T / K, g = 560; F.list.push({ k: 'coco', x: x0, y: y0, vx: -(x0 - bx) / T2, vy: (ty - y0 - 0.5 * g * T2 * T2) / T2, g: g, r: 15, d: d, d0: d }); }
-function ftWave(F, d, K) { var p = ftBoss(F); F.list.push({ k: 'wave', x: p.x - 30, vx: -(236 + 14 * F.r) * K, d: d, d0: d }); }
+function ftNew() { return { n: runFight, ph: 'wait', r: 0, rt: 0, t: 0, hold: 0, nx: 0, list: [], hits: 0, by: runFight === 3 ? GROUND_Y - 92 : 300, pc: 0, slide: 0, shake: 0, hop: 0, kick: 0 }; }
+/* Where each boss lets its attacks out, relative to its center: the cannon barrel, the robot's arm and chest lamp, the gorilla's raised fist and feet, the Prince's scepter orb and hand. Nothing ever appears in mid air: an attack starts here, and the boss first lines itself up with where the attack will fly. */
+var FT_MZ = { 1: { waf: [-62, 25] }, 2: { fist: [-52, 30], lane: [-22, 28] }, 3: { coco: [-62, -26], wave: [-30, 90] }, 4: { waf: [-50, -36], lane: [-50, -36], coco: [-56, 12] } };
+var FT_BMIN = 150, FT_BMAX = GROUND_Y - 95;
+function ftBoss(F) { return { x: FT_BX + (1 - ss(F.slide)) * 160 + F.kick * 5, y: F.by + (calmOn() || F.n === 3 ? 0 : Math.sin(time * 1.6) * 6) - F.hop }; }
+function ftMk(F, k, o) { var m = FT_MZ[F.n][k]; o.k = k; o.ox = m[0]; o.oy = m[1]; o.live = false; o.d0 = o.d; F.list.push(o); }
+function ftWaf(F, y, d, K, fist) { var k = fist ? 'fist' : 'waf', m = FT_MZ[F.n][k]; ftMk(F, k, { y: clamp(y, FT_BMIN + m[1], FT_BMAX + m[1]), vx: -((fist ? 300 : 262) + 18 * F.r) * K, r: fist ? 15 : 13, d: d }); }
+function ftLane(F, y, d) { var m = FT_MZ[F.n].lane; ftMk(F, 'lane', { y: clamp(y, FT_BMIN + m[1], FT_BMAX + m[1]), d: d, act: 0.5 }); }
+function ftCoco(F, ty, T, d, K) { ftMk(F, 'coco', { ty: ty, T2: T / K, g: 560, r: 15, d: d, x: 0, y: 0, vx: 0, vy: 0 }); }
+function ftWave(F, d, K) { ftMk(F, 'wave', { vx: -(236 + 14 * F.r) * K, d: d, x: 0 }); }
+function ftAim(a, p) {   // a coconut is held in the thrower's hand until it is let go: its flight is worked out from the hand
+  var x0 = p.x + a.ox, y0 = p.y + a.oy; a.x = x0; a.y = y0; a.vx = -(x0 - bx) / a.T2; a.vy = (a.ty - y0 - 0.5 * a.g * a.T2 * a.T2) / a.T2;
+}
 function ftPattern(F, K) {   // push one volley and say how long until the next
-  var k = F.n === 4 ? 1 + (F.pc++ + (F.r > 0 && rng() < 0.35 ? 1 : 0)) % 3 : F.n, r = F.r, y = clamp(by + vy * 0.2, 110, GROUND_Y - 60), d = 0.6 / K, i, gi, y2;
-  if (k === 1) {
-    if (r === 0) { ftWaf(F, y + (rng() - 0.5) * 40, d, K); return 1.35 / K; }
-    if (r === 1) { ftWaf(F, y - 80, d, K); ftWaf(F, y, d + 0.3, K); ftWaf(F, y + 80, d + 0.6, K); return 2.0 / K; }
-    gi = clamp(Math.round((by - 110) / 80) + (rng() < 0.5 ? 0 : rng() < 0.5 ? -1 : 1), 0, 4); for (i = 0; i < 5; i++) if (i !== gi) ftWaf(F, 110 + i * 80, d + 0.3, K); return 2.5 / K;
+  var k = F.n === 4 ? 1 + (F.pc++ + (F.r > 0 && rng() < 0.35 ? 1 : 0)) % 3 : F.n, r = F.r, duel = F.n === 4, y = clamp(by + vy * 0.2, 130, GROUND_Y - 80), d = 0.3 / K, i, s, hole, y2;
+  if (k === 1) {   // wafers: one shot, then three one after another, then a sweeping barrage with a hole in it
+    if (r === 0) { ftWaf(F, y + (rng() - 0.5) * 40, d, K); return 1.7 / K; }
+    if (r === 1) { ftWaf(F, y - 80, d, K); ftWaf(F, y, d + 0.55, K); ftWaf(F, y + 80, d + 1.1, K); return 2.9 / K; }
+    s = rng() < 0.5 ? 1 : -1; hole = 1 + Math.floor(rng() * 3); for (i = 0; i < 5; i++) if (i !== hole) ftWaf(F, (s > 0 ? 200 : 200 + 4 * 70) + s * 70 * i, d + i * 0.34, K); return 3.6 / K;
   }
-  if (k === 2) {
-    if (r === 0) { ftLane(F, y + (rng() - 0.5) * 100, d + 0.4); return 2.0 / K; }
-    if (r === 1) { ftLane(F, y, d + 0.5); ftLane(F, y > 300 ? y - 190 : y + 190, d + 0.5); ftWaf(F, y, d + 0.9, K, true); return 2.8 / K; }
-    ftWaf(F, y, d, K, true); ftWaf(F, y + (rng() < 0.5 ? -110 : 110), d + 0.45, K, true); ftLane(F, y + (rng() < 0.5 ? -150 : 150), d + 0.9); return 2.4 / K;
+  if (k === 2) {   // lasers (one at a time, from the emitter) and rocket fists
+    y2 = y > 330 ? y - 190 : y + 190;
+    if (r === 0) { ftLane(F, y + (rng() - 0.5) * 100, d + 0.5); return 2.3 / K; }
+    if (r === 1) { ftLane(F, y, d + 0.5); ftLane(F, y2, d + 2.1); if (!duel) ftWaf(F, y, d + 3.0, K, true); return 3.9 / K; }
+    if (duel) { ftLane(F, y, d + 0.5); ftLane(F, y2, d + 1.9); ftLane(F, y + 20, d + 3.3); return 4.6 / K; }
+    ftWaf(F, y, d, K, true); ftWaf(F, y + (rng() < 0.5 ? -110 : 110), d + 0.6, K, true); ftLane(F, y + (rng() < 0.5 ? -150 : 150), d + 1.5); return 3.2 / K;
   }
-  if (r === 0) { ftCoco(F, y, 0.85, 0.7 / K, K); return 1.7 / K; }
-  if (r === 1) { ftWave(F, 0.9 / K, K); ftCoco(F, y, 0.85, 0.7 / K, K); return 2.4 / K; }
-  ftCoco(F, y - 80, 0.85, 0.7 / K, K); ftCoco(F, y + 80, 1.2, 1.2 / K, K); ftWave(F, 1.5 / K, K); return 3.0 / K;
+  if (r === 0) { ftCoco(F, y, 0.85, 0.8 / K, K); return 1.9 / K; }   // coconuts thrown from a raised fist, and shockwaves from a stomp
+  if (r === 1) { if (duel) { ftCoco(F, y, 0.85, 0.8 / K, K); ftCoco(F, y - 90, 1.0, 1.7 / K, K); return 3.1 / K; } ftWave(F, 0.9 / K, K); ftCoco(F, y, 0.85, 1.0 / K, K); return 2.7 / K; }
+  if (duel) { ftCoco(F, y - 80, 0.85, 0.8 / K, K); ftCoco(F, y + 80, 1.1, 1.5 / K, K); ftCoco(F, y, 0.9, 2.3 / K, K); return 3.6 / K; }
+  ftCoco(F, y - 80, 0.85, 0.8 / K, K); ftCoco(F, y + 80, 1.2, 1.4 / K, K); ftWave(F, 1.8 / K, K); return 3.2 / K;
 }
 function ftHit() {
   var F = FT; if (!F || invuln > 0 || F.hold > 0 || F.ph !== 'round') return false;
@@ -2495,15 +2511,21 @@ function ftHit() {
   burst(bx, by, 26, ['#ff6b81', '#ffffff', '#ffd93b'], 260, 240); pop('Oops! Again!', '#ff6b81', 26); return true;
 }
 function ftStep(dt, sp) {
-  var F = FT, i, a, p, K = relaxK(), goal = clamp(by, 170, GROUND_Y - 110), best = 9, dx, dy, rr2;
+  var F = FT, i, a, p, K = relaxK(), goal = F.n === 3 ? GROUND_Y - 92 : clamp(by, FT_BMIN, FT_BMAX), best = 99, dx, dy, rr2, rem, dd, spd;
   if (F.shake > 0) F.shake -= dt;
+  if (F.kick > 0) F.kick = Math.max(0, F.kick - dt * 7);
   if (F.ph === 'wait') { if (!obs.length) { F.ph = 'intro'; rsgT = 0; rsgGo = false; vy = 0; celT = 0; lastAfter = 0; } return; }
   F.slide = Math.min(1, F.slide + dt);
-  if (F.slide >= 1 && !F.landed) { F.landed = 1; p = ftBoss(F); burst(p.x, GROUND_Y - 8, 14, ['#e8d0a0', '#ffffff'], 170, 60); if (!calmOn()) punchT = CFG.punchSecs * 0.35; }   // the boss lands with a thump
+  if (F.slide >= 1 && !F.landed) { F.landed = 1; p = ftBoss(F); burst(p.x, GROUND_Y - 8, 14, ['#e8d0a0', '#ffffff'], 170, 60); if (!calmOn()) punchT = CFG.punchSecs * 0.35; }   // the boss arrives with a thump
   if (F.hold > 0 && F.ph !== 'won') { F.hold -= dt; if (F.hold <= 0) { F.hold = 0; F.ph = 'round'; F.rt = 0; F.nx = 0.5; grace = 0.25; vy = 0; flapAnim = 0.18; pop('Go!', '#7be07b', 28); } }
   if (F.ph === 'intro') { if (!rsgHold()) { F.ph = 'round'; F.rt = 0; F.nx = 0.5; } }
-  for (i = 0; i < F.list.length; i++) { a = F.list[i]; if (a.d > 0 && a.d < best && a.y !== undefined) { best = a.d; goal = clamp(a.y, 110, GROUND_Y - 90); } }
-  F.by += (goal - F.by) * Math.min(1, dt * (best < 9 ? 5 : 1.3));
+  F.hop = 0;
+  for (i = 0; i < F.list.length; i++) {   // the boss slides to the height of its next shot, and hops before a stomp
+    a = F.list[i];
+    if (a.k === 'wave' && !a.live && a.d > 0) F.hop = Math.max(F.hop, 16 * Math.sin(Math.PI * Math.min(1, 1 - a.d / a.d0)));
+    if (F.n !== 3 && (a.k === 'waf' || a.k === 'fist' || a.k === 'lane') && (!a.live || (a.k === 'lane' && a.act > 0))) { rem = a.live ? 0 : a.d; if (rem < best) { best = rem; goal = clamp(a.y - a.oy, FT_BMIN, FT_BMAX); } }
+  }
+  dd = goal - F.by; spd = best < 99 ? clamp(Math.abs(dd) * 8, 80, 440) : 130; F.by += clamp(dd, -spd * dt, spd * dt);
   if (F.ph === 'won') {
     F.t += dt; if (!calmOn() && F.t < 2.4 && Math.floor(F.t * 6) !== Math.floor((F.t - dt) * 6)) { p = ftBoss(F); burst(p.x + (rng() - 0.5) * 80, p.y + (rng() - 0.5) * 100, 8, ['#ffd93b', '#ff8a3c', '#ffffff'], 200, 120); }
     if (F.t >= 3.2) ftFinish();
@@ -2515,7 +2537,17 @@ function ftStep(dt, sp) {
   p = ftBoss(F);
   for (i = F.list.length - 1; i >= 0; i--) {
     a = F.list[i];
-    if (a.d > 0) { a.d -= dt; if (a.k === 'waf' || a.k === 'fist') a.x = p.x - 66; if (a.d > 0) continue; a.d = 0; }
+    if (!a.live) {
+      if (a.d > 0) a.d -= dt;
+      if (a.k === 'coco') ftAim(a, p);
+      if (a.d > 0) continue;
+      a.d = 0;
+      if (a.k !== 'coco' && a.k !== 'wave' && Math.abs(F.by - (a.y - a.oy)) > 5) continue;   // wait until the boss has lined up
+      a.live = true;
+      if (a.k === 'waf' || a.k === 'fist') { a.x = p.x + a.ox; a.y = p.y + a.oy; F.kick = 1; burst(a.x - 24, a.y, 7, ['#ffffff', '#fff2a0', '#ffb347'], 150, 10); }   // fired: a puff at the barrel and a little recoil
+      else if (a.k === 'lane') a.y = p.y + a.oy;
+      else if (a.k === 'wave') { a.x = p.x + a.ox; burst(a.x, GROUND_Y - 6, 10, ['#e8d0a0', '#ffffff'], 160, 40); if (!calmOn()) punchT = CFG.punchSecs * 0.2; }
+    }
     if (a.k === 'lane') { a.act -= dt; if (invuln <= 0 && Math.abs(by - a.y) < 30 && ftHit()) break; if (a.act <= 0) F.list.splice(i, 1); continue; }
     a.x += a.vx * dt;
     if (a.k === 'coco') { a.y += a.vy * dt; a.vy += a.g * dt; if (a.y > GROUND_Y - 10) { burst(a.x, GROUND_Y - 6, 8, ['#a8744c', '#e8d0a0'], 120, 100); F.list.splice(i, 1); continue; } }
@@ -2538,24 +2570,32 @@ function ftFinish() {
   FT = null; invuln = 0; hurtT = 0; runFight = 0; grace = 1.4; vy = 0; score = spawned = gateStart(stage + 1); pendNext = ''; stageUp();
 }
 function drawFight() {
-  var F = FT, p = ftBoss(F), i, a, f, g, sh = F.shake > 0 && !calmOn() ? Math.sin(time * 80) * 4 : 0, cl = calmOn(), al;
+  var F = FT, p = ftBoss(F), i, a, f, g, sh = F.shake > 0 && !calmOn() ? Math.sin(time * 80) * 4 : 0, cl = calmOn(), al, ex, mx, my, fl;
   for (i = 0; i < F.list.length; i++) {   // warnings first, behind everything
-    a = F.list[i]; f = a.d > 0 ? 1 - a.d / a.d0 : 1;
-    if (a.k === 'coco' && a.d > 0) { ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.55; for (g = 1; g < 14; g++) { al = g * 0.07; if (a.x + a.vx * al < 20) break; ctx.beginPath(); ctx.arc(a.x + a.vx * al, a.y + a.vy * al + 0.5 * a.g * al * al, 3.2, 0, 7); ctx.fill(); } ctx.globalAlpha = 1; }
-    else if (a.k === 'lane') { al = a.d > 0 ? (cl ? 0.28 : 0.18 + 0.16 * Math.abs(Math.sin(time * 14))) : 0.95; ctx.globalAlpha = al; ctx.fillStyle = a.d > 0 ? '#ff4a4a' : '#fff6a0'; ctx.fillRect(0, a.y - 30, p.x - 30, 60); if (a.d <= 0) { ctx.fillStyle = '#ff3b3b'; ctx.fillRect(0, a.y - 12, p.x - 30, 24); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, a.y - 4, p.x - 30, 8); } ctx.globalAlpha = 1; if (a.d > 0) outlined('!', 30, a.y + 2, 30, '#ffffff'); }
-    else if (a.d > 0 && (a.k === 'waf' || a.k === 'fist')) { ctx.globalAlpha = 0.25 + 0.3 * f; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.setLineDash([8, 10]); ctx.beginPath(); ctx.moveTo(p.x - 80, a.y); ctx.lineTo(0, a.y); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
-    else if (a.k === 'wave' && a.d > 0) { ctx.globalAlpha = 0.5 + 0.4 * f; outlined('!', W - 26, GROUND_Y - 30, 30, '#ffd93b'); ctx.fillStyle = '#e8d0a0'; for (g = 0; g < 4; g++) { ctx.beginPath(); ctx.arc(p.x - 40 - g * 16 + Math.sin(time * 20 + g) * 2, GROUND_Y - 6 - f * 8, 6 + g, 0, 7); ctx.fill(); } ctx.globalAlpha = 1; }
+    a = F.list[i]; f = a.live ? 1 : a.d > 0 ? 1 - a.d / a.d0 : 1; mx = p.x + a.ox; my = p.y + a.oy;
+    if (a.k === 'coco' && !a.live) { ctx.fillStyle = '#ffffff'; ctx.globalAlpha = 0.55; for (g = 1; g < 14; g++) { al = g * 0.07; if (a.x + a.vx * al < 20) break; ctx.beginPath(); ctx.arc(a.x + a.vx * al, a.y + a.vy * al + 0.5 * a.g * al * al, 3.2, 0, 7); ctx.fill(); } ctx.globalAlpha = 1; }
+    else if (a.k === 'lane') {
+      if (!a.live) { al = cl ? 0.28 : 0.18 + 0.16 * Math.abs(Math.sin(time * 14)); ctx.globalAlpha = al; ctx.fillStyle = '#ff4a4a'; ctx.fillRect(0, a.y - 30, mx, 60); ctx.globalAlpha = 1; outlined('!', 30, a.y + 2, 30, '#ffffff'); ctx.globalAlpha = 0.5 + 0.4 * f; ctx.fillStyle = '#ff8a8a'; ctx.beginPath(); ctx.arc(mx, my, 6 + 10 * f, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }   // the emitter charges up
+      else { ctx.globalAlpha = 0.95; ctx.fillStyle = '#fff6a0'; ctx.fillRect(0, a.y - 30, mx, 60); ctx.fillStyle = '#ff3b3b'; ctx.fillRect(0, a.y - 12, mx, 24); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, a.y - 4, mx, 8); ctx.beginPath(); ctx.arc(mx, my, 17, 0, 7); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.globalAlpha = 1; }
+    }
+    else if (!a.live && (a.k === 'waf' || a.k === 'fist')) { ex = a.k === 'waf' && F.n === 1 ? mx - 34 : mx - 12; ctx.globalAlpha = 0.25 + 0.3 * f; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.setLineDash([8, 10]); ctx.beginPath(); ctx.moveTo(ex, a.y); ctx.lineTo(0, a.y); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#fff2a0'; ctx.beginPath(); ctx.arc(ex, my, 4 + 8 * f, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }   // the dotted line shows the shot; the muzzle glows
+    else if (a.k === 'wave' && !a.live) { ctx.globalAlpha = 0.5 + 0.4 * f; outlined('!', W - 26, GROUND_Y - 30, 30, '#ffd93b'); ctx.fillStyle = '#e8d0a0'; for (g = 0; g < 4; g++) { ctx.beginPath(); ctx.arc(mx - g * 16 + Math.sin(time * 20 + g) * 2, GROUND_Y - 6 - f * 8, 6 + g, 0, 7); ctx.fill(); } ctx.globalAlpha = 1; }
   }
+  for (i = 0; i < F.list.length; i++) {   // a wafer or fist that has just left its barrel or arm is still inside it: drawn behind the boss
+    a = F.list[i]; if (!a.live || (a.k !== 'waf' && a.k !== 'fist') || a.x < p.x + a.ox - 46) continue;
+    if (a.k === 'waf') ART.mg.draw(ctx, 'wafer', a.x, a.y, undefined, 1); else ART.fxs(ctx, 'fist', a.x, a.y, 0);
+  }
+  if (F.n === 2 && F.ph !== 'won') { ctx.fillStyle = '#ffb347'; for (g = -11; g <= 21; g += 32) { fl = 12 + (cl ? 0 : Math.sin(time * 45 + g) * 4); ctx.beginPath(); ctx.ellipse(p.x + g, p.y + 80 + fl / 2, 6, fl / 2 + 3, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#fff2a0'; ctx.beginPath(); ctx.ellipse(p.x + g, p.y + 79 + fl / 3, 3, fl / 3 + 1, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#ffb347'; } }   // the robot hovers on rocket boots
   var wt = F.ph === 'won' ? Math.max(0, F.t - 1.4) : 0, co = [[-2, -14, 0.62], [0, -30, 0.72], [34, -66, 0.46], [0, 0, 1.12]][F.n - 1];   // beaten: the boss spins away up and to the right, crying
   ctx.save(); ctx.translate(p.x + sh + wt * wt * 80, p.y - wt * wt * 70 + wt * 20); if (wt > 0 && !calmOn()) ctx.rotate(wt * 4.5);
   ART.boss(ctx, F.n, 0, 0); if (F.ph === 'won') cryChimp(co[0], co[1], co[2]);
   ctx.restore();
   for (i = 0; i < F.list.length; i++) {
     a = F.list[i];
-    if (a.d > 0 && a.k !== 'wave' && a.k !== 'lane') { if (a.k === 'coco') continue; f = a.d / a.d0; ctx.globalAlpha = 1 - f * 0.4; ctx.fillStyle = '#fff2a0'; ctx.beginPath(); ctx.arc(p.x - 70, a.y, 8 + (1 - f) * 14, 0, 7); ctx.fill(); ctx.globalAlpha = 1; continue; }
-    if (a.d > 0) continue;
-    if (a.k === 'waf') ART.mg.draw(ctx, 'wafer', a.x, a.y, undefined, 1);
-    else if (a.k === 'fist') { ctx.fillStyle = 'rgba(255,160,60,0.7)'; ctx.beginPath(); ctx.moveTo(a.x + 12, a.y - 8); ctx.lineTo(a.x + 44 + Math.sin(time * 40) * 5, a.y); ctx.lineTo(a.x + 12, a.y + 8); ctx.fill(); ART.fxs(ctx, 'fist', a.x, a.y, 0); }
+    if (a.k === 'coco' && !a.live) { ART.fxs(ctx, 'coco', a.x, a.y - 15 - (cl ? 0 : Math.abs(Math.sin(time * 9)) * 3), 0); continue; }   // held up in the hand
+    if (!a.live) continue;
+    if (a.k === 'waf') { if (a.x < p.x + a.ox - 46) ART.mg.draw(ctx, 'wafer', a.x, a.y, undefined, 1); }
+    else if (a.k === 'fist') { ctx.fillStyle = 'rgba(255,160,60,0.7)'; ctx.beginPath(); ctx.moveTo(a.x + 12, a.y - 8); ctx.lineTo(a.x + 44 + Math.sin(time * 40) * 5, a.y); ctx.lineTo(a.x + 12, a.y + 8); ctx.fill(); if (a.x < p.x + a.ox - 46) ART.fxs(ctx, 'fist', a.x, a.y, 0); }
     else if (a.k === 'coco') ART.fxs(ctx, 'coco', a.x, a.y, time * 8);
     else if (a.k === 'wave') { ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(a.x - 22, GROUND_Y); ctx.quadraticCurveTo(a.x - 6, GROUND_Y - 62, a.x + 8, GROUND_Y - 46); ctx.quadraticCurveTo(a.x + 16, GROUND_Y - 20, a.x + 24, GROUND_Y); ctx.closePath(); ctx.fillStyle = '#ffe27a'; ctx.fill(); ctx.stroke(); }
   }
@@ -3120,7 +3160,7 @@ function renderMini() {
   else if (m.practice && (m.ph === 'win' || m.ph === 'lose')) practiceCard(m);
   else if (m.ph === 'win') { ctx.lineWidth = 3; ctx.strokeStyle = INK; rrect(40, 200, 280, 150, 22); fs('rgba(255,252,240,0.95)'); outlined('Made it to shore!', W / 2, 244, 30, '#ffd93b'); outlined('+' + (CFG.friendsPerStage + m.saved + m.bonus) + ' banana friends escaped', W / 2, 292, 17, '#ffffff'); outlined('Next: ' + ART.names[themeOf(stage)], W / 2, 324, 17, '#ffd93b'); }
   else if (m.ph === 'lose') { ctx.fillStyle = 'rgba(58,42,77,0.3)'; ctx.fillRect(0, 0, W, H); ctx.lineWidth = 3; ctx.strokeStyle = INK; rrect(40, 200, 280, 210, 22); fs('rgba(255,252,240,0.96)'); ART.chimp(ctx, 250, 270, 0.62, 0, time); outlined('Splash!', 130, 244, 36, '#ffd93b'); outlined('The Navy got you.', 130, 288, 17, '#ffffff'); ctx.globalAlpha = m.pt > 0.6 ? 1 : 0.3; outlined('Tap to try again', W / 2, 372, 22, '#ffffff'); ctx.globalAlpha = 1; }
-  if (m.paused) { ctx.fillStyle = 'rgba(58,42,77,0.45)'; ctx.fillRect(0, 0, W, H); outlined('Paused', W / 2, 270, 44, '#ffd93b'); outlined('Tap to continue', W / 2, 330, 24, '#ffffff'); mgBtn(PS_BT, 'Settings', '#4a9bd8'); padLine(); if (m.practice) mgBtn(MG_BT, 'Back to title', '#8a6cd8'); else outlined('(the P key pauses too)', W / 2, 366, 15, '#ffffff'); }
+  if (m.paused) { ctx.fillStyle = 'rgba(58,42,77,0.45)'; ctx.fillRect(0, 0, W, H); outlined('Paused', W / 2, 270, 44, '#ffd93b'); outlined('Tap to continue', W / 2, 330, 24, '#ffffff'); mgBtn(PS_BT, 'Settings', '#4a9bd8'); padLine(); if (m.practice) mgBtn(MG_BT, 'Back to title', '#8a6cd8'); else outlined('(the P key pauses too)', W / 2, 366, 15, '#ffffff'); drawExtrasCard(); }
 }
 function noteBest() {
   if (pracN) return;   // a Relaxed run keeps its own best score, so the normal records stay honest
@@ -3149,7 +3189,7 @@ function openWin() {
 function giftNeeded() { return !save.unlocks.balloons ? 1 : pcBeaten(4) && !save.unlocks.crown ? 2 : 0; }   // 1: Prince Chimp's balloons (first win), 2: the crown (Crown Duel won)
 function afterWin() { toReady(); giftTitle = false; var g = giftNeeded(); if (g) startGift(g === 2 ? 1 : 0); }
 var freshArmed = false;
-function winTitle() { save.stats.plus = Math.min(CFG.plusMax, save.stats.plus + 1); persist(); pWin.hidden = true; var g = giftNeeded(); if (g) { giftTitle = true; startGift(g === 2 ? 1 : 0); return; } resetWorld(); state = 'title'; titleT = 5; setBar(true); toast('Saved. Welcome back to the title screen!', 3000); }   // keep everything, save, and rest at the title screen instead of going straight to the launch pad
+function winTitle() { save.stats.plus = Math.min(CFG.plusMax, save.stats.plus + 1); persist(); pWin.hidden = true; var g = giftNeeded(); if (g) { startGift(g === 2 ? 1 : 0, true); return; } resetWorld(); state = 'title'; titleT = 5; setBar(true); toast('Saved. Welcome back to the title screen!', 3000); }   // keep everything, save, and rest at the title screen instead of going straight to the launch pad
 function winKeep() { save.stats.plus = Math.min(CFG.plusMax, save.stats.plus + 1); persist(); pWin.hidden = true; afterWin(); }
 function winFresh() {
   if (!freshArmed) { freshArmed = true; $('wFresh').textContent = 'Tap again to confirm: reset upgrades and credits'; $('winMsg').textContent = 'Your best score, records and costumes always stay. Your current save is kept as a backup on this device.'; return; }
@@ -3175,7 +3215,7 @@ function secretsFound() { var u = save.unlocks; return (u.balloons ? 1 : 0) + (u
 /* --- the pennant string --- */
 function flagStep(dt, sp) {
   var i, p; for (i = 0; i < fl.length; i++) fl[i].x -= sp * dt * 0.6;   // the string drags behind Fancy, a little slower than the world
-  flAcc += dt; if (flAcc >= 0.03) { flAcc = 0; p = fl.length >= 44 ? fl.shift() : { x: 0, y: 0 }; p.x = bx - 17; p.y = by + 3; fl.push(p); }
+  flAcc += dt; if (flAcc >= 0.03) { flAcc = 0; p = fl.length >= 30 ? fl.shift() : { x: 0, y: 0 }; p.x = bx - 17; p.y = by + 3; fl.push(p); }
 }
 function drawFlags() {   // a thin string drawn as one smooth curve, with small pennants that stream back and flutter more toward the loose end
   var n = fl.length, i, c = 0, p, a, b, tx, ty, tl, w, d, calm = calmOn();
@@ -3183,8 +3223,8 @@ function drawFlags() {   // a thin string drawn as one smooth curve, with small 
   ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(fl[n - 1].x, fl[n - 1].y);
   for (i = n - 2; i > 0; i--) ctx.quadraticCurveTo(fl[i].x, fl[i].y, (fl[i].x + fl[i - 1].x) / 2, (fl[i].y + fl[i - 1].y) / 2);
   ctx.lineTo(fl[0].x, fl[0].y); ctx.strokeStyle = INK; ctx.lineWidth = 2.6; ctx.stroke(); ctx.strokeStyle = '#fffdf6'; ctx.lineWidth = 1; ctx.stroke();
-  for (i = n - 4; i >= 3; i -= 5, c++) {
-    p = fl[i]; a = fl[i + 1]; b = fl[i - 1]; tx = a.x - b.x; ty = a.y - b.y; tl = Math.sqrt(tx * tx + ty * ty) || 1; tx = tx / tl * 3.8; ty = ty / tl * 3.8;
+  for (var ii = n - 4; ii >= 3; ii -= 2.5, c++) {
+    i = Math.round(ii); p = fl[i]; a = fl[i + 1]; b = fl[i - 1]; tx = a.x - b.x; ty = a.y - b.y; tl = Math.sqrt(tx * tx + ty * ty) || 1; tx = tx / tl * 3.8; ty = ty / tl * 3.8;
     d = (n - 1 - i) / n; w = calm ? 0 : Math.sin(time * 11 + c * 1.7) * (0.8 + 3 * d);
     ctx.beginPath(); ctx.moveTo(p.x + tx, p.y + ty);
     ctx.quadraticCurveTo(p.x - 1 + w * 0.2, p.y + 3.8 + w * 0.5, p.x - 8.2 + w * 0.3, p.y + 5.4 + w);
@@ -3289,7 +3329,7 @@ function balResultCard() {
 /* --- Prince Chimp gives up his balloons (the first time the game is beaten) --- */
 var GIFT_LINES = ['Fine! You win, Banana!', 'Take every balloon I own... and please leave me alone!'];
 var giftK = 0, giftTitle = false, CROWN_LINES = ['Fair and square, Banana!', 'Take my crown...', 'it looks better on you!'];
-function startGift(k) { giftK = k || 0; state = 'gift'; giftT = 0; giftS = 0; giftSt = 0; setBar(false); ART.bal.warm(); }
+function startGift(k, toTitle) { giftK = k || 0; giftTitle = !!toTitle; state = 'gift'; giftT = 0; giftS = 0; giftSt = 0; setBar(false); ART.bal.warm(); }
 function giftTap() { if ((giftS === 1 || giftS === 2) && giftSt > 0.45) { giftS++; giftSt = 0; } }
 function giftUpdate(dt) {
   giftT += dt; giftSt += dt;
@@ -3526,6 +3566,49 @@ function drawProgress() {   // ten pips for the ten gates of the stage, then "n 
   if (rec > 0) t += score > rec ? '  -  new best!' : '  -  best ' + rec;
   outlined(t, W / 2, 131, 14, rec > 0 && score > rec ? '#ffd93b' : '#ffffff');
 }
+var TESTFILE = false;   // the tester build flips this to true: it shows a TEST FILE badge, the player build never does
+var XSHORT = { practice: 'Practice Navy', wshield: 'Wafer shield', rope: 'Rope cutter', superleap: 'Super Leap' };
+var XCHIP = { roomy: ['R', '#7be07b'], gentle: ['G', '#6ec6ff'], shield: ['B', '#ff6b81'], magnet: ['M', '#b45cff'], sweet: ['P', '#ffd93b'], dare: ['D', '#ff8a1f'], golden: ['$', '#f2b81f'], wind: ['W', '#4ad6c8'] };   // the letters of the small row shown while flying (Chimp's Navy extras only appear on the pause list)
+function extrasList() {   // everything switched on for this run, as [text, color] lines for the pause list
+  var L = [], i, u, l, t;
+  for (i = 0; i < UPS.length; i++) {
+    u = UPS[i]; l = lvl(u.id); if (!l) continue;
+    t = (XSHORT[u.id] || u.name) + (u.costs.length > 1 ? ' ' + l : '');
+    if (u.id === 'shield' && state !== 'mini') t += ' (' + shield + ' left)';
+    if (u.id === 'wind' && state !== 'mini') t += windUsed ? ' (used)' : ' (ready)';
+    L.push([t, '#ffffff']);
+  }
+  L.push(['Speed ' + spdPct() + '%', spdPct() === 100 ? '#cfe6ff' : '#ffd93b']);
+  if (save.stats.plus > 0) L.push(['Victory bonus +' + Math.round((plusK() - 1) * 100) + '%', '#ffd93b']);
+  if (runChal) for (i = 0; i < CHAL.length; i++) if (CHAL[i][0] === runChal) L.push(['Challenge: ' + CHAL[i][1], '#ff9ac0']);
+  if (runFight) L.push(['Fight: ' + FIGHTS[runFight - 1][0], '#ff9ac0']);
+  return L;
+}
+function drawExtrasCard() {   // the list on the pause screens, in two columns under the buttons
+  var L = extrasList(), n = L.length, rows = Math.ceil(n / 2), y0 = 488, rh = Math.min(15, (H - 40 - y0) / rows), i, c, x, y;
+  ctx.fillStyle = 'rgba(40,28,60,0.55)'; rrect(14, y0 - 32, W - 28, 24 + rows * rh + 12, 14); ctx.fill();
+  outlined('What you have switched on', W / 2, y0 - 16, 14, '#ffd93b');
+  for (i = 0; i < n; i++) { c = i < rows ? 0 : 1; x = c ? 190 : 28; y = y0 + 6 + (i - c * rows) * rh; outlined(L[i][0], x, y, 12, L[i][1], 'left'); }
+  if (TESTFILE) testBadge();
+}
+function testBadge() { ctx.globalAlpha = 0.9; ctx.lineWidth = 2; ctx.strokeStyle = INK; rrect(W - 92, H - 26, 84, 20, 8); ctx.fillStyle = '#e22a40'; ctx.fill(); ctx.stroke(); ctx.globalAlpha = 1; outlined('TEST FILE', W - 50, H - 15, 12, '#ffffff'); }
+function drawExtrasRow() {   // tiny badges while flying: a letter per upgrade, its level as pips, dim when spent
+  var A = [], i, id, l, x, n, j, c, dim;
+  for (id in XCHIP) { l = lvl(id); if (l) A.push(id); }
+  var sp = spdPct() !== 100; n = A.length + (sp ? 1 : 0);
+  if (n) {
+    x = W / 2 - (n - 1) * 10; ctx.globalAlpha = 0.72;
+    for (i = 0; i < A.length; i++, x += 20) {
+      id = A[i]; l = lvl(id); c = XCHIP[id]; dim = (id === 'shield' && !shield) || (id === 'wind' && windUsed);
+      ctx.globalAlpha = dim ? 0.3 : 0.78; ctx.lineWidth = 2; ctx.strokeStyle = INK; rrect(x - 8, 144, 16, 16, 5); ctx.fillStyle = c[1]; ctx.fill(); ctx.stroke();
+      outlined(c[0], x, 153, 11, '#ffffff');
+      for (j = 0; j < l; j++) { ctx.beginPath(); ctx.arc(x - (l - 1) * 2.5 + j * 5, 166, 2, 0, 7); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = INK; ctx.stroke(); }
+    }
+    if (sp) { ctx.globalAlpha = 0.78; outlined(spdPct() + '%', x, 153, 11, '#ffd93b'); }
+    ctx.globalAlpha = 1;
+  }
+  if (TESTFILE) testBadge();
+}
 function drawTaps() {   // a thin ring where a tap landed, so a tap is always seen: dim when the game could not use it yet
   for (var i = 0; i < tapFx.length; i++) { var q = tapFx[i], f = q.t / 0.4; ctx.globalAlpha = (q.ign ? 0.32 : 0.7) * (1 - f); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3 * (1 - f) + 1; ctx.beginPath(); ctx.arc(q.x, q.y, 8 + 26 * f, 0, 7); ctx.stroke(); }
   ctx.globalAlpha = 1;
@@ -3737,7 +3820,7 @@ function render() {
       drawTapIcon(hx(24), 58); outlinedC(String(runFlaps), hx(42), 59, 20, '#ffffff', ha);   // taps this run
       if (streak >= 2) outlinedC('x' + streak + ' perfect', hx(14), 86, 16, '#ffd93b', ha);
     }
-    if (state === 'play' || state === 'paused') { drawPauseBtn(PB, .5); if (BAL) drawBalHud(); else if (FT && FT.ph !== 'wait') drawFtHud(); else drawProgress(); }   // the pause button, and how far along the stage is
+    if (state === 'play' || state === 'paused') { drawPauseBtn(PB, .5); if (BAL) drawBalHud(); else if (FT && FT.ph !== 'wait') drawFtHud(); else drawProgress(); if (state === 'play') drawExtrasRow(); }   // the pause button, and how far along the stage is
     lap('hud');
   }
   if (state === 'title') {
@@ -3759,7 +3842,7 @@ function render() {
     if (runChal) outlined('Challenge: ' + CHAL[chalIdx() - 1][1], W / 2, 146, 17, '#ffd93b');
   } else if (state === 'paused') {
     if (resT >= 0) { ctx.fillStyle = 'rgba(58,42,77,0.18)'; ctx.fillRect(0, 0, W, H); drawResume(); }
-    else { ctx.fillStyle = 'rgba(58,42,77,0.35)'; ctx.fillRect(0, 0, W, H); outlined('Paused', W / 2, 270, 44, '#ffd93b'); outlined('Tap to continue', W / 2, 330, 24, '#ffffff'); mgBtn(PS_BT, 'Settings', '#4a9bd8'); padLine(); if (pracN) mgBtn(MG_BT, 'Back to title', '#8a6cd8'); else outlined('(the P key pauses too)', W / 2, 366, 15, '#ffffff'); }
+    else { ctx.fillStyle = 'rgba(58,42,77,0.35)'; ctx.fillRect(0, 0, W, H); outlined('Paused', W / 2, 270, 44, '#ffd93b'); outlined('Tap to continue', W / 2, 330, 24, '#ffffff'); mgBtn(PS_BT, 'Settings', '#4a9bd8'); padLine(); if (pracN) mgBtn(MG_BT, 'Back to title', '#8a6cd8'); else outlined('(the P key pauses too)', W / 2, 366, 15, '#ffffff'); drawExtrasCard(); }
   } else if (state === 'dead') {
     deadCard(clamp(deadT / 0.35, 0, 1));
   } else if (state === 'victory') {
