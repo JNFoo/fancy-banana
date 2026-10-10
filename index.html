@@ -526,12 +526,7 @@ function chimpDraw(g, mood) {
   if (cry) { ell(g, 0, 19.5, 9.5, 7); fb(g, '#5a1620', O, 2); ell(g, 0, 23, 5.4, 3); fb(g, '#ff7f95', null); rr(g, -5.5, 13, 11, 3.2, 1.4); fb(g, '#ffffff', O, 1); }
   else { g.strokeStyle = O; g.lineWidth = 2.4; g.beginPath(); if (mood) { g.moveTo(-9, 21); g.quadraticCurveTo(0, 15, 9, 21); } else { g.moveTo(-9, 17); g.quadraticCurveTo(0, 22, 10, 14); } g.stroke(); }
   g.fillStyle = 'rgba(255,110,140,.35)'; ell(g, -19, 13, 4.4, 2.6); g.fill(); ell(g, 19, 13, 4.4, 2.6); g.fill();
-  g.save(); g.rotate(-.12);                                                                                                                                 // crown
-  g.beginPath(); g.moveTo(-17, -22); g.lineTo(-19, -40); g.lineTo(-9, -31); g.lineTo(0, -44); g.lineTo(9, -31); g.lineTo(19, -40); g.lineTo(17, -22); g.closePath(); fb(g, gold(g, -44, -22), O, lw);
-  rr(g, -17, -26, 34, 6.4, 2.4); fb(g, '#f0b83a', O, lw * .7);
-  g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.moveTo(-14, -26); g.lineTo(-15.4, -35); g.lineTo(-11, -30.4); g.closePath(); g.fill();
-  circ(g, 0, -37, 2.8); fb(g, '#ff4a6a', O, 1.1); circ(g, -17, -34, 2.2); fb(g, '#4fb8ff', O, 1); circ(g, 17, -34, 2.2); fb(g, '#4fe0a0', O, 1);
-  g.restore();
+  g.save(); g.translate(0, -19); g.rotate(-.12); crownDraw(g, .94); g.restore();   /* the 3D crown */
 }
 function chimpPic(s, mood) {
   var key = (mood || 0) + '|' + s.toFixed(2), p = CHP[key];
@@ -542,12 +537,34 @@ function chimp(g, cx, cy, s, mood) { put(g, chimpPic(s, mood).c, cx - 52 * s, cy
 
 /* Prince Chimp's fights (build 4): the four bosses, a gold crown, and the things they throw. Each picture is built once, then stamped. They face left. */
 var BOSSP = {}, FXP = {};
-function crownDraw(g, sc) {   // a small gold crown, its band centered on (0, 0), the points rising up
-  g.save(); g.scale(sc, sc); g.lineJoin = 'round';
-  g.beginPath(); g.moveTo(-17, 0); g.lineTo(-19, -18); g.lineTo(-9, -9); g.lineTo(0, -22); g.lineTo(9, -9); g.lineTo(19, -18); g.lineTo(17, 0); g.closePath(); fs(g, gold(g, -22, 0), OUTK, 2.4);
-  rr(g, -17, -3.5, 34, 6.4, 2.4); fs(g, '#f0b83a', OUTK, 2);
-  circ(g, 0, -13, 3); fs(g, '#ff4a6a', OUTK, 1.2); circ(g, -14, -9, 2.3); fs(g, '#4fb8ff', OUTK, 1.1); circ(g, 14, -9, 2.3); fs(g, '#4fe0a0', OUTK, 1.1);
-  g.restore();
+var CRP = null, GOLDM = -1;
+function goldMat() { if (GOLDM < 0) { RAMP.push([[0, 104, 58, 6], [.32, 206, 138, 20], [.6, 250, 196, 58], [.84, 255, 228, 122], [1, 255, 250, 206]]); LUT = null; GOLDM = RAMP.length - 1; } return GOLDM; }   // polished gold: deep amber in the shade, pale cream on the glints
+function crownWall(R0, R1, y0, hb, hp, inv) {   // the crown's wall: a ring of radius R0 at the bottom edge y0 flaring to R1, with five points (hp tall) rising from the band height hb
+  return function (u, v) {
+    var th = v * PI2, f = (th - Math.PI / 2) / (PI2 / 5), pk = 1 - Math.abs(f - Math.round(f)) * 2, H = hb + hp * pk, h = u * H, R = R0 + (R1 - R0) * (h / (hb + hp)), c = Math.cos(th), sn = Math.sin(th), q = inv ? -1 : 1;
+    return { x: R * c, y: y0 - h, z: R * sn, nx: c * q, ny: .22 * q, nz: sn * q };
+  };
+}
+function crownPic() {   // a real 3D crown: polished gold band and five points, pearl tips, a red velvet cap inside, and ruby, sapphire and emerald on the band. Built once per art scale.
+  if (CRP) return CRP;
+  var m = meshPic(64, 58, 1.7, function (Rr, s) {
+    var ox = 32 * s, oy = 37 * s, ph = -.2, gm = goldMat(), i, a, R = 16.5, jw = [[Math.PI / 2, 3.7, '#e8143c'], [Math.PI / 2 - 1.2566, 2.9, '#2f7bff'], [Math.PI / 2 + 1.2566, 2.9, '#1fc46a']];
+    meshNow(Rr, ballFn(0, -9, 0, R - 2.2, 8, R - 2.2), 14, 20, s, ox, oy, matFor('#b01830'), null, ph);                       // the velvet cap
+    meshNow(Rr, crownWall(R - 1.4, R - 3.2, 4, 8, 0, true), 2, 40, s, ox, oy, matFor('#9a6414'), null, ph);                      // inside of the band
+    meshNow(Rr, crownWall(R - 2, R - 4.4, -4, 7, 17, true), 2, 80, s, ox, oy, matFor('#a8741a'), null, ph);                      // inside of the points
+    meshNow(Rr, crownWall(R + .6, R + .6, 4, 8, 0, false), 2, 40, s, ox, oy, gm, null, ph);                                       // the band
+    meshNow(Rr, crownWall(R, R + 1.2, -4, 7, 17, false), 2, 80, s, ox, oy, gm, null, ph);                                        // the five points
+    for (i = 0; i < 5; i++) { a = Math.PI / 2 + i * PI2 / 5; meshNow(Rr, ballFn((R + .4) * Math.cos(a), -28.6, (R + .4) * Math.sin(a), 2.5, 2.5, 2.5), 8, 12, s, ox, oy, matFor('#fff4dc'), null, ph); }   // pearls on the tips
+    for (i = 0; i < 3; i++) { a = jw[i][0]; meshNow(Rr, ballFn((R + 1.3) * Math.cos(a), 0, (R + 1.3) * Math.sin(a), jw[i][1], jw[i][1] * 1.08, jw[i][1]), 10, 14, s, ox, oy, matFor(jw[i][2]), null, ph); }
+    meshNow(Rr, rodFn(-R - .4, 4.6, 1, R + .4, 4.6, 1, 1.1, 1.1), 2, 14, s, ox, oy, matFor('#fff4dc'), null, ph);
+  });
+  var g = m.g;
+  g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.moveTo(24, 20); g.lineTo(25.1, 22.9); g.lineTo(28, 24); g.lineTo(25.1, 25.1); g.lineTo(24, 28); g.lineTo(22.9, 25.1); g.lineTo(20, 24); g.lineTo(22.9, 22.9); g.closePath(); g.fill();   // a glint on the front point
+  g.fillStyle = 'rgba(255,255,255,.7)'; ell(g, 29.6, 35.4, 1.5, .9, -.5); g.fill();                                              // the ruby's shine
+  return (CRP = m);
+}
+function crownDraw(g, sc) {   // the crown, its band centered on (0, 0), the points rising up (sc 1 = about 38 units wide)
+  var p = crownPic(); g.drawImage(p.c, -32 * sc, -37 * sc, 64 * sc, 58 * sc);
 }
 function chimpAt(g, x, y, s, mood) { g.save(); g.translate(x, y); g.scale(s, s); chimpDraw(g, mood); g.restore(); }
 function fur(g, x, y, w, h, n, seed, col) {   // short fur tufts scattered inside an ellipse: fine strokes, a little darker than the coat
@@ -1780,7 +1797,7 @@ function mgsea(g, p0, p1) {
 }
 function mgwater(g, off) { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } var y = ((off % 320) + 320) % 320 - 320; for (; y < 640; y += 320) put(g, MGW.c, 0, y); }
 
-function init(k) { K = k; CHP = {}; BALP = {}; WAFP = null; PARTY = null; BALW = false; SET = {}; PLAN = {}; QUEUE = []; MGQ = []; TASKQ = []; MGC = {}; MGW = null; COIN = null; initBanana(); coinFrames(); [[.78, 0], [.42, 1], [.56, 2], [1.15, 2]].forEach(function (c) { TASKQ.push(function () { chimpPic(c[0], c[1]); }); }); Object.keys(TEXF).forEach(function (k) { TASKQ.push(function () { tex3(k); }); }); }   // the chimp pictures for the Oops and stage cards are built early, a few ms per frame
+function init(k) { K = k; CRP = null; CHP = {}; BALP = {}; WAFP = null; PARTY = null; BALW = false; SET = {}; PLAN = {}; QUEUE = []; MGQ = []; TASKQ = []; MGC = {}; MGW = null; COIN = null; initBanana(); coinFrames(); [[.78, 0], [.42, 1], [.56, 2], [1.15, 2]].forEach(function (c) { TASKQ.push(function () { chimpPic(c[0], c[1]); }); }); Object.keys(TEXF).forEach(function (k) { TASKQ.push(function () { tex3(k); }); }); }   // the chimp pictures for the Oops and stage cards are built early, a few ms per frame
 function keep(list) { for (var key in SET) if (list.indexOf(+key) < 0) delete SET[key]; }
 
 /* ---------- the launch track: a huge loop-de-loop, drawn live as vectors (so it is big and sharp, and costs no memory) ----------
@@ -1935,7 +1952,7 @@ return { fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: cr
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1154';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1213';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -2520,7 +2537,7 @@ function fightNext() { if (!secretsOn()) return 0; for (var n = 1; n <= 4; n++) 
 function fightOn() { return !!save.unlocks.pcf && fightNext() > 0; }
 function wearsCrown() { var u = save.unlocks; return !!u.crown && !u.crownOff; }
 function fightDue() { var gs = stageOfGate(spawned); return themeOf(gs) === CFG.finalTheme && spawned === gateStart(gs + 1) - 2; }
-function ftNew() { return { n: runFight, ph: 'wait', r: 0, rt: 0, t: 0, hold: 0, nx: 0, list: [], hits: 0, by: runFight === 3 ? GROUND_Y - 92 : 300, pc: 0, slide: 0, shake: 0, hop: 0, kick: 0 }; }
+function ftNew() { return { n: runFight, ph: 'wait', r: 0, rt: 0, t: 0, hold: 0, nx: 0, list: [], hits: 0, cc: 0, h0: 0, c0: 0, blast: null, by: runFight === 3 ? GROUND_Y - 92 : 300, pc: 0, slide: 0, shake: 0, hop: 0, kick: 0 }; }
 /* Where each boss lets its attacks out, relative to its center: the cannon barrel, the robot's arm and chest lamp, the gorilla's raised fist and feet, the Prince's scepter orb and hand. Nothing ever appears in mid air: an attack starts here, and the boss first lines itself up with where the attack will fly. */
 var FT_MZ = { 1: { waf: [-62, 25] }, 2: { fist: [-52, 30], lane: [-22, 28] }, 3: { coco: [-62, -26], wave: [-30, 90] }, 4: { waf: [-50, -36], lane: [-50, -36], coco: [-56, 12] } };
 var FT_BMIN = 150, FT_BMAX = GROUND_Y - 95;
@@ -2556,17 +2573,31 @@ function ftHit() {
   var F = FT; if (!F || invuln > 0 || F.hold > 0 || F.ph !== 'round') return false;
   if (shield > 0) { shield--; boing(-CFG.bounceVy); F.list.length = 0; return true; }
   runHurts++; F.hits++; F.list.length = 0; F.ph = 'retry'; F.hold = 1.7; F.shake = 0.4; invuln = 2.2; hurtT = 0.9; vy = -180; fallD = 0; streak = 0;
-  burst(bx, by, 26, ['#ff6b81', '#ffffff', '#ffd93b'], 260, 240); pop('Oops! Again!', '#ff6b81', 26); return true;
+  burst(bx, by, 26, ['#ff6b81', '#ffffff', '#ffd93b'], 260, 240); burst(bx, by, 14, ['#ffffff', '#fff2a0'], 380, 60); if (!calmOn()) { flashT = 0.14; punchT = CFG.punchSecs * 0.6; } pop('Oops! Again!', '#ff6b81', 26); return true;
+}
+var FT_CC = ['Close call!', 'So close!', 'Whoa, nice!', 'Phew!'], FT_WORDS = [['Nice job!', 'Way to go!', 'Great dodging!', 'Keep it up!', 'You did it!'], ['Flawless!', 'Perfect dodging!', 'Super smooth!', 'Banana-tastic!'], ['Boss beaten!', 'Champion!', 'Awesome!']];
+function ftCC(F, a) {   // a shot skimmed past Fancy without touching him: a cheer, a little spray of sparkles, and a count for the round
+  if (a.cc) return; a.cc = 1; F.cc++; pop(FT_CC[Math.floor(rng() * FT_CC.length)], '#7ad8ff', 24); burst(bx + 12, by, 16, ['#7ad8ff', '#ffffff', '#ffd93b'], 210, 200);
+}
+function ftBlast(F, last) {   // a round survived: a big encouraging word in the middle of the screen, with confetti
+  var flawless = F.hits === F.h0, pool = FT_WORDS[last ? 2 : flawless ? 1 : 0], cc = F.cc - F.c0, sub = (last ? 'Round 3' : 'Round ' + F.r) + ' cleared' + (flawless ? ' - no hits!' : '!') + (cc >= 2 ? '  ' + cc + ' close calls' : '');
+  F.blast = { w: pool[Math.floor(rng() * pool.length)], s: sub, t: 0, f: flawless || last, c: last ? '#ffd93b' : flawless ? '#7be07b' : '#ffd93b' };
+  burst(W / 2, 250, flawless || last ? 44 : 28, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 320, 330);
 }
 function ftStep(dt, sp) {
-  var F = FT, i, a, p, K = relaxK(), goal = F.n === 3 ? GROUND_Y - 92 : clamp(by, FT_BMIN, FT_BMAX), best = 99, dx, dy, rr2, rem, dd, spd;
+  var F = FT, i, a, p, an, K = relaxK(), goal = F.n === 3 ? GROUND_Y - 92 : clamp(by, FT_BMIN, FT_BMAX), best = 99, dx, dy, rr2, rem, dd, spd;
   if (F.shake > 0) F.shake -= dt;
   if (F.kick > 0) F.kick = Math.max(0, F.kick - dt * 7);
+  if (F.blast) { F.blast.t += dt; if (F.blast.t > 2.1) F.blast = null; }
   if (F.ph === 'wait') { if (!obs.length) { F.ph = 'intro'; rsgT = 0; rsgGo = false; vy = 0; celT = 0; spinT = 0; lastAfter = 0; } return; }
   F.slide = Math.min(1, F.slide + dt);
+  if (!calmOn()) {   // little extras: dust trailing the arriving boss, sparks falling from the robot's boots
+    if (F.slide < 1 && frng() < 0.5) { p = ftBoss(F); fxAdd(p.x + 50, p.y + 30 + frng() * 40, 40 + frng() * 50, (frng() - 0.5) * 30, 0.5, '#ffffff', 3 + frng() * 3, false, 0); }
+    if (F.n === 2 && F.slide >= 1 && F.ph !== 'won' && frng() < 0.55) { p = ftBoss(F); fxAdd(p.x + (frng() < 0.5 ? -11 : 21) + (frng() - 0.5) * 6, p.y + 92, (frng() - 0.5) * 50, 110 + frng() * 120, 0.35 + frng() * 0.3, frng() < 0.5 ? '#ffb347' : '#fff2a0', 2 + frng() * 2, true, 240); }
+  }
   if (F.slide >= 1 && !F.landed) { F.landed = 1; p = ftBoss(F); burst(p.x, GROUND_Y - 8, 14, ['#e8d0a0', '#ffffff'], 170, 60); if (!calmOn()) punchT = CFG.punchSecs * 0.35; }   // the boss arrives with a thump
-  if (F.hold > 0 && F.ph !== 'won') { F.hold -= dt; if (F.hold <= 0) { F.hold = 0; F.ph = 'round'; F.rt = 0; F.nx = 0.5; grace = 0.25; vy = 0; flapAnim = 0.18; pop('Go!', '#7be07b', 28); } }
-  if (F.ph === 'intro') { if (!rsgHold()) { F.ph = 'round'; F.rt = 0; F.nx = 0.5; } }
+  if (F.hold > 0 && F.ph !== 'won') { F.hold -= dt; if (F.hold <= 0) { F.hold = 0; F.ph = 'round'; F.rt = 0; F.nx = 0.5; F.h0 = F.hits; F.c0 = F.cc; grace = 0.25; vy = 0; flapAnim = 0.18; pop('Go!', '#7be07b', 28); } }
+  if (F.ph === 'intro') { if (!rsgHold()) { F.ph = 'round'; F.rt = 0; F.nx = 0.5; F.h0 = F.hits; F.c0 = F.cc; } }
   F.hop = 0;
   for (i = 0; i < F.list.length; i++) {   // the boss slides to the height of its next shot, and hops before a stomp
     a = F.list[i];
@@ -2575,7 +2606,8 @@ function ftStep(dt, sp) {
   }
   dd = goal - F.by; spd = best < 99 ? clamp(Math.abs(dd) * 8, 80, 440) : 130; F.by += clamp(dd, -spd * dt, spd * dt);
   if (F.ph === 'won') {
-    F.t += dt; if (!calmOn() && F.t < 2.4 && Math.floor(F.t * 6) !== Math.floor((F.t - dt) * 6)) { p = ftBoss(F); burst(p.x + (rng() - 0.5) * 80, p.y + (rng() - 0.5) * 100, 8, ['#ffd93b', '#ff8a3c', '#ffffff'], 200, 120); }
+    F.t += dt; if (!calmOn() && F.t > 1.4 && frng() < 0.8) { p = ftBoss(F); an = F.t - 1.4; fxAdd(p.x + an * an * 80, p.y - an * an * 70 + an * 20, (frng() - 0.5) * 70, 30 + frng() * 70, 0.7, ['#ffd93b', '#ffffff', '#ff9ac0'][Math.floor(frng() * 3)], 3 + frng() * 3, true, 90); }
+    if (!calmOn() && F.t < 2.4 && Math.floor(F.t * 6) !== Math.floor((F.t - dt) * 6)) { p = ftBoss(F); burst(p.x + (rng() - 0.5) * 80, p.y + (rng() - 0.5) * 100, 8, ['#ffd93b', '#ff8a3c', '#ffffff'], 200, 120); }
     if (F.t >= 3.2) ftFinish();
     return;
   }
@@ -2596,18 +2628,23 @@ function ftStep(dt, sp) {
       else if (a.k === 'lane') a.y = p.y + a.oy;
       else if (a.k === 'wave') { a.x = p.x + a.ox; burst(a.x, GROUND_Y - 6, 10, ['#e8d0a0', '#ffffff'], 160, 40); if (!calmOn()) punchT = CFG.punchSecs * 0.2; }
     }
-    if (a.k === 'lane') { a.act -= dt; if (invuln <= 0 && Math.abs(by - a.y) < 30 && ftHit()) break; if (a.act <= 0) F.list.splice(i, 1); continue; }
-    a.x += a.vx * dt;
+    if (a.k === 'lane') { a.act -= dt; if (invuln <= 0) { dy = Math.abs(by - a.y); a.near = Math.min(a.near === undefined ? 99 : a.near, dy); if (dy < 30 && ftHit()) break; } if (a.act <= 0) { if (a.near >= 30 && a.near < 44 + 3 * lvl('dare')) ftCC(F, a); F.list.splice(i, 1); } continue; }
+    a.px = a.x; a.x += a.vx * dt;
     if (a.k === 'coco') { a.y += a.vy * dt; a.vy += a.g * dt; if (a.y > GROUND_Y - 10) { burst(a.x, GROUND_Y - 6, 8, ['#a8744c', '#e8d0a0'], 120, 100); F.list.splice(i, 1); continue; } }
     if (a.x < -50) { F.list.splice(i, 1); continue; }
     if (invuln > 0) continue;
-    if (a.k === 'wave') { if (by + CFG.bananaR - 2 > GROUND_Y - 46 && Math.abs(a.x - bx) < 20 + CFG.bananaR && ftHit()) break; }
-    else { dx = a.x - bx; dy = a.y - by; rr2 = a.r + CFG.bananaR - 3; if (dx * dx + dy * dy < rr2 * rr2 && ftHit()) break; }
+    if (a.k === 'wave') {
+      if (by + CFG.bananaR - 2 > GROUND_Y - 46 && Math.abs(a.x - bx) < 20 + CFG.bananaR && ftHit()) break;
+      if (Math.abs(a.x - bx) < 20 + CFG.bananaR) a.near = Math.min(a.near === undefined ? 99 : a.near, GROUND_Y - 46 - (by + CFG.bananaR - 2)); else if (a.x < bx && a.near > 0 && a.near < 18 + 3 * lvl('dare')) ftCC(F, a);
+    } else {
+      dx = a.x - bx; dy = a.y - by; rr2 = a.r + CFG.bananaR - 3; if (dx * dx + dy * dy < rr2 * rr2 && ftHit()) break;
+      if (!a.cc && a.px >= bx && a.x < bx && Math.abs(dy) < rr2 + 16 + 3 * lvl('dare')) ftCC(F, a);
+    }
   }
   if (F.ph === 'round' && F.rt >= FT_ROUND && !F.list.length) {
-    if (F.r < 2) { F.r++; F.ph = 'between'; F.hold = 1.5; invuln = Math.max(invuln, 1.7); pop('Round ' + (F.r + 1) + '!', '#ffd93b', 32); burst(bx + 40, by, 20, ['#ffd93b', '#ffffff'], 240, 200); }
+    if (F.r < 2) { F.r++; F.ph = 'between'; F.hold = 1.5; invuln = Math.max(invuln, 1.7); ftBlast(F, false); burst(bx + 40, by, 20, ['#ffd93b', '#ffffff'], 240, 200); }
     else {
-      F.ph = 'won'; F.t = 0; F.hold = 99; invuln = 99; F.list.length = 0; var n = F.n, bonus = F.hits ? 0 : 15;
+      F.ph = 'won'; F.t = 0; F.hold = 99; invuln = 99; F.list.length = 0; ftBlast(F, true); celT = CFG.celSecs; var n = F.n, bonus = F.hits ? 0 : 15;
       giveCoins(25 + bonus, bx + 20, by); burst(bx + 40, by, 40, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 320, 360);
       if (!pracN) { save.unlocks['pc' + n] = 1; persist(); }
       fightNew = FIGHTS[n - 1][0] + ' beaten!' + (n < 4 ? ' Crown piece ' + n + ' of 3.' : ' The Crown is yours soon...') + (bonus ? ' No hits: +15 bonus.' : '');
@@ -2636,6 +2673,19 @@ function drawBalloonsWagon(F, p, sh, wt, cl) {   // the wagon hangs from three o
     ART.bal.draw(ctx, b[2], x, y, 1.08, 1.08, true);
   }
 }
+function drawFlare(x, y, len, cl) {   // a rocket flame under a boot: a hot glow, an orange teardrop, a yellow body, a white core and two bright shock diamonds; it flickers and breathes
+  var L = len + (cl ? 0 : Math.sin(time * 52 + x) * 4 + Math.sin(time * 31 + x * 2) * 2.5), w = 10 + (cl ? 0 : Math.sin(time * 40 + x) * 1.1), gr;
+  ctx.save();
+  gr = ctx.createRadialGradient(x, y + L * 0.38, 2, x, y + L * 0.38, 40); gr.addColorStop(0, 'rgba(255,170,60,0.5)'); gr.addColorStop(1, 'rgba(255,120,30,0)'); ctx.fillStyle = gr; ctx.fillRect(x - 42, y - 8, 84, L + 64);
+  gr = ctx.createLinearGradient(0, y, 0, y + L + 8); gr.addColorStop(0, '#ff7a1a'); gr.addColorStop(0.6, 'rgba(255,84,20,0.9)'); gr.addColorStop(1, 'rgba(255,60,20,0)');
+  ctx.fillStyle = gr; ctx.beginPath(); ctx.moveTo(x - w, y); ctx.bezierCurveTo(x - w * 1.1, y + L * 0.55, x - 2, y + L, x, y + L + 8); ctx.bezierCurveTo(x + 2, y + L, x + w * 1.1, y + L * 0.55, x + w, y); ctx.closePath(); ctx.fill();
+  gr = ctx.createLinearGradient(0, y, 0, y + L * 0.8); gr.addColorStop(0, '#ffe066'); gr.addColorStop(0.7, 'rgba(255,196,60,0.9)'); gr.addColorStop(1, 'rgba(255,170,40,0)'); ctx.fillStyle = gr;
+  ctx.beginPath(); ctx.moveTo(x - w * 0.62, y); ctx.bezierCurveTo(x - w * 0.7, y + L * 0.4, x - 1, y + L * 0.75, x, y + L * 0.82); ctx.bezierCurveTo(x + 1, y + L * 0.75, x + w * 0.7, y + L * 0.4, x + w * 0.62, y); ctx.closePath(); ctx.fill();
+  gr = ctx.createLinearGradient(0, y, 0, y + L * 0.5); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = gr;
+  ctx.beginPath(); ctx.moveTo(x - w * 0.3, y); ctx.quadraticCurveTo(x - 1, y + L * 0.34, x, y + L * 0.5); ctx.quadraticCurveTo(x + 1, y + L * 0.34, x + w * 0.3, y); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,230,0.75)'; ctx.beginPath(); ctx.ellipse(x, y + L * 0.36, w * 0.3, 2.6, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.ellipse(x, y + L * 0.62, w * 0.2, 2, 0, 0, 7); ctx.fill();
+  ctx.restore();
+}
 function drawFight() {
   var F = FT, p = ftBoss(F), i, a, f, g, sh = F.shake > 0 && !calmOn() ? Math.sin(time * 80) * 4 : 0, cl = calmOn(), al, ex, mx, my, fl;
   for (i = 0; i < F.list.length; i++) {   // warnings first, behind everything
@@ -2652,7 +2702,7 @@ function drawFight() {
     a = F.list[i]; if (!a.live || (a.k !== 'waf' && a.k !== 'fist') || a.x < p.x + a.ox - 46) continue;
     if (a.k === 'waf') ART.mg.draw(ctx, 'wafer', a.x, a.y, undefined, 1); else ART.fxs(ctx, 'fist', a.x, a.y, 0);
   }
-  if (F.n === 2 && F.ph !== 'won') { ctx.fillStyle = '#ffb347'; for (g = -11; g <= 21; g += 32) { fl = 12 + (cl ? 0 : Math.sin(time * 45 + g) * 4); ctx.beginPath(); ctx.ellipse(p.x + g, p.y + 80 + fl / 2, 6, fl / 2 + 3, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#fff2a0'; ctx.beginPath(); ctx.ellipse(p.x + g, p.y + 79 + fl / 3, 3, fl / 3 + 1, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#ffb347'; } }   // the robot hovers on rocket boots
+  if (F.n === 2 && F.ph !== 'won') { drawFlare(p.x - 11, p.y + 81, 38, cl); drawFlare(p.x + 21, p.y + 81, 38, cl); }   // the robot hovers on rocket boots
   var wt = F.ph === 'won' ? Math.max(0, F.t - 1.4) : 0, co = [[-2, -14, 0.62], [0, -30, 0.72], [34, -66, 0.46], [0, 0, 1.12]][F.n - 1];   // beaten: the boss spins away up and to the right, crying
   if (wt <= 0 || F.n === 1) {   // a soft spotlight behind the boss and its shadow on the floor: smaller and fainter the higher it hovers
     var hh = clamp((GROUND_Y - p.y) / 330, 0, 1), sa = (1 - hh * 0.75) * 0.3 * (wt > 0 ? 0 : 1);
@@ -2686,12 +2736,27 @@ function drawPieces(g, cx, cy, s) {   // the three crown pieces (lit once earned
     if (on) { g.beginPath(); g.arc(x, cy + 3 * s, 3.2 * s, 0, 7); g.fillStyle = ['#ff4a6a', '#4fb8ff', '#4fe0a0'][i]; g.fill(); g.lineWidth = 1.2; g.stroke(); }
   }
 }
-function drawFtHud() {
-  var F = FT, w = 170, x0 = W / 2 - w / 2, u = clamp((F.r * FT_ROUND + Math.min(F.rt, FT_ROUND)) / (3 * FT_ROUND), 0, 1);
+function drawBlast(F) {   // the encouraging word: it pops in with a bounce, sits with slowly turning rays behind it, then fades
+  var B = F.blast, t = B.t, cl = calmOn(), sc = cl ? 1 : easeOutBack(clamp(t / 0.4, 0, 1)), al = clamp((2.1 - t) / 0.5, 0, 1), i, an;
+  ctx.save(); ctx.translate(W / 2, 250); ctx.globalAlpha = al * 0.9;
+  if (!cl) { ctx.rotate(t * 0.5); ctx.fillStyle = B.f ? 'rgba(255,236,140,0.2)' : 'rgba(255,255,255,0.13)'; for (i = 0; i < 12; i++) { an = i * 0.5236; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, 220 * sc, an, an + 0.13); ctx.closePath(); ctx.fill(); } ctx.rotate(-t * 0.5); }
+  ctx.globalAlpha = al; ctx.scale(sc, sc); if (!cl) ctx.rotate(-0.07);
+  outlined(B.w, 0, 0, B.f ? 46 : 40, B.c, 'center', B.f ? 46 : 40); outlined(B.s, 0, 36, 17, '#ffffff', 'center', 17);
+  ctx.restore(); ctx.globalAlpha = 1;
+}
+function drawFtHud() {   // three round segments, each with a star at its end that lights when that round is survived
+  var F = FT, gap = 7, sw = 62, x0 = W / 2 - (3 * sw + 2 * gap) / 2, i, x, u, done, cur, sx, sy, j, an, rad;
+  if (F.blast) drawBlast(F);
   if (F.ph === 'intro') return;
-  ctx.lineWidth = 2.5; ctx.strokeStyle = INK; rrect(x0, 108, w, 11, 5.5); ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fill(); ctx.stroke();
-  if (u > 0 || F.ph === 'won') { rrect(x0 + 1, 109, Math.max(8, (w - 2) * (F.ph === 'won' ? 1 : u)), 9, 4.5); ctx.fillStyle = '#ff6b81'; ctx.fill(); }
-  outlined(FIGHTS[F.n - 1][0] + '  -  ' + (F.ph === 'won' ? 'Beaten!' : 'Round ' + (F.r + 1) + ' of 3'), W / 2, 133, 14, '#ffffff');
+  for (i = 0; i < 3; i++) {
+    x = x0 + i * (sw + gap); done = F.ph === 'won' || i < F.r; cur = i === F.r && !done; u = done ? 1 : cur ? clamp(F.rt / FT_ROUND, 0, 1) : 0;
+    if (F.ph === 'between' || F.ph === 'retry' || F.ph === 'intro') u = cur ? 0 : u;
+    ctx.lineWidth = 2.5; ctx.strokeStyle = INK; rrect(x, 108, sw, 12, 6); ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fill(); ctx.stroke();
+    if (u > 0) { rrect(x + 1, 109, Math.max(10, (sw - 2) * u), 10, 5); ctx.fillStyle = done ? '#ffd93b' : '#ff6b81'; ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,0.45)'; rrect(x + 4, 110.5, Math.max(4, (sw - 8) * u), 2.6, 1.3); ctx.fill(); }
+    sx = x + sw - 1; sy = 114; rad = done ? 8 : 6; ctx.beginPath(); for (j = 0; j < 10; j++) { an = -1.5708 + j * 0.6283; ctx.lineTo(sx + Math.cos(an) * (j % 2 ? rad * 0.46 : rad), sy + Math.sin(an) * (j % 2 ? rad * 0.46 : rad)); } ctx.closePath();
+    ctx.fillStyle = done ? '#ffd93b' : 'rgba(255,255,255,0.55)'; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = INK; ctx.stroke();
+  }
+  outlined(FIGHTS[F.n - 1][0] + '  -  ' + (F.ph === 'won' ? 'Beaten!' : 'Round ' + (F.r + 1) + ' of 3'), W / 2, 136, 14, '#ffffff');
 }
 function ftCards() {
   var F = FT, t = rsgT, a, n = F.n;
