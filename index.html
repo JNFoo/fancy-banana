@@ -1570,7 +1570,7 @@ function planFor(th) {
   layerSteps('top', D.topP, D.topY, D.topH, D.top, D.wash[3]);
   if (JG) {
     chunkStrip(JGW, 0, 72, D.ground, 0, 0, 0, function (L) { s.ground = L; }).forEach(function (f) { st.push(f); });
-  } else st.push(function () { s.ground = mk(GP[th], 72); D.ground(s.ground.g, GP[th]); var g = s.ground.g, q = g.createLinearGradient(0, 0, 0, 72); g.save(); g.globalCompositeOperation = 'source-atop'; q.addColorStop(0, 'rgba(255,255,255,.34)'); q.addColorStop(.08, 'rgba(255,255,255,0)'); q.addColorStop(.55, 'rgba(60,30,90,0)'); q.addColorStop(1, 'rgba(60,30,90,.22)'); g.fillStyle = q; g.fillRect(0, 0, GP[th], 72); g.restore(); });   // the floor: a lit top edge and a deeper tone toward the bottom
+  } else st.push(function () { s.ground = mk(GP[th], 72); D.ground(s.ground.g, GP[th]); var g = s.ground.g, q = g.createLinearGradient(0, 0, 0, 72); g.save(); g.globalCompositeOperation = 'source-atop'; q.addColorStop(0, 'rgba(255,255,255,.34)'); q.addColorStop(.08, 'rgba(255,255,255,0)'); q.addColorStop(.55, 'rgba(60,30,90,0)'); q.addColorStop(1, 'rgba(60,30,90,.22)'); g.fillStyle = q; g.fillRect(0, 0, GP[th], 72); g.restore(); var gc = s.ground.c, ex = Math.ceil(K), gw = document.createElement('canvas'), wg; gw.width = gc.width + ex; gw.height = gc.height; wg = gw.getContext('2d', RF); wg.drawImage(gc, 0, 0); wg.drawImage(gc, 0, 0, ex, gc.height, gc.width, 0, ex, gc.height); s.ground.c = gw; });   // the floor: a lit top edge and a deeper tone toward the bottom; one picture-pixel of the next tile is added on the right, so the floor can slide by fractions of a pixel without a hairline between tiles
   var sc = st.length;   // everything above is scenery (what the title screen shows); the obstacle pieces below are only needed once a run starts
   for (side = 0; side < 2; side++) {
     for (v = 0; v < D.ts[side].nv; v++) (function (side, v) { st.push(slicer(function () { return boldG(OW, D.ts[side].h, function (g) { return D.tile(g, side, v); }, 0, th === 5 ? OLG : null); }, function (o) { cylShade(o); rimH(o); edgeRows(o); s.tiles[side][v] = o; })); })(side, v);
@@ -1626,6 +1626,8 @@ function pend(th, mg) {   // how many build steps are still waiting before theme
 function px(x) { return Math.round(x * K) / K; }
 /* Every cached picture is stamped at its own pixel size, on whole device pixels: a 1:1 copy. (Stretching a picture by even 0.1% makes Firefox resample it, which was 15x slower.) */
 function put(g, c, x, y) { g.drawImage(c, Math.round(x * K) / K, Math.round(y * K) / K, c.width / K, c.height / K); }
+function putX(g, c, x, y) { g.drawImage(c, x, Math.round(y * K) / K, c.width / K, c.height / K); }   // slides sideways by fractions of a pixel (so a gate glides instead of stepping), still on whole rows
+function putS(g, c, x, y) { g.drawImage(c, x, y, c.width / K, c.height / K); }   // a lone moving picture: any fraction, both ways
 function layer(g, L, off) { for (var x = px(-(off % L.P)); x < W; x += L.P) put(g, L.c, x, L.y); }
 function chunky(L) {   // cut a long picture into screen-wide pieces: stamping whole small pictures 1:1 is much cheaper in Firefox than copying a window out of a huge one
   var w = Math.round(W * K), n = Math.ceil(L.c.width / w), i, c, cg, out = [];
@@ -1657,7 +1659,7 @@ function chunkSteps(get, done) {   // the same cut as chunky(), one screen-wide 
 }
 function layerJ(g, L, off) { var o = Math.max(0, Math.min(off || 0, L.P - W)), k = Math.floor(o / W), x = px(-(o - k * W)); put(g, L.ch[k], x, L.y); if (L.ch[k + 1]) put(g, L.ch[k + 1], x + W, L.y); }   // the garden's long journey pictures
 function back(g, th, dist) { var s = scenery(th); put(g, s.sky.c, 0, 0); if (th === JT) { layerJ(g, s.far, dist * .27); layerJ(g, s.mid, dist * .56); layerJ(g, s.top, dist * .56); return; } layer(g, s.far, dist * .27); layer(g, s.mid, dist * .56); layer(g, s.top, dist * .56); }
-function ground(g, th, off) { var s = scenery(th), P = GP[th]; if (th === JT) { s.ground.y = GY; layerJ(g, s.ground, off); return; } for (var x = px(-(off % P)); x < W; x += P) put(g, s.ground.c, x, GY); }
+function ground(g, th, off) { var s = scenery(th), P = GP[th]; if (th === JT) { s.ground.y = GY; layerJ(g, s.ground, off); return; } for (var x = -(off % P); x < W; x += P) putX(g, s.ground.c, x, GY); }
 function edgeRows(o) {   // which pixel rows of a finished tile hold the picture (the first and the last): needed to close the one-pixel gaps that rounding can leave between stacked tiles
   var c = o.c, d = o.g.getImageData(0, 0, c.width, c.height).data, w0 = c.width, xs = [.35, .5, .65], i, y, x, a = c.height, b = -1;   // one read of the whole tile (each read can stall a phone's graphics chip), then look at three columns
   for (i = 0; i < xs.length; i++) {
@@ -1692,16 +1694,16 @@ function capFinish(o) {   // the glossy toy finish on an end piece: a warm shade
 function piece(g, s, D, th, side, x, edge, o, kind) {
   var t = D.ts[side], cp = s.caps[side][kind], ch = cp.h, ys = [], y, i, W2 = OW + PAD * 2, ov = D.ov || 6;   // ov: how far the pole runs in under the cap
   if (side) { for (y = edge + ch - ov; y < GY + 4; y += t.pitch) ys.push(y); } else { for (y = edge - ch + ov - t.h; y > -t.h - 2; y -= t.pitch) ys.push(y); }
-  var X = Math.round((x - PAD) * K), tl, sx = Math.round((x - PAD + 7) * K) / K;
+  var tl;
   for (i = 0; i < ys.length; i++) {   // first a copy of each tile's last picture row, one row further down: it shows only where rounding left a gap between two tiles (the next tile is drawn over it otherwise)
     tl = s.tiles[side][(o.col + i) % t.nv];
-    if (tl.r1 >= 0) g.drawImage(tl.c, 0, tl.r1, tl.c.width, 1, X / K, (Math.round((ys[i] - PAD) * K) + tl.r1 + 1) / K, tl.c.width / K, 1 / K);
+    if (tl.r1 >= 0) g.drawImage(tl.c, 0, tl.r1, tl.c.width, 1, x - PAD, (Math.round((ys[i] - PAD) * K) + tl.r1 + 1) / K, tl.c.width / K, 1 / K);
   }
-  for (i = ys.length - 1; i >= 0; i--) put(g, s.tiles[side][(o.col + i) % t.nv].c, x - PAD, ys[i] - PAD);
-  put(g, cp.c, x - PAD, (side ? edge : edge - ch) - PAD);
+  for (i = ys.length - 1; i >= 0; i--) putX(g, s.tiles[side][(o.col + i) % t.nv].c, x - PAD, ys[i] - PAD);
+  putX(g, cp.c, x - PAD, (side ? edge : edge - ch) - PAD);
 }
 function obstacle(g, o) {
-  if (o.x > W + 40 || o.x < -OW - 40) return; var s = sets(o.th), D = DEF[o.th], x = px(o.x), kt = (o.kt || 0) % D.kinds, kb = (o.kb || 0) % D.kinds;
+  if (o.x > W + 40 || o.x < -OW - 40) return; var s = sets(o.th), D = DEF[o.th], x = o.x, kt = (o.kt || 0) % D.kinds, kb = (o.kb || 0) % D.kinds;
   piece(g, s, D, o.th, 0, x, o.gt, o, kt); piece(g, s, D, o.th, 1, x, o.gb, o, kb);
   var tt = performance.now() / 1000, sd = 0;   // a little star of light that glints on each end piece now and then, out of step from gate to gate
   for (sd = 0; sd < 2; sd++) {
@@ -1867,13 +1869,10 @@ function palm(g, x, base, h, lean, seed) {   // a shaded palm: a ringed trunk an
 }
 function hibiscus(g, x, y, s) { var k; g.save(); g.translate(x, y); g.scale(s, s); for (k = 0; k < 5; k++) { g.save(); g.rotate(k * 1.2566); ell(g, 0, -4.2, 3.2, 4.4); fs(g, lg(g, 0, -8, 0, 0, [[0, '#ff8aa8'], [1, '#e0245a']]), '#8a0f33', .8); g.restore(); } circ(g, 0, 0, 1.6); fs(g, '#ffe14d', '#a06a00', .6); g.restore(); }
 function bush(g, x, y, s, flowers) { var k, r = rnd(Math.floor(x) + 7); for (k = 0; k < 7; k++) { g.save(); g.translate(x + (k - 3) * 5 * s, y); g.rotate(-1.57 + (k - 3) * .32); leafShape(g, (16 + r() * 8) * s, 4.4 * s); g.fillStyle = lg(g, 0, -5, 0, 5, [[0, k % 2 ? '#5fc454' : '#3da64a'], [1, '#1f6a32']]); g.fill(); g.strokeStyle = '#17501f'; g.lineWidth = .9; g.stroke(); g.restore(); } if (flowers) { hibiscus(g, x - 6 * s, y - 12 * s, .9 * s); hibiscus(g, x + 7 * s, y - 16 * s, .75 * s); } }
-function tiki(g, x, y) {   // a bamboo torch with a bright flame
-  var q = rg(g, x, y - 66, 2, x, y - 66, 34, [[0, 'rgba(255,214,120,.65)'], [1, 'rgba(255,160,60,0)']]); g.fillStyle = q; g.fillRect(x - 34, y - 100, 68, 68);
+function tiki(g, x, y) {   // a bamboo torch (the flame, its glow and the embers are drawn live, see mgFlame in game.js)
   rr(g, x - 4.5, y - 60, 9, 62, 3); fs(g, lg(g, x - 4.5, 0, x + 4.5, 0, [[0, '#9a6a2a'], [.4, '#f0cf84'], [1, '#7a4e1c']]), '#3f2812', 1.3);
   g.strokeStyle = 'rgba(60,34,10,.6)'; g.lineWidth = 1.3; [-44, -28, -12].forEach(function (d) { g.beginPath(); g.moveTo(x - 4.5, y + d); g.lineTo(x + 4.5, y + d); g.stroke(); });
   g.beginPath(); g.moveTo(x - 8, y - 62); g.lineTo(x + 8, y - 62); g.lineTo(x + 5, y - 56); g.lineTo(x - 5, y - 56); g.closePath(); fs(g, '#5a3a1a', '#2b1808', 1.2);
-  g.beginPath(); g.moveTo(x, y - 90); g.bezierCurveTo(x + 9, y - 78, x + 8, y - 68, x, y - 62); g.bezierCurveTo(x - 8, y - 68, x - 9, y - 78, x, y - 90); fs(g, lg(g, 0, y - 90, 0, y - 62, [[0, '#ffe87a'], [.5, '#ff9f2a'], [1, '#e03a10']]), '#a02808', 1);
-  g.beginPath(); g.moveTo(x, y - 80); g.bezierCurveTo(x + 4, y - 74, x + 3.4, y - 68, x, y - 65); g.bezierCurveTo(x - 3.4, y - 68, x - 4, y - 74, x, y - 80); fs(g, '#fffbe0', null);
 }
 function wood(g, x, y, w, h, c0, c1, rad) {   // a plank with a frame, grain and a lit top edge
   rr(g, x, y, w, h, rad); fs(g, lg(g, 0, y, 0, y + h, [[0, c0], [1, c1]]), '#3f2812', 2.6);
@@ -2042,16 +2041,30 @@ var MG = {
     var q = g.createLinearGradient(0, 0, 0, 130); q.addColorStop(0, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(255,255,255,1)'); g.globalCompositeOperation = 'destination-out'; g.fillStyle = q; g.fillRect(0, 0, 72, 130); g.globalCompositeOperation = 'source-over';
   }); },
   ripple: function () { return spr(80, 48, function (g) { ell(g, 40, 24, 36, 20); g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2.4; g.stroke(); ell(g, 40, 24, 33, 17.6); g.strokeStyle = 'rgba(130,215,255,.5)'; g.lineWidth = 2.6; g.stroke(); }); },
+  buoy: function () { return spr(56, 56, function (g) {   // a life ring seen from above, with a heart floating in the middle: touch it to win a heart back
+    var i, c = 28;
+    ell(g, c + 3, c + 5, 23, 21); fs(g, 'rgba(0,40,80,.25)', null);
+    for (i = 0; i < 4; i++) { g.beginPath(); g.arc(c, c, 23, i * 1.5708, (i + 1) * 1.5708); g.arc(c, c, 12.5, (i + 1) * 1.5708, i * 1.5708, true); g.closePath(); fs(g, i % 2 ? '#ffffff' : '#ef3b4b', INK, 1.8); }
+    g.beginPath(); g.arc(c, c, 23, 0, PI2); g.strokeStyle = INK; g.lineWidth = 2.6; g.stroke(); g.beginPath(); g.arc(c, c, 12.5, 0, PI2); g.stroke();
+    g.fillStyle = 'rgba(255,255,255,.7)'; ell(g, 16, 13, 6, 2.4, -.7); g.fill();
+    g.save(); g.translate(c, c + 0.5); g.scale(.74, .74); g.translate(-12, -10.5); g.beginPath(); g.moveTo(12, 20); g.bezierCurveTo(-4, 9, 4, -2, 12, 5); g.bezierCurveTo(20, -2, 28, 9, 12, 20); g.closePath(); fs(g, lg(g, 0, 0, 0, 20, [[0, '#ff7a90'], [1, '#d9254a']]), '#7a0f26', 2); g.fillStyle = 'rgba(255,255,255,.6)'; ell(g, 7.5, 6.5, 2.6, 1.6, -.6); g.fill(); g.restore();
+  }); },
+  glow: function () { return spr(72, 72, function (g) { g.fillStyle = rg(g, 36, 36, 1, 36, 36, 36, [[0, 'rgba(255,214,120,.7)'], [.5, 'rgba(255,170,70,.28)'], [1, 'rgba(255,160,60,0)']]); g.fillRect(0, 0, 72, 72); }); },
+  shadowSub: function () { return spr(200, 54, function (g) {   // a submarine seen far down in the water: only a dark shape (drawn faint, behind everything)
+    g.fillStyle = '#06284f'; rr(g, 10, 14, 176, 28, 14); g.fill(); ell(g, 100, 22, 22, 15); g.fill(); rr(g, 94, 6, 12, 12, 4); g.fill(); rr(g, 176, 18, 20, 20, 6); g.fill();
+    g.beginPath(); g.moveTo(10, 28); g.lineTo(2, 20); g.lineTo(2, 36); g.closePath(); g.fill(); rr(g, 54, 38, 22, 6, 3); g.fill(); rr(g, 134, 38, 22, 6, 3); g.fill();
+    g.fillStyle = 'rgba(120,200,255,.35)'; [34, 60, 86, 128, 152].forEach(function (x) { circ(g, x, 28, 3); g.fill(); });
+  }); },
   heart: function (full) { return spr(24, 22, function (g) { g.beginPath(); g.moveTo(12, 20); g.bezierCurveTo(-4, 9, 4, -2, 12, 5); g.bezierCurveTo(20, -2, 28, 9, 12, 20); g.closePath(); if (full) { fs(g, lg(g, 0, 0, 0, 20, [[0, '#ff7a90'], [1, '#d9254a']]), '#7a0f26', 1.8); g.fillStyle = 'rgba(255,255,255,.55)'; ell(g, 7.5, 6.5, 2.6, 1.6, -.6); g.fill(); } else fs(g, 'rgba(255,255,255,.35)', '#7a0f26', 1.8); }); },
   shore: function () { var s = mk(W, SHH); SHORE.forEach(function (p) { p(s.g); }); return s; }   // Prince Chimp's beach: the finish line of the mini game (built in three parts, see SHORE)
 };
 var MGC = {};
 function mgs(k, a) { var key = k + (a === undefined ? '' : a); return MGC[key] || (MGC[key] = MG[k](a)); }
 /* draw one mini game thing centred on (x, y) */
-function mgdraw(g, k, x, y, a) { var s = mgs(k, a); put(g, s.c, x - s.w / 2, y - s.h / 2); }
+function mgdraw(g, k, x, y, a) { var s = mgs(k, a); putS(g, s.c, x - s.w / 2, y - s.h / 2); }
 var MGW = null;
 var MGQ = [], MGSH = null;
-function mgwarm() { MGQ = [['sub'], ['barrels', 1], ['barrels', 2], ['barrels', 3], ['barrelsV', 2], ['barrelsV', 3], ['gull', 0], ['gull', 1], ['gull', 2], ['gull', 3], ['gull', 4], ['gull', 5], ['gull', 6], ['gull', 7], ['sub', 'r'], ['gullShadow', 0], ['gullShadow', 1], ['gullShadow', 2], ['gullShadow', 3], ['whirl'], ['whirlArms'], ['bubble'], ['wake'], ['ripple'], ['heart', true], ['heart', false], ['wafer']].map(function (a) { return function () { mgs(a[0], a[1]); }; }); MGQ.push(function () { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } }); [0, 1, 2, 3, 4].forEach(function (n) { MGQ.push(function () { if (MGCP === n) mgCausticPart(MGCP++); }); }); SHORE.forEach(function (st, n) { MGQ.push(function () { if (MGC.shore) return; if (n === 0) MGSH = mk(W, SHH); if (!MGSH) return; st(MGSH.g); if (n === SHORE.length - 1) { MGC.shore = MGSH; MGSH = null; } }); }); }
+function mgwarm() { MGQ = [['sub'], ['barrels', 1], ['barrels', 2], ['barrels', 3], ['barrelsV', 2], ['barrelsV', 3], ['gull', 0], ['gull', 1], ['gull', 2], ['gull', 3], ['gull', 4], ['gull', 5], ['gull', 6], ['gull', 7], ['sub', 'r'], ['buoy'], ['glow'], ['shadowSub'], ['gullShadow', 0], ['gullShadow', 1], ['gullShadow', 2], ['gullShadow', 3], ['whirl'], ['whirlArms'], ['bubble'], ['wake'], ['ripple'], ['heart', true], ['heart', false], ['wafer']].map(function (a) { return function () { mgs(a[0], a[1]); }; }); MGQ.push(function () { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } }); [0, 1, 2, 3, 4].forEach(function (n) { MGQ.push(function () { if (MGCP === n) mgCausticPart(MGCP++); }); }); SHORE.forEach(function (st, n) { MGQ.push(function () { if (MGC.shore) return; if (n === 0) MGSH = mk(W, SHH); if (!MGSH) return; st(MGSH.g); if (n === SHORE.length - 1) { MGC.shore = MGSH; MGSH = null; } }); }); }
 function mgdone() { while (MGQ.length) MGQ.shift()(); }
 function mgcol(a, b, w) { return 'rgb(' + Math.round(a[0] + (b[0] - a[0]) * w) + ',' + Math.round(a[1] + (b[1] - a[1]) * w) + ',' + Math.round(a[2] + (b[2] - a[2]) * w) + ')'; }
 /* The sea is light and teal at the start and the end of the level and deep blue in the middle. The color is a gradient up the screen (what is ahead is at the top), so a change is seen traveling toward Fancy instead of switching in steps. p0 = the level's progress at the bottom, p1 = at the top (0..1). */
@@ -2339,7 +2352,7 @@ return { get tlast() { return TLAST; }, tbmax: TBMAX, fightWarm: fightWarm, boss
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1916';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1953';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -3621,18 +3634,18 @@ var MG_INTRO = 2.6;   // seconds the title and instructions show before Ready, S
 var mgDn = null;      // where the finger went down, relative to Fancy: a tap only leaps, a drag steers
 function startMini(practice) {
   if (!practice) split('Water'); CFG.mgSpeed = MG_V0 * relaxK() * plusK(); var h = CFG.mgHearts + lvl('heart'); state = 'mini'; setBar(false); cardT = -1; pendNext = ''; nextT = 0; rsgT = -1; celT = 0; fx.length = 0; ART.warm(themeOf(stage));
-  MG = { ph: 'intro', pt: 0, t: 0, scroll: 0, x: W / 2, y: CFG.mgY0, tx: W / 2, ty: CFG.mgY0, leap: -1, buf: 0, hearts: h, maxH: h, inv: 0, ents: [], plan: null, pi: 0, saved: 0, leaps: 0, slow: 0, practice: !!practice, wcd: 1.4, wc: 0, bonus: 0, wsh: lvl('wshield'), pl: 0, lh: h, lid: 0, lw: 0, lb: 0, pay: null, off: 0, boss: null, bossDone: false, cove: 70 + rng() * 220, coveHit: false };
+  MG = { ph: 'intro', pt: 0, t: 0, scroll: 0, x: W / 2, y: CFG.mgY0, tx: W / 2, ty: CFG.mgY0, leap: -1, buf: 0, hearts: h, maxH: h, inv: 0, ents: [], plan: null, pi: 0, saved: 0, leaps: 0, slow: 0, practice: !!practice, wcd: 1.4, wc: 0, bonus: 0, wsh: lvl('wshield'), pl: 0, lh: h, lid: 0, lw: 0, lb: 0, pay: null, off: 0, boss: null, bossDone: false, cove: 70 + rng() * 220, coveHit: false, life: [], lifeAt: 0 };
   MG.plan = mgPlan();
 }
 /* The level is planned up front: a list of things, each with the moment it enters at the top. Obstacle rows are 1.4 to 2 seconds apart (a leap takes 0.8). A seagull is only put into a gap long enough to leave room to dodge it. */
-var MG_SIZE = { wafer: [34, 34], sub: [184, 60], barrels: [0, 0], barrel: [40, 44], gull: [72, 60], whirl: [56, 56], bubble: [44, 44], raft: [76, 48] };
+var MG_SIZE = { wafer: [34, 34], sub: [184, 60], barrels: [0, 0], barrel: [40, 44], gull: [72, 60], whirl: [56, 56], bubble: [44, 44], raft: [76, 48], buoy: [48, 48] };
 function mgPlan() {
   var p = [], rd, sv, sx, vS = CFG.mgSpeed, cur = 2.2, end = CFG.mgSecs - 6, bub = 0, gap, pr, k, n, x, lo, hi, tg, v, trav = (CFG.mgY0 + 70) / vS;
   function add(kind, arr, o) { o = o || {}; o.k = kind; o.vo = o.vo || 0; o.t = o.at !== undefined ? o.at : Math.max(0, arr - trav / (vS + o.vo)); o.y = o.y === undefined ? -70 : o.y; p.push(o); }
   function whirl(x, vo) { if (rng() < 0.4) add('whirl', cur, { x: x, vo: 0, at: Math.max(0, cur - trav / (vS + vo)), ahead: vo * 1.25 }); }   // a whirlpool right in the way: whatever comes along it catches
   while (cur < end) {
     pr = cur / end; k = rng();
-    rd = pr < 0.5; sv = rd ? 62 : 40; sx = rd ? [100, 260] : [90, 270];   // the first half has the long, fast red submarines; the second half the purple ones
+    rd = pr >= 0.5; sv = rd ? 62 : 40; sx = rd ? [100, 260] : [90, 270];   // the first half has the purple submarines; the back half the long, fast red ones (and the fiercer red gulls)
     if (k < 0.28) { add('sub', cur, { x: sx[0], vo: sv, red: rd }); add('sub', rd ? cur + 0.5 : cur, { x: sx[1], vo: sv, red: rd }); if (rng() < 0.5) whirl(rng() < 0.5 ? 90 : 270, sv); }   // a wall of two submarines: leap it (the long red ones come one after the other, so they never overlap)
     else if (k < 0.55) { x = rng() < 0.5 ? 95 : 265; add('sub', cur, { x: x, vo: sv, red: rd }); n = rng() < 0.5 ? 2 : 3; v = rng() < 0.4; add('barrels', cur + 0.3, { n: n, vert: v, x: v ? (x < 180 ? 285 : 75) : (x < 180 ? 330 - n * 18 : 30 + n * 18), vo: 30 }); if (rng() < 0.4) whirl(x, sv); }
     else { n = rng() < 0.5 ? 2 : 3; v = rng() < 0.5; x = 60 + rng() * 240; add('barrels', cur, { n: n, vert: v, x: x, vo: 30 }); if (rng() < 0.5) { n = rng() < 0.5 ? 2 : 3; v = rng() < 0.5; add('barrels', cur + 0.2, { n: n, vert: v, x: 40 + rng() * 280, vo: 30 }); } if (rng() < 0.45) whirl(x, 30); }
@@ -3645,6 +3658,9 @@ function mgPlan() {
     } else if (rng() < 0.25) add('whirl', cur + gap * 0.5, { x: 40 + rng() * 280, vo: 0 });   // a lone whirlpool slows Fancy down
     cur += gap;
   }
+  var half = CFG.mgSecs / 2;   // exactly half way across: a buoy with a heart on it, with a clear stretch of water around it
+  p = p.filter(function (e) { return Math.abs(e.t + (CFG.mgY0 + 70) / (vS + e.vo) - half) > 1.6; });   // (a thing's time here is when it enters at the top; it reaches Fancy (y 520) a little later)
+  add('buoy', 0, { x: 70 + rng() * 220, vo: 0, at: half - trav });
   p.sort(function (a, b) { return a.t - b.t; }); return p;
 }
 /* From the third playthrough on, submarines and barrel chimps throw vanilla wafers at Fancy */
@@ -3736,6 +3752,7 @@ function updateMini(dt) {
     if (waferOn() && m.ph === 'play' && (e.k === 'sub' || e.k === 'barrels')) mgThrowStep(e, dt);
     if (e.k === 'gull') { dx = m.x - e.x; dy = m.y - e.y; if (dx * dx + dy * dy < (CFG.mgHitR + 14) * (CFG.mgHitR + 14) && !(lvl('superleap') > 0 && mgOver(m))) mgHurt(); continue; }   // a gull cannot be leapt, unless Fancy has bought Super Leap
     if (e.k === 'raft') { dx = m.x - e.x; dy = m.y - e.y; if (m.ph === 'play' && Math.abs(dx) < 46 && Math.abs(dy) < 30) { m.bonus += 8; m.ents.splice(i, 1); burst(e.x, e.y, 30, ['#ffd93b', '#fff2a0', '#ffffff'], 240, 220); pop('TREASURE! +8', '#ffd93b', 26); secretFound('raft', 'Secret found: the Treasure Raft!'); } continue; }
+    if (e.k === 'buoy') { dx = m.x - e.x; dy = m.y - e.y; if (m.ph === 'play' && m.hearts < m.maxH && dx * dx + dy * dy < (CFG.mgHitR + 22) * (CFG.mgHitR + 22)) { m.hearts++; m.ents.splice(i, 1); burst(e.x, e.y, 22, ['#ff6b81', '#ffffff', '#ffd93b'], 220, 180); pop('Heart back!', '#ff8aa0', 22); } continue; }   // the heart buoy: a heart back, if one has been lost
     if (e.k === 'bubble') { dx = m.x - e.x; dy = m.y - e.y; if (dx * dx + dy * dy < (CFG.mgHitR + 20) * (CFG.mgHitR + 20)) { m.saved++; m.ents.splice(i, 1); burst(e.x, e.y, 18, ['#ffffff', '#bfe8ff', '#ffd93b'], 200, 160); pop('Friend freed!', '#ffd93b', 18); } continue; }
     if (e.k === 'whirl') { dx = m.x - e.x; dy = m.y - e.y; if (!mgOver(m) && dx * dx + dy * dy < 31 * 31) m.slow = 1; continue; }
     // submarines and barrels: leap over them, or steer around; a whirlpool sinks a sub and splits a group of barrels apart
@@ -3882,6 +3899,43 @@ function mgBoss(b) {   // Prince Chimp's giant submarine, up at the top of the s
   ART.chimp(ctx, b.x, y - 40, 0.42, 1, time); ctx.globalAlpha = 1;
   if (!b.end) { ctx.fillStyle = 'rgba(30,20,50,0.55)'; rrect(110, 12, 140, 10, 5); ctx.fill(); ctx.fillStyle = '#ff6b81'; rrect(110, 12, 140 * clamp(1 - b.t / 12, 0, 1), 10, 5); ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#ffffff'; rrect(110, 12, 140, 10, 5); ctx.stroke(); }
 }
+/* Life under the water: now and then a school of fish or the dark shape of a submarine drifts across, far below the surface and the action. Drawn from the clock and the scroll (no physics), so it glides. */
+function mgLifeStep(m) {
+  var i, o, n, d, j;
+  if (time >= m.lifeAt && m.life.length < 6) {
+    m.lifeAt = time + 1.3 + frng() * 3; d = frng() < 0.5 ? 1 : -1; n = frng();
+    if (n < 0.62) { o = { k: 'fish', d: d, sp: 26 + frng() * 30, dp: 0.55, n: 4 + Math.floor(frng() * 4), big: 0, fx: [], fy: [] }; for (j = 0; j < o.n; j++) { o.fx.push((frng() - 0.5) * 70 - j * 7 * d); o.fy.push((frng() - 0.5) * 34); } }
+    else if (n < 0.88) o = { k: 'fish', d: d, sp: 18 + frng() * 14, dp: 0.5, n: 1, big: 1, fx: [0], fy: [0] };
+    else o = { k: 'sub', d: d, sp: 9 + frng() * 9, dp: 0.4 };
+    o.x0 = d > 0 ? -70 : W + 70; o.y0 = -50 - frng() * 40; o.s0 = m.scroll; o.t0 = time; o.ph = frng() * 6.28; if (o.k === 'sub') { o.x0 = d > 0 ? -150 : W + 150; o.sc = 0.8 + frng() * 0.35; } if (frng() < 0.5) o.x0 = 40 + frng() * 280;
+    m.life.push(o);
+  }
+  for (i = m.life.length - 1; i >= 0; i--) { o = m.life[i]; if (o.y0 + (m.scroll - o.s0) * o.dp > H + 80 || Math.abs(o.x0 + o.d * o.sp * (time - o.t0) - W / 2) > W + 220) m.life.splice(i, 1); }
+}
+function mgLifeDraw(m) {
+  var i, o, j, x, y, a, wg, c = m.life.length;
+  for (i = 0; i < c; i++) {
+    o = m.life[i]; x = o.x0 + o.d * o.sp * (time - o.t0); y = o.y0 + (m.scroll - o.s0) * o.dp;
+    if (o.k === 'sub') { ctx.globalAlpha = 0.2; ctx.save(); ctx.translate(x, y); ctx.scale(o.d * o.sc, o.sc); ART.mg.draw(ctx, 'shadowSub', 0, 0); ctx.restore(); ctx.globalAlpha = 1; continue; }
+    ctx.fillStyle = 'rgba(8,52,104,0.34)';
+    for (j = 0; j < o.n; j++) {
+      wg = Math.sin(time * 9 + o.ph + j * 1.7); a = o.big ? 1.9 : 1;
+      ctx.save(); ctx.translate(x + o.fx[j], y + o.fy[j] + Math.sin(time * 1.4 + j + o.ph) * 2); ctx.scale(o.d * a, a);
+      ctx.beginPath(); ctx.ellipse(0, 0, 8, 3.6, 0, 0, 6.2832); ctx.moveTo(-6, 0); ctx.lineTo(-13, -4 + wg * 2.4); ctx.lineTo(-13, 4 + wg * 2.4); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  }
+}
+function mgFlame(x, y, ph) {   // a tiki torch flame: it flickers in height, leans in the breeze, glows, and lets go of embers (y is the rim of the torch)
+  var t = time * 9 + ph, h = 27 + Math.sin(t) * 3.2 + Math.sin(t * 2.3 + 1) * 2.2, ln = Math.sin(t * 0.7) * 3 + Math.sin(t * 1.9) * 1.6, w = 8.6 + Math.sin(t * 1.7 + 2) * 1.3, i, u;
+  ctx.globalAlpha = 0.7 + Math.sin(t * 1.3) * 0.15 + Math.sin(t * 3.1) * 0.08; ART.mg.draw(ctx, 'glow', x, y - 16);
+  ctx.globalAlpha = 1; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.moveTo(x + ln, y - h); ctx.bezierCurveTo(x + w + ln * 0.5, y - h * 0.62, x + w, y - 6, x, y); ctx.bezierCurveTo(x - w, y - 6, x - w + ln * 0.4, y - h * 0.62, x + ln, y - h); ctx.fillStyle = '#ff9f2a'; ctx.fill(); ctx.lineWidth = 1.3; ctx.strokeStyle = '#d8501a'; ctx.stroke();
+  h *= 0.68; w *= 0.62; ctx.beginPath(); ctx.moveTo(x + ln * 0.7, y - h - 2); ctx.bezierCurveTo(x + w + ln * 0.3, y - h * 0.6, x + w, y - 4, x, y - 1); ctx.bezierCurveTo(x - w, y - 4, x - w, y - h * 0.6, x + ln * 0.7, y - h - 2); ctx.fillStyle = '#ffd24a'; ctx.fill();
+  h *= 0.55; w *= 0.55; ctx.beginPath(); ctx.moveTo(x + ln * 0.5, y - h - 3); ctx.bezierCurveTo(x + w, y - h * 0.6, x + w, y - 3, x, y - 2); ctx.bezierCurveTo(x - w, y - 3, x - w, y - h * 0.6, x + ln * 0.5, y - h - 3); ctx.fillStyle = '#fffbe0'; ctx.fill();
+  for (i = 0; i < 3; i++) { u = (time * 0.8 + i / 3 + ph * 0.37) % 1; ctx.globalAlpha = (1 - u) * 0.9; ctx.fillStyle = i % 2 ? '#ffe27a' : '#ff9f2a'; ctx.fillRect(x + Math.sin(u * 7 + i * 2 + ph) * 6 + ln * u - 1, y - 24 - u * 34, 2, 2); }
+  ctx.globalAlpha = 1;
+}
 var mgRip = [];   // rings spreading on the water where Fancy leaps, lands or gets hit: {x, y, t}
 function renderMini() {   // like the flying game: everything is drawn where it will be when the picture is shown (physics is in fixed steps), so it glides instead of hopping
   var m = MG, a = m && !m.paused && m.ph === 'play' ? acc : 0, i, e, vS = CFG.mgSpeed;
@@ -3891,9 +3945,9 @@ function renderMini() {   // like the flying game: everything is drawn where it 
 }
 function renderMini0() {
   var m = MG, i, e, lt = mgLT(m), rem = Math.max(0, CFG.mgSecs - lt) * CFG.mgSpeed, sb = H - rem, p = clamp(lt / CFG.mgSecs, 0, 1), z = m.leap >= 0 ? Math.sin(Math.PI * m.leap / mgLeapT()) : 0;
-  ART.mg.sea(ctx, p, p + H / CFG.mgSpeed / CFG.mgSecs); ART.mg.water(ctx, m.scroll); ART.mg.caustic(ctx, m.scroll, p); ART.mg.glints(ctx, m.scroll, time, p); if (secretsOn() && !m.practice && sb > -300) mgArch(m.cove, sb + 70, m.coveHit);
+  ART.mg.sea(ctx, p, p + H / CFG.mgSpeed / CFG.mgSecs); ART.mg.water(ctx, m.scroll); ART.mg.caustic(ctx, m.scroll, p); ART.mg.glints(ctx, m.scroll, time, p); mgLifeStep(m); mgLifeDraw(m); if (secretsOn() && !m.practice && sb > -300) mgArch(m.cove, sb + 70, m.coveHit);
   if (sb > 0) {
-    ART.mg.jungle(ctx, sb - 300); ART.mg.draw(ctx, 'shore', W / 2, sb - 150);
+    ART.mg.jungle(ctx, sb - 300); ART.mg.draw(ctx, 'shore', W / 2, sb - 150); mgFlame(17, sb - 110, 0); mgFlame(343, sb - 110, 2.3);
     ctx.lineCap = 'round'; for (i = 0; i < 3; i++) { ctx.strokeStyle = 'rgba(255,255,255,' + [.8, .55, .35][i] + ')'; ctx.lineWidth = [3.4, 2.4, 1.6][i]; ctx.beginPath(); for (var wx = 0; wx <= W; wx += 8) { var wy = sb - 6 + i * 6 + Math.sin(wx * .06 + time * 1.8 + i * 1.3) * 3 + Math.sin(wx * .17 - time * 2.4) * 1.1; if (wx === 0) ctx.moveTo(wx, wy); else ctx.lineTo(wx, wy); } ctx.stroke(); }   // waves washing up the beach
   }
   for (i = 0; i < m.ents.length; i++) { e = m.ents[i]; if (e.k === 'whirl') { ctx.save(); ctx.translate(e.x, e.y); ctx.scale(1.2, 1.2); ART.mg.draw(ctx, 'whirl', 0, 0); ctx.rotate(e.spin * -2); ART.mg.draw(ctx, 'whirlArms', 0, 0); ctx.restore(); } }
@@ -3904,6 +3958,7 @@ function renderMini0() {
       else if (e.k === 'barrels' && e.vx) { ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(e.spin * e.vx * 0.02); ART.mg.draw(ctx, e.vert ? 'barrelsV' : 'barrels', 0, 0, e.n); ctx.restore(); }
       else { if (e.k === 'sub') { ctx.save(); ctx.globalAlpha = .8; ctx.translate(e.x + e.w / 2 - 2, e.y + 2); ctx.rotate(-1.5708); ctx.scale(1.15, 1.25); ART.mg.draw(ctx, 'wake', 0, 65); ctx.restore(); } ART.mg.draw(ctx, e.k === 'barrels' && e.vert ? 'barrelsV' : e.k, e.x, e.y + Math.sin(time * 3 + e.ph) * 1.2, e.red ? 'r' : e.n); }
     } else if (e.k === 'bubble') ART.mg.draw(ctx, 'bubble', e.x, e.y + Math.sin(time * 3 + e.ph) * 3);
+    else if (e.k === 'buoy') { var bu = (time * 0.8 + e.ph) % 1; ctx.globalAlpha = (1 - bu) * .7; ctx.lineWidth = 2.4; ctx.strokeStyle = '#ffffff'; ctx.beginPath(); ctx.arc(e.x, e.y, 24 + bu * 14, 0, 6.2832); ctx.stroke(); ctx.globalAlpha = 1; ctx.save(); ctx.translate(e.x, e.y + Math.sin(time * 2.6 + e.ph) * 3); ctx.rotate(Math.sin(time * 1.7 + e.ph) * 0.1); ART.mg.draw(ctx, 'buoy', 0, 0); ctx.restore(); }
     else if (e.k === 'raft') mgRaft(e.x, e.y + Math.sin(time * 3 + e.ph) * 2);
   }
   for (i = 0; i < m.ents.length; i++) {   // wafers fly over the water: a shadow on the water shows where they really are
