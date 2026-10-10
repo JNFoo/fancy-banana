@@ -1,5 +1,6 @@
 # What's new
 
+- **2026.10.09.2021 (alpha):** Fancy's eyes are 20% bigger, and his gloves now sit at his sides instead of looking like buck teeth. The launch track is now a glossy chrome-and-enamel loop with a drop shadow, round bolted pillars, metal collars and glowing chasing lights. The launch effects are unchanged.
 - **2026.10.09.2015 (alpha):** The water level is back in its place in the game (after the Silverware Drawer). Two new upgrades: **Super Leap** (75 then 150 credits) makes Fancy leap longer and higher, and lets him sail right over seagulls. **Practice Chimp's Navy** (40 credits) adds a Practice button on the title screen to try the water level any time (no friends or credits earned); when you finish or get hit you can try again or go back to the title screen.
 - **2026.10.09.2003 (alpha):** The beach at the end of the water level has two signs (Prince Chimp’s Tropical Jungle Island, AKA Rhode Island) and a big Prince Chimp above them. The whirlpool is 20% bigger and the gull has a proper shadow. The main game now has a pause button (top right) and the P key.
 - **2026.10.09.1957 (alpha):** The water level has a pause button (top right; the P key works too, and it pauses by itself if you switch tabs). The seagull and whirlpool look much more 3D. Fancy's gloves are now tucked in at his sides.
