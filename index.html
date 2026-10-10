@@ -1524,8 +1524,8 @@ function planFor(th) {
   } else st.push(function () { s.ground = mk(GP[th], 72); D.ground(s.ground.g, GP[th]); var g = s.ground.g, q = g.createLinearGradient(0, 0, 0, 72); g.save(); g.globalCompositeOperation = 'source-atop'; q.addColorStop(0, 'rgba(255,255,255,.34)'); q.addColorStop(.08, 'rgba(255,255,255,0)'); q.addColorStop(.55, 'rgba(60,30,90,0)'); q.addColorStop(1, 'rgba(60,30,90,.22)'); g.fillStyle = q; g.fillRect(0, 0, GP[th], 72); g.restore(); });   // the floor: a lit top edge and a deeper tone toward the bottom
   var sc = st.length;   // everything above is scenery (what the title screen shows); the obstacle pieces below are only needed once a run starts
   for (side = 0; side < 2; side++) {
-    for (v = 0; v < D.ts[side].nv; v++) (function (side, v) { st.push(slicer(function () { return boldG(OW, D.ts[side].h, function (g) { return D.tile(g, side, v); }, 0); }, function (o) { rimH(o); edgeRows(o); s.tiles[side][v] = o; })); })(side, v);
-    for (i = 0; i < D.kinds; i++) (function (side, i) { st.push(slicer(function () { return boldG(OW, D.capH[side][i], function (g) { return D.cap(g, side, i); }, side ? 1 : 2); }, function (o) { rimH(o); s.caps[side][i] = o; })); })(side, i);
+    for (v = 0; v < D.ts[side].nv; v++) (function (side, v) { st.push(slicer(function () { return boldG(OW, D.ts[side].h, function (g) { return D.tile(g, side, v); }, 0); }, function (o) { cylShade(o); rimH(o); edgeRows(o); shadowOf(o); s.tiles[side][v] = o; })); })(side, v);
+    for (i = 0; i < D.kinds; i++) (function (side, i) { st.push(slicer(function () { return boldG(OW, D.capH[side][i], function (g) { return D.cap(g, side, i); }, side ? 1 : 2); }, function (o) { capFinish(o); rimH(o); shadowOf(o); s.caps[side][i] = o; })); })(side, i);
   }
   var lr = rnd(th * 977 + 13), lout = [];   // the drifting life (balloons, butterflies, sparkles): one sprite per step, so no stage start ever builds them all at once
   (LIFE[th] || []).forEach(function (e) { for (var j = 0; j < e[1]; j++) (function (e, j) { st.push(function () { lout.push(lifeItem(th, e, j, lr)); }); })(e, j); });
@@ -1533,7 +1533,7 @@ function planFor(th) {
   st.push(function () {   // last: touch every finished picture once (a 1-pixel stamp), a step at a time, so the first real draw of a new stage is not the moment each one is first used
     var cs = [], k, L;
     ['sky', 'far', 'mid', 'top', 'ground'].forEach(function (n) { L = s[n]; if (!L) return; if (L.c) cs.push(L.c); if (L.ch) L.ch.forEach(function (c) { cs.push(c); }); });
-    for (k = 0; k < 2; k++) { s.tiles[k].forEach(function (o) { cs.push(o.c); }); s.caps[k].forEach(function (o) { cs.push(o.c); }); }
+    for (k = 0; k < 2; k++) { s.tiles[k].forEach(function (o) { cs.push(o.c); if (o.sh) cs.push(o.sh); }); s.caps[k].forEach(function (o) { cs.push(o.c); if (o.sh) cs.push(o.sh); }); }
     cs.forEach(function (c) { st.push(function () { touch(c); }); });
   });
   return (PLAN[th] = { s: s, st: st, i: 0, sc: sc });
@@ -1542,6 +1542,7 @@ var TCH = null;
 function touch(c) { if (!TCH) { TCH = document.createElement('canvas'); TCH.width = TCH.height = 1; TCH = TCH.getContext('2d'); } TCH.drawImage(c, 0, 0, 1, 1); }
 function sets(th) {
   var s = SET[th]; if (s) return s; var p = planFor(th);
+  
   while (p.i < p.st.length) { if (p.st[p.i]() !== true) p.i++; }
   SET[th] = p.s; delete PLAN[th]; return p.s;
 }
@@ -1551,19 +1552,27 @@ function scenery(th) {   // just the sky, hills and ground: enough to draw the t
   return p.s;
 }
 function warm(th) { if (!SET[th] && QUEUE.indexOf(th) < 0) { planFor(th); QUEUE.push(th); } }
-function pump(ms) {   // run queued build steps for about `ms` milliseconds; returns true while work is left
-  var t0 = performance.now(), th, p;
-  while (TASKQ.length) { TASKQ.shift()(); if (performance.now() - t0 >= ms) return true; }
-  while (MGQ.length) { MGQ.shift()(); if (performance.now() - t0 >= ms) return true; }
+
+function pump(ms, min) {   // run queued build steps for about `ms` milliseconds, and at least `min` steps (default 1); returns true while work is left
+  var t0 = performance.now(), th, p, c = 0, mn = min || 1, s0;
+  while (TASKQ.length) {  TASKQ.shift()();  if (++c >= mn && performance.now() - t0 >= ms) return true; }
+  while (MGQ.length) {  MGQ.shift()();  if (++c >= mn && performance.now() - t0 >= ms) return true; }
   while (QUEUE.length) {
     th = QUEUE[0]; p = PLAN[th];
     if (!p) { QUEUE.shift(); continue; }
     if (p.i >= p.st.length) { sets(th); QUEUE.shift(); continue; }
     
     if (p.st[p.i]() !== true) p.i++; 
-    if (performance.now() - t0 >= ms) break;
+    if (++c >= mn && performance.now() - t0 >= ms) break;
   }
   return QUEUE.length > 0;
+}
+function pend(th, mg) {   // how many build steps are still waiting before theme th is ready (th < 0: only the picture and mini game queues)
+  var n = TASKQ.length + (mg ? MGQ.length : 0), i, q, p;
+  if (th < 0) return n;
+  if (SET[th]) return n;
+  for (i = 0; i < QUEUE.length; i++) { q = QUEUE[i]; p = PLAN[q]; if (p) n += p.st.length - p.i; if (q === th) break; }
+  return n;
 }
 function px(x) { return Math.round(x * K) / K; }
 /* Every cached picture is stamped at its own pixel size, on whole device pixels: a 1:1 copy. (Stretching a picture by even 0.1% makes Firefox resample it, which was 15x slower.) */
@@ -1614,10 +1623,36 @@ function edgeRows(o) {   // which pixel rows of a finished tile hold the picture
     g.clearRect(0, b, w, 1); g.drawImage(c, 0, b - 1, w, 1, 0, b, w, 1); g.restore();
   }
 }
+function cylShade(o) {   // makes a pole a round tube: a dark edge, a bright soft lobe on the left, a form shadow down the right. Only sideways, so stacked tiles still join without a seam.
+  var c = o.c, w = c.width, h = c.height, mn = w, mx = 0, i, d, x, y, g = o.g, q;
+  for (i = 0; i < 3; i++) { y = Math.floor(h * [.3, .5, .7][i]); d = g.getImageData(0, y, w, 1).data; for (x = 0; x < w; x++) if (d[x * 4 + 3] > 120) { if (x < mn) mn = x; if (x > mx) mx = x; } }
+  if (mx - mn < 8) return;
+  q = g.createLinearGradient(mn, 0, mx, 0); q.addColorStop(0, 'rgba(40,20,70,.3)'); q.addColorStop(.1, 'rgba(40,20,70,0)'); q.addColorStop(.2, 'rgba(255,255,255,.42)'); q.addColorStop(.34, 'rgba(255,255,255,.05)'); q.addColorStop(.56, 'rgba(45,20,80,0)'); q.addColorStop(.86, 'rgba(45,20,80,.4)'); q.addColorStop(1, 'rgba(45,20,80,.16)');
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = q; g.fillRect(0, 0, w, h); g.restore();
+}
+function capFinish(o) {   // the glossy toy finish on an end piece: a warm shade pooled lower right, a soft gloss up on the left with a crisp white dot, and a lit upper edge
+  var c = o.c, w = c.width, h = c.height, g = o.g, q;
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-atop';
+  q = g.createRadialGradient(w * .74, h * .78, w * .04, w * .74, h * .78, w * .75); q.addColorStop(0, 'rgba(50,20,80,.4)'); q.addColorStop(1, 'rgba(50,20,80,0)'); g.fillStyle = q; g.fillRect(0, 0, w, h);
+  q = g.createLinearGradient(0, 0, 0, h); q.addColorStop(0, 'rgba(255,255,255,.26)'); q.addColorStop(.18, 'rgba(255,255,255,0)'); g.fillStyle = q; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(255,255,255,.4)'; g.beginPath(); g.ellipse(w * .33, h * .3, w * .2, Math.min(h * .12, w * .09), -.55, 0, PI2); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(w * .27, h * .24, Math.max(1.5, w * .022), 0, PI2); g.fill();
+  g.restore();
+}
+function shadowOf(o) {   // a half-size dark copy of a finished picture: drawn bigger and a little to the lower right it becomes a soft shadow on the scenery behind
+  var c = o.c, h2 = document.createElement('canvas'), g;
+  h2.width = Math.max(1, Math.ceil(c.width / 2)); h2.height = Math.max(1, Math.ceil(c.height / 2)); g = h2.getContext('2d');
+  g.drawImage(c, 0, 0, h2.width, h2.height); g.globalCompositeOperation = 'source-in'; g.fillStyle = 'rgb(36,20,70)'; g.fillRect(0, 0, h2.width, h2.height);
+  o.sh = h2; return o;
+}
 function piece(g, s, D, th, side, x, edge, o, kind) {
   var t = D.ts[side], cp = s.caps[side][kind], ch = cp.h, ys = [], y, i, W2 = OW + PAD * 2;
   if (side) { for (y = edge + ch - 6; y < GY + 4; y += t.pitch) ys.push(y); } else { for (y = edge - ch + 6 - t.h; y > -t.h - 2; y -= t.pitch) ys.push(y); }
-  var X = Math.round((x - PAD) * K), tl;
+  var X = Math.round((x - PAD) * K), tl, sx = Math.round((x - PAD + 9) * K) / K;
+  g.save(); g.globalAlpha = .36;   // the soft shadow of the whole piece on the scenery (light from the upper left)
+  for (i = 0; i < ys.length; i++) { tl = s.tiles[side][(o.col + i) % t.nv]; if (tl.sh) g.drawImage(tl.sh, sx, Math.round((ys[i] - PAD + 8) * K) / K, tl.c.width / K, tl.c.height / K + 1 / K); }
+  if (cp.sh) g.drawImage(cp.sh, sx, Math.round(((side ? edge : edge - ch) - PAD + 8) * K) / K, cp.c.width / K, cp.c.height / K);
+  g.restore();
   for (i = 0; i < ys.length; i++) {   // first a copy of each tile's last picture row, one row further down: it shows only where rounding left a gap between two tiles (the next tile is drawn over it otherwise)
     tl = s.tiles[side][(o.col + i) % t.nv];
     if (tl.r1 >= 0) g.drawImage(tl.c, 0, tl.r1, tl.c.width, 1, X / K, (Math.round((ys[i] - PAD) * K) + tl.r1 + 1) / K, tl.c.width / K, 1 / K);
@@ -1625,7 +1660,15 @@ function piece(g, s, D, th, side, x, edge, o, kind) {
   for (i = ys.length - 1; i >= 0; i--) put(g, s.tiles[side][(o.col + i) % t.nv].c, x - PAD, ys[i] - PAD);
   put(g, cp.c, x - PAD, (side ? edge : edge - ch) - PAD);
 }
-function obstacle(g, o) { if (o.x > W + 40 || o.x < -OW - 40) return; var s = sets(o.th), D = DEF[o.th], x = px(o.x); piece(g, s, D, o.th, 0, x, o.gt, o, (o.kt || 0) % D.kinds); piece(g, s, D, o.th, 1, x, o.gb, o, (o.kb || 0) % D.kinds); }
+function obstacle(g, o) {
+  if (o.x > W + 40 || o.x < -OW - 40) return; var s = sets(o.th), D = DEF[o.th], x = px(o.x), kt = (o.kt || 0) % D.kinds, kb = (o.kb || 0) % D.kinds;
+  piece(g, s, D, o.th, 0, x, o.gt, o, kt); piece(g, s, D, o.th, 1, x, o.gb, o, kb);
+  var tt = performance.now() / 1000, sd = 0;   // a little star of light that glints on each end piece now and then, out of step from gate to gate
+  for (sd = 0; sd < 2; sd++) {
+    var ph = ((tt * .42 + (o.col * 3 + (sd ? kb : kt) * 5 + sd * 7) * .173) % 1), a = ph < .2 ? Math.sin(ph / .2 * Math.PI) : 0, cp = s.caps[sd][sd ? kb : kt];
+    if (a > .05) { var sx = x - PAD + cp.c.width / K * .27, sy = (sd ? o.gb : o.gt - cp.h) - PAD + cp.c.height / K * .24, r = 7 * a; g.save(); g.globalAlpha = a; g.fillStyle = '#ffffff'; g.beginPath(); g.moveTo(sx, sy - r); g.lineTo(sx + r * .25, sy - r * .25); g.lineTo(sx + r, sy); g.lineTo(sx + r * .25, sy + r * .25); g.lineTo(sx, sy + r); g.lineTo(sx - r * .25, sy + r * .25); g.lineTo(sx - r, sy); g.lineTo(sx - r * .25, sy - r * .25); g.closePath(); g.fill(); g.restore(); }
+  }
+}
 function rects(o) {
   var D = DEF[o.th], out = [], side, L, i, e, d0, d1;
   for (side = 0; side < 2; side++) {
@@ -1898,22 +1941,30 @@ function ribbon(g, P) {
   g.save(); g.translate(8.4, 9.8); g.lineWidth = 1.4; g.strokeStyle = 'rgba(255,255,255,.7)'; g.stroke(); g.restore();   // a crisp rim light on the lower right edge
 }
 var TKB = null;
-function tkBulb(c, lit) {   // a glass bulb in a metal cap: a lit one glows with a hot white core, an unlit one is dull glass; drawn once per color, at 2x
-  TKB = TKB || {}; var k = c + lit; if (TKB[k]) return TKB[k];
-  var s = document.createElement('canvas'); s.width = s.height = 64; var g = s.getContext('2d'), q;
-  g.translate(32, 32); g.scale(2, 2);
-  if (lit) { q = g.createRadialGradient(0, 0, 2, 0, 0, 15.5); q.addColorStop(0, c); q.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = .8; g.fillStyle = q; g.beginPath(); g.arc(0, 0, 16, 0, PI2); g.fill(); g.globalAlpha = 1; }
+function tkBulb(c, lv) {   // a glass bulb in a metal cap at one of 4 brightness levels (0 off and dull, 1 warm, 2 bright, 3 blazing with a white core and a big halo); drawn once per color and level, at 2x, on an 88 px square
+  TKB = TKB || {}; var k = c + lv; if (TKB[k]) return TKB[k];
+  var s = document.createElement('canvas'); s.width = s.height = 88; var g = s.getContext('2d'), q;
+  g.translate(44, 44); g.scale(2, 2);
+  if (lv > 0) { var hr = [0, 11, 15, 21][lv]; q = g.createRadialGradient(0, 0, 3, 0, 0, hr); q.addColorStop(0, lv === 3 ? '#ffffff' : c); q.addColorStop(.25, c); q.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = [0, .5, .85, 1][lv]; g.fillStyle = q; g.beginPath(); g.arc(0, 0, hr, 0, PI2); g.fill(); g.globalAlpha = 1; }
   g.beginPath(); g.arc(0, 0, 6.4, 0, PI2); g.fillStyle = '#2b2140'; g.fill();                                           // socket ring and outline
   q = g.createLinearGradient(-5, -5, 5, 5); q.addColorStop(0, '#f2f5ff'); q.addColorStop(.5, '#9aa3bd'); q.addColorStop(1, '#4e5470'); g.beginPath(); g.arc(0, 0, 5.8, 0, PI2); g.fillStyle = q; g.fill();   // the metal cap
-  g.beginPath(); g.arc(0, 0, 4.7, 0, PI2); g.fillStyle = lit ? c : mixc2(c); g.fill();
-  q = g.createRadialGradient(-1.5, -1.7, .3, 0, 0, 5); if (lit) { q.addColorStop(0, '#ffffff'); q.addColorStop(.35, lit ? '#fff7d0' : c); q.addColorStop(.7, c); q.addColorStop(1, c); } else { q.addColorStop(0, 'rgba(255,255,255,.7)'); q.addColorStop(.4, 'rgba(255,255,255,.08)'); q.addColorStop(1, 'rgba(20,10,40,.22)'); }
+  g.beginPath(); g.arc(0, 0, 4.7, 0, PI2); g.fillStyle = lv ? c : mixc2(c); g.fill();
+  q = g.createRadialGradient(-1.2, -1.4, .2, 0, 0, 5);
+  if (lv === 0) { q.addColorStop(0, 'rgba(255,255,255,.55)'); q.addColorStop(.4, 'rgba(255,255,255,.06)'); q.addColorStop(1, 'rgba(20,10,40,.28)'); }
+  else if (lv === 1) { q.addColorStop(0, 'rgba(255,255,255,.7)'); q.addColorStop(.45, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(20,10,40,.1)'); }
+  else { q.addColorStop(0, '#ffffff'); q.addColorStop(lv === 3 ? .75 : .45, lv === 3 ? '#ffffff' : '#fff6d0'); q.addColorStop(1, c); }
   g.beginPath(); g.arc(0, 0, 4.7, 0, PI2); g.fillStyle = q; g.fill();
   g.lineWidth = .9; g.strokeStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(0, 0, 3.3, 3.5, 4.9); g.stroke();   // the curved window shine
   g.beginPath(); g.arc(-1.7, -1.9, 1, 0, PI2); g.fillStyle = 'rgba(255,255,255,.95)'; g.fill();
   g.beginPath(); g.arc(1.8, 2.1, .55, 0, PI2); g.fillStyle = 'rgba(255,255,255,.55)'; g.fill();
   return TKB[k] = s;
 }
-function mixc2(c) { return drk(c, .16); }   // an unlit bulb: the same color, dark and dull
+function mixc2(c) { return drk(c, .3); }   // an unlit bulb: the same color, dark and dull
+function tkLv(i, n, t, flash) {   // the brightness level of bulb i of n: a bright head that races round with a fading tail, and a blink of the whole string now and then
+  if (flash) return 3;
+  var w = (((i - t * 9) % n) + n) % n;   // 0 at the head, growing behind it
+  return w < 1.6 ? 3 : w < 4 ? 2 : w < 8 ? 1 : 0;
+}
 function tkBolt(g, x, y) { circ(g, x, y, 2.4); fs(g, '#cfd6e6', '#2b2140', 1); g.fillStyle = '#fff'; g.fillRect(x - 1.2, y - 1.4, 1.4, 1.2); }
 function tkPath(g, x, cx, ty) { g.beginPath(); g.moveTo(x - 400, ty); g.lineTo(cx + 70, ty); g.quadraticCurveTo(cx + 140, ty, cx + 200, ty - 85); }
 function track(g, x, t, p, th) {
@@ -1936,9 +1987,15 @@ function track(g, x, t, p, th) {
   for (i = 0; i < 10; i++) { g.fillStyle = i % 2 ? '#fff' : '#2b2140'; g.fillRect(cx + 30 + i * 6, ty - 15, 6, 15); g.fillStyle = i % 2 ? '#2b2140' : '#fff'; g.fillRect(cx + 30 + i * 6, ty, 6, 15); }   // checkered start
   g.strokeStyle = '#2b2140'; g.lineWidth = 1.6; g.strokeRect(cx + 30, ty - 15, 60, 30);
   q = g.createLinearGradient(0, ty - 15, 0, ty + 15); q.addColorStop(0, 'rgba(255,255,255,.35)'); q.addColorStop(.5, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(20,10,40,.3)'); g.fillStyle = q; g.fillRect(cx + 30, ty - 15, 60, 30);
-  for (i = 0; i < 22; i++) {                                                                                                    // a chasing ring of glowing bulbs
-    a = i / 22 * PI2; var bc = lc[(i + ph) % 3], bl = ((i + ph) % 3) === 0 ? 1 : 0, bs = tkBulb(bc, bl);
-    var bz = bl ? 42 : 36; g.drawImage(bs, cx + Math.cos(a) * (r + 24) - bz / 2, cy + Math.sin(a) * (r + 24) - bz / 2, bz, bz);
+  var fl2 = ((t * .62) % 1) < .13, nb = 22, lvl, bz = 58;
+  g.save(); g.lineCap = 'butt'; g.beginPath(); g.arc(cx, cy, r + 24, 0, PI2); g.lineWidth = 17; g.strokeStyle = '#2b2140'; g.stroke(); g.lineWidth = 13.4; g.strokeStyle = '#4a3a6c'; g.stroke(); g.lineWidth = 2; g.strokeStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.arc(cx, cy, r + 21.5, 0, PI2); g.stroke(); g.restore();   // a dark light strip behind the bulbs so they glow against it
+  g.save(); g.beginPath(); g.moveTo(Math.max(-20, cx - 270), ty - 26); g.lineTo(cx + 36, ty - 26); g.lineWidth = 17; g.lineCap = 'round'; g.strokeStyle = '#2b2140'; g.stroke(); g.lineWidth = 13.4; g.strokeStyle = '#4a3a6c'; g.stroke(); g.restore();   // every 1.6 s the whole string blinks for a moment
+  for (i = 0; i < nb; i++) {                                                                                                    // a chasing ring of glowing bulbs
+    a = i / nb * PI2; lvl = tkLv(i, nb, t, fl2); g.drawImage(tkBulb(lc[i % 3], lvl), cx + Math.cos(a) * (r + 24) - bz / 2, cy + Math.sin(a) * (r + 24) - bz / 2, bz, bz);
+  }
+  for (i = 0; i < 9; i++) {   // and a row of bulbs along the run-up, chasing on from the ring
+    var bx2 = cx - 250 + i * 32; if (bx2 < -30 || bx2 > W + 30) continue;
+    lvl = tkLv(nb + (8 - i), nb + 9, t * 1.0, fl2); g.drawImage(tkBulb(lc[(i + 1) % 3], lvl), bx2 - bz / 2, ty - 26 - bz / 2, bz, bz);
   }
   [[cx - 70, ty], [cx, cy - r], [cx + 70, ty]].forEach(function (c2) {                                                          // bolted metal collars
     rr(g, c2[0] - 13, c2[1] - 26, 26, 52, 7); fs(g, P[10], '#2b2140', 2.2);
@@ -1954,39 +2011,47 @@ function track(g, x, t, p, th) {
   g.lineCap = 'round';
 }
 /* the golden banana coin: 8 pre-drawn frames of it spinning */
-var COIN = null, COINN = 12;
-function coinFrame(i) {   // a golden banana, drawn flat as a side view with five peel ridges, a brown stem and tip: it rocks gently and a shine sweeps along it (12 steps)
-  if (!COIN) COIN = [];
-  if (COIN[i]) return COIN[i];
-  var m = mk(44, 48), g = m.g, N = 18, P0 = [-16, -6], P1 = [.5, 19], P2 = [16.5, -9], j, t, u, cx, cy, dx, dy, l, w, nx, ny, up = [], dn = [], mid = [], q, f = i / COINN, sw = Math.sin(f * PI2), sh = (f * 1.6 - .3);
+var COIN = null, COINN = 20;
+var COINK = null;
+function coinShape() {   // the banana outline as points (once): a crescent with a thick middle, plus the ridge lines
+  if (COINK) return COINK;
+  var N = 18, P0 = [-16, -6], P1 = [.5, 19], P2 = [16.5, -9], up = [], dn = [], mid = [], j, t, u, cx, cy, dx, dy, l, nx, ny, w;
   for (j = 0; j <= N; j++) {
     t = j / N; u = 1 - t; cx = u * u * P0[0] + 2 * u * t * P1[0] + t * t * P2[0]; cy = u * u * P0[1] + 2 * u * t * P1[1] + t * t * P2[1];
     dx = 2 * u * (P1[0] - P0[0]) + 2 * t * (P2[0] - P1[0]); dy = 2 * u * (P1[1] - P0[1]) + 2 * t * (P2[1] - P1[1]); l = Math.sqrt(dx * dx + dy * dy) || 1; nx = -dy / l; ny = dx / l;
-    w = 1.6 + 7.4 * Math.pow(Math.sin(Math.min(1, t * .96 + .02) * PI2 / 2), .62); up.push([cx - nx * w, cy - ny * w]); dn.push([cx + nx * w, cy + ny * w]); mid.push([cx, cy, nx, ny, w]);
+    w = 1.6 + 7.4 * Math.pow(Math.sin(Math.min(1, t * .96 + .02) * Math.PI), .62); up.push([cx - nx * w, cy - ny * w]); dn.push([cx + nx * w, cy + ny * w]); mid.push([cx, cy, nx, ny, w]);
   }
-  function body() { g.beginPath(); g.moveTo(up[0][0], up[0][1]); for (var k = 1; k <= N; k++) g.lineTo(up[k][0], up[k][1]); for (var k = N; k >= 0; k--) g.lineTo(dn[k][0], dn[k][1]); g.closePath(); }
-  function rib(f0, c, lw) { g.beginPath(); for (var k = 1; k < N; k++) { var p = mid[k], o = f0 * p[4]; if (k === 1) g.moveTo(p[0] + p[2] * o, p[1] + p[3] * o); else g.lineTo(p[0] + p[2] * o, p[1] + p[3] * o); } g.strokeStyle = c; g.lineWidth = lw; g.stroke(); }
-  g.save(); g.translate(22, 22.5); g.rotate(sw * .2); g.lineJoin = 'round'; g.lineCap = 'round';
-  g.save(); g.translate(0, 20); g.scale(1, .2); g.beginPath(); g.arc(0, 0, 14, 0, PI2); g.fillStyle = 'rgba(40,24,60,.2)'; g.fill(); g.restore();   // a soft shadow below
-  g.beginPath(); g.moveTo(P2[0] - 2, P2[1] + 1); g.lineTo(P2[0] + 2.6, P2[1] - 5.2); g.lineWidth = 6.6; g.strokeStyle = INK; g.stroke(); g.lineWidth = 4; g.strokeStyle = '#7a4a16'; g.stroke(); g.lineWidth = 1.4; g.strokeStyle = '#c98b3a'; g.beginPath(); g.moveTo(P2[0] - 1.4, P2[1] + .2); g.lineTo(P2[0] + 1.6, P2[1] - 4.4); g.stroke();   // the stem
-  body(); g.lineWidth = 4; g.strokeStyle = INK; g.stroke();
-  q = g.createLinearGradient(0, -4, 0, 12); q.addColorStop(0, '#fff6a8'); q.addColorStop(.38, '#ffd633'); q.addColorStop(.75, '#f0a800'); q.addColorStop(1, '#c97a00'); body(); g.fillStyle = q; g.fill();
-  g.save(); body(); g.clip();
-  rib(-.62, 'rgba(255,250,200,.85)', 1.2); rib(-.3, 'rgba(160,96,0,.55)', 1); rib(.1, 'rgba(160,96,0,.5)', 1); rib(.5, 'rgba(120,64,0,.55)', 1.1); rib(.8, 'rgba(255,225,120,.55)', 1);   // the peel ridges
-  g.lineWidth = 2.4; g.strokeStyle = 'rgba(255,255,255,.55)'; rib(-.8, 'rgba(255,255,255,.7)', 1.8);   // a rim of light along the top
-  g.save(); g.translate(sh * 50 - 12, 0); g.rotate(.5); g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(-2, -30, 4.5, 60); g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(4, -30, 3, 60); g.restore();   // a shine that sweeps along
-  g.fillStyle = 'rgba(255,255,255,.9)'; g.beginPath(); g.ellipse(-7.4, 6.6, 2.4, 1.1, .6, 0, PI2); g.fill();   // a crisp glint
-  g.fillStyle = 'rgba(120,60,0,.28)'; g.beginPath(); g.ellipse(5, 13.6, 11, 3.2, -.25, 0, PI2); g.fill();   // deeper gold underneath
+  return COINK = { N: N, up: up, dn: dn, mid: mid, P0: P0, P2: P2 };
+}
+function coinFrame(i) {   // a GOLD banana turning about its up-down axis like a coin on a spindle: 20 steps. The face narrows, shows its back (mirrored), and a thick milled gold edge shows when it is side-on. No shadow (it floats in the air).
+  if (!COIN) COIN = [];
+  if (COIN[i]) return COIN[i];
+  var m = mk(44, 48), g = m.g, S = coinShape(), N = S.N, th = i / COINN * PI2, c = Math.cos(th), sn = Math.sin(th), ac = Math.abs(c), SC = .84, T = 3.4, k, n = 7, q, ox, base = 22, by0 = 23;
+  function path(dx) { g.save(); g.translate(base + dx, by0); g.scale(Math.max(.02, ac) * SC * (c < 0 ? -1 : 1), SC); g.beginPath(); g.moveTo(S.up[0][0], S.up[0][1]); for (var j = 1; j <= N; j++) g.lineTo(S.up[j][0], S.up[j][1]); for (var j = N; j >= 0; j--) g.lineTo(S.dn[j][0], S.dn[j][1]); g.closePath(); g.restore(); }
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  for (k = 0; k <= n; k++) { ox = sn * T * (1 - 2 * k / n); path(ox); g.lineWidth = 3.2; g.strokeStyle = INK; g.stroke(); g.fillStyle = INK; g.fill(); }   // the dark outline of the whole thickness
+  for (k = 0; k <= n; k++) { ox = sn * T * (1 - 2 * k / n); path(ox); g.fillStyle = k % 2 ? '#d9980a' : '#f2b81c'; g.fill(); }   // the milled gold edge
+  ox = sn * T * (c > 0 ? 1 : -1); path(ox); q = g.createLinearGradient(base + ox, by0 - 10, base + ox, by0 + 12); q.addColorStop(0, '#fff6b0'); q.addColorStop(.28, '#ffd726'); q.addColorStop(.7, '#f5ad06'); q.addColorStop(1, '#d08a00'); g.fillStyle = q; g.fill();   // the face: bright gold
+  g.save(); path(ox); g.clip();
+  g.save(); g.translate(base + ox, by0); g.scale(Math.max(.02, ac) * SC * (c < 0 ? -1 : 1), SC); g.lineJoin = 'round'; g.lineCap = 'round';
+  function rib(f0, col, lw) { g.beginPath(); for (var k2 = 1; k2 < N; k2++) { var p = S.mid[k2], o = f0 * p[4]; if (k2 === 1) g.moveTo(p[0] + p[2] * o, p[1] + p[3] * o); else g.lineTo(p[0] + p[2] * o, p[1] + p[3] * o); } g.strokeStyle = col; g.lineWidth = lw; g.stroke(); }
+  rib(-.6, 'rgba(255,244,170,.9)', 1.5); rib(-.28, 'rgba(170,100,0,.5)', 1); rib(.1, 'rgba(170,100,0,.45)', 1); rib(.5, 'rgba(140,76,0,.5)', 1.1); rib(.8, 'rgba(255,214,90,.6)', 1.1);   // the peel ridges
+  g.fillStyle = 'rgba(120,60,0,.3)'; g.beginPath(); g.ellipse(5, 13.6, 11, 3.2, -.25, 0, PI2); g.fill();
   g.restore();
-  g.lineWidth = 1.1; g.strokeStyle = '#8a5200'; body(); g.stroke();
-  g.fillStyle = '#4a2a10'; g.beginPath(); g.ellipse(P0[0] - .4, P0[1] - .2, 2.6, 2.3, -.5, 0, PI2); g.fill(); g.lineWidth = 1; g.strokeStyle = INK; g.stroke();   // the dark tip
+  g.fillStyle = 'rgba(255,255,255,.5)'; g.save(); g.translate(base + ox + sn * 9 * 0 + (((i % COINN) / COINN) * 70 - 24) * ac * SC, by0); g.rotate(.5); g.fillRect(-2, -30, 4.2, 60); g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(4, -30, 2.6, 60); g.restore();   // a shine sweeping across the face as it turns
+  g.fillStyle = 'rgba(110,60,0,' + (.32 * (1 - ac)) + ')'; g.fillRect(0, 0, 44, 48);   // the face darkens as it turns away
   g.restore();
+  path(ox); g.lineWidth = 1.1; g.strokeStyle = '#7a4500'; g.stroke();
+  g.save(); g.translate(base + ox, by0); g.scale(Math.max(.02, ac) * SC * (c < 0 ? -1 : 1), SC);
+  g.beginPath(); g.moveTo(S.P2[0] - 1, S.P2[1] + .5); g.lineTo(S.P2[0] + 2.4, S.P2[1] - 4.8); g.restore();   // the stem
+  g.lineWidth = 3.6; g.strokeStyle = INK; g.stroke(); g.lineWidth = 2; g.strokeStyle = '#8a5a1c'; g.stroke();
+  g.save(); g.translate(base + ox, by0); g.scale(Math.max(.02, ac) * SC * (c < 0 ? -1 : 1), SC); g.fillStyle = '#4a2a10'; g.beginPath(); g.ellipse(S.P0[0] - .4, S.P0[1] - .2, 2.6, 2.3, -.5, 0, PI2); g.fill(); g.restore();   // the dark tip
   return COIN[i] = m;
 }
 function coinFrames() { COIN = []; for (var i = 0; i < COINN; i++) (function (i) { TASKQ.push(function () { coinFrame(i); }); })(i); }
 function coin(g, x, y, t) {
-  var m = coinFrame(Math.floor(t * 7) % COINN), ph = (t * .9 + x * .013 + y * .007) % 1, a = ph < .22 ? Math.sin(ph / .22 * Math.PI) : 0, r;
-  put(g, m.c, x - 22, y - 21);
+  var m = coinFrame(Math.floor(t * 11) % COINN), ph = (t * .9 + x * .013 + y * .007) % 1, a = ph < .22 ? Math.sin(ph / .22 * Math.PI) : 0, r;
+  put(g, m.c, x - 22, y - 23);
   if (a > .05) { r = 6.5 * a; g.save(); g.globalAlpha = a; g.fillStyle = '#fffbe0'; g.beginPath(); g.moveTo(x - 9, y - 15 - r); g.lineTo(x - 9 + r * .28, y - 15 - r * .28); g.lineTo(x - 9 + r, y - 15); g.lineTo(x - 9 + r * .28, y - 15 + r * .28); g.lineTo(x - 9, y - 15 + r); g.lineTo(x - 9 - r * .28, y - 15 + r * .28); g.lineTo(x - 9 - r, y - 15); g.lineTo(x - 9 - r * .28, y - 15 - r * .28); g.closePath(); g.fill(); g.restore(); }   // a twinkle that crosses each coin now and then (out of step, so the coins do not blink together)
 }
 
@@ -2058,13 +2123,13 @@ function balBack(g, off) { var P = party(); put(g, P.sky.c, 0, 0); layer(g, P.cl
 function balGround(g, off) { var F = party().floor, x; for (x = px(-(off % 72)); x < W; x += 72) put(g, F.c, x, GY); }
 function balWarm() { var i; if (BALW) return; BALW = true; TASKQ.push(party); for (i = 0; i < BALC.length; i++) (function (i) { TASKQ.push(function () { balloonPic(i); }); })(i); TASKQ.push(waferPic); }
 
-return { fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: crownDraw, setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { draw: mgdraw, water: mgwater, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
+return { fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: crownDraw, setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { draw: mgdraw, water: mgwater, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, pend: pend, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
 })();
 
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1603';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1629';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -3027,7 +3092,18 @@ function die() {
    ART.warm(themeOf(1));   // build the first stage's pictures while the Oops card shows, so the next try starts instantly
   
 }
-function pumpNeed() { var nt = themeOf(stage + 1); return state === 'play' && nt !== themeOf(stage) && !ART.ready(nt) && score - gateStart(stage) >= 2; }   // the next stage's pictures are still being built and half the stage is gone: build faster
+var pumpCr = 0;
+function pumpPlan() {   // [steps, ms] to build this frame when the next stage's pictures (or the water level's) are behind schedule, else null. The build must finish before the next look's first gate is drawn: a stage that is not ready is built in ONE frame then, which on a slow laptop is a long freeze.
+  
+  if (state !== 'play' || pracN || BAL || FT) { pumpCr = 0; return null; }
+  var mgs = themeOf(stage) === CFG.miniAfter, left = ART.pend(mgs ? -1 : themeOf(stage + 1), mgs), g, tl, n;
+  if (!left || (!mgs && themeOf(stage + 1) === themeOf(stage))) { pumpCr = 0; return null; }
+  g = Math.max(1, gateStart(stage + 1) - score); tl = (g * CFG.spacing) / Math.max(80, speedFor(stage));
+  pumpCr += Math.min(3, left / Math.max(0.25, tl * 36) * 1.35); n = Math.min(4, Math.floor(pumpCr)); pumpCr -= n;   // an even trickle over the time that is left (about 36 frames a second assumed)
+  if (tl < 3) { n = Math.max(n, 2); return [n, 6]; }   // nearly out of time: a bigger share every frame
+  return n > 0 ? [n, 0] : null;
+}
+function pumpFrame(fs) { var pp = pumpPlan(); if (pp) ART.pump(pp[1], pp[0]); else if (performance.now() - fs < 6 || ++pumpSkip >= 4) { pumpSkip = 0; ART.pump(CFG.pumpMs); } }
 function stageUp() {
   var done = themeOf(stage); cardStage = stage; stage++; save.stats.friends += CFG.friendsPerStage;
   giveCoins(CFG.stageCoins, bx + 20, by); burst(bx + 20, by, 26, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 300, 340); pop('Stage bonus +' + CFG.stageCoins + '!', '#ffd93b', 22);   // a little fanfare
@@ -3824,22 +3900,28 @@ var k = 1, dpr = 1, artK = 0;
 function rrect(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
 function fs(fill) { ctx.fillStyle = fill; ctx.fill(); ctx.stroke(); }
 /* Outlined text is drawn ONCE into a small picture and then stamped (stroke + fill of text every frame was a steady cost). `base` lets a changing size reuse one picture. */
-var TXC = {}, TXN = 0;
+var TXC = {}, TXN = 0, TXF = 0;   // cache of text pictures; TXF counts drawn frames so the cache can drop only pictures nobody has used for a while
 var TEXTQ = [], TXP = {};   // outlined text built one per frame (a lazy request is queued and drawn from the next frame on): a card full of new text no longer lands on one frame
 (function () { [[64, '#ffffff'], [22, '#ffffff'], [20, '#ffffff'], [32, '#ffffff'], [24, '#ffffff'], [24, '#ffd93b'], [16, '#ffffff'], [14, '#ffffff']].forEach(function (p) { '0123456789'.split('').forEach(function (c) { var key = p[0] + '|' + p[1] + '|' + c; TXP[key] = 1; TEXTQ.push([c, p[0], p[1], key]); }); }); })();   // the digits are built early, one per frame
 (function () { [['Ready', '#ff6b81'], ['Set', '#ffd93b'], ['GO!', '#7be07b']].forEach(function (p) { var key = '72|' + p[1] + '|' + p[0]; TXP[key] = 1; TEXTQ.push([p[0], 72, p[1], key]); }); })();   // Ready, Set, Go are built early too
 
 function textPic(text, size, fill, lazy) {
   var key = size + '|' + fill + '|' + text, e = TXC[key];
-  if (e) return e;
+  if (e) { e.u = TXF; return e; }
   if (lazy) { if (!TXP[key]) { TXP[key] = 1; TEXTQ.push([text, size, fill, key]); } return null; }
-  if (TXN > 160) { TXC = {}; TXN = 0; }
+  if (TXN > 220) txTrim();
   var c = document.createElement('canvas'), g2, pad = Math.ceil(size * 0.2) + 2, kk = k > 0 ? k : 1, w;
   g2 = c.getContext('2d'); g2.font = '800 ' + size + 'px ' + FONT; w = g2.measureText(text).width;
   e = { c: c, w: w, pad: pad, h: Math.ceil(size * 1.4) + pad * 2 }; c.width = Math.ceil((w + pad * 2) * kk); c.height = Math.ceil(e.h * kk);
   g2 = c.getContext('2d'); g2.scale(kk, kk); g2.font = '800 ' + size + 'px ' + FONT; g2.textBaseline = 'middle'; g2.textAlign = 'left';
   g2.lineJoin = 'round'; g2.lineWidth = size * 0.2; g2.strokeStyle = INK; g2.strokeText(text, pad, e.h / 2); g2.fillStyle = fill || '#fff'; g2.fillText(text, pad, e.h / 2);
-  TXC[key] = e; TXN++; return e;
+  e.u = TXF; TXC[key] = e; TXN++; return e;
+}
+function txTrim() {   // make room: drop pictures unused for 15 seconds (the old way threw the WHOLE cache away at 160 pictures, so every word on screen was rebuilt in one frame: a freeze by the Silverware Drawer on a slow laptop)
+  var ks = Object.keys(TXC), i, n = 0, old = TXF - 900;
+  for (i = 0; i < ks.length; i++) if (TXC[ks[i]].u < old) { delete TXC[ks[i]]; n++; }
+  if (n < 30) { ks = Object.keys(TXC).sort(function (a, b) { return TXC[a].u - TXC[b].u; }); for (i = 0; i < 40 && i < ks.length; i++) { delete TXC[ks[i]]; n++; } }
+  TXN = Object.keys(TXC).length;
 }
 function outlined(text, x, y, size, fill, align, base, lazy) {
   
@@ -4112,7 +4194,7 @@ var PBR = 16;   // pause button radius (bigger with Large buttons)
 function drawPauseBtn(b, a) { var f = PBR / 16; ctx.beginPath(); ctx.arc(b[0], b[1], PBR, 0, 7); ctx.fillStyle = 'rgba(30,20,50,' + a + ')'; ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.4; ctx.stroke(); ctx.fillStyle = '#ffffff'; rrect(b[0] - 6.5 * f, b[1] - 7 * f, 4.4 * f, 14 * f, 1.6); ctx.fill(); rrect(b[0] + 2.1 * f, b[1] - 7 * f, 4.4 * f, 14 * f, 1.6); ctx.fill(); }
 function blinkOff() { return invuln > 0 && spinT <= 0 && !calmOn() && Math.floor(time * 14) % 2; }   // after a bump Fancy blinks (Calm mode: steady and a little see-through instead)
 function render() {
-  if (PR) prT = performance.now();
+  TXF++; if (PR) prT = performance.now();
   ctx.setTransform(k, 0, 0, k, 0, 0); ctx.globalAlpha = 1;
   if (state === 'mini' && MG) { renderMini(); return; }
   var i, pe = punchT > 0 && !calmOn() ? punchT / CFG.punchSecs : 0;
@@ -4326,7 +4408,7 @@ function frame(t) {
   requestAnimationFrame(frame);
   if (!autoRun) { last = t; return; }
   var fs = performance.now(), ri = t - last, dt = Math.min(0.05, ri / 1000 || 0), p0 = REC ? fs : 0; last = t; acc += dt; wlSync(); govStep(ri, t); if (padOn || padTest) padStep();
-  try { while (acc >= CFG.step) { update(CFG.step); acc -= CFG.step; } var p1 = REC ? performance.now() : 0, still = washA <= 0 && ((state === 'paused' && resT < 0) || (state === 'mini' && MG && MG.paused)); if (!(still && stillDrawn) && !(opt('saver') && t - lastDraw < 28)) { renders++; lastDraw = t; render(); stillDrawn = still; if (washA > 0) { ctx.globalAlpha = washA; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; } }   /* a paused game does not change: draw it once, then rest (saves battery and heat); the Battery saver draws at most every 28 ms */ if (TEXTQ.length) { var tq = TEXTQ.shift(); delete TXP[tq[3]]; textPic(tq[0], tq[1], tq[2]); } if (renders > 1) { if (performance.now() - fs < 6 || ++pumpSkip >= 4) { pumpSkip = 0; ART.pump(pumpNeed() ? CFG.pumpMs * 2.2 : CFG.pumpMs); } } /* background art building only when this frame was cheap (or every 4th frame at the latest), so a slow phone is not made slower right when it struggles */ if (REC) REC(t, dt, p1 - p0, performance.now() - p1); } catch (e) { logError('frame', e); acc = 0; softFail(e); }
+  try { while (acc >= CFG.step) { update(CFG.step); acc -= CFG.step; } var p1 = REC ? performance.now() : 0, still = washA <= 0 && ((state === 'paused' && resT < 0) || (state === 'mini' && MG && MG.paused)); if (!(still && stillDrawn) && !(opt('saver') && t - lastDraw < 28)) { renders++; lastDraw = t; render(); stillDrawn = still; if (washA > 0) { ctx.globalAlpha = washA; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; } }   /* a paused game does not change: draw it once, then rest (saves battery and heat); the Battery saver draws at most every 28 ms */ if (TEXTQ.length) { var tq = TEXTQ.shift(); delete TXP[tq[3]]; textPic(tq[0], tq[1], tq[2]); }  if (renders > 1) pumpFrame(fs); /* background art building only when this frame was cheap (or every 4th frame at the latest), so a slow phone is not made slower right when it struggles */ if (REC) REC(t, dt, p1 - p0, performance.now() - p1); } catch (e) { logError('frame', e); acc = 0; softFail(e); }
 }
 requestAnimationFrame(frame);
 
