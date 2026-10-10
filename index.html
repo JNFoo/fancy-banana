@@ -384,7 +384,7 @@ function tri(R, a, b, c, mat, T) {
     t = t * .9 + rim; sp0 = nx * .55 + ny * .8; if (sp0 > .25) t -= (sp0 - .25) * .3;   // shade pooled low and to the right (Apple Press: the deep tone of the ramp collects there)
     sp = nx * HLX + ny * HLY + nz * HLZ; sp = sp > 0 ? Math.pow(sp, 16) * .55 + Math.pow(sp, 110) * .55 + Math.pow(sp, 380) * .5 : 0;                 // one big soft highlight
     tv = w0 * a[7] + w1 * b[7] + w2 * c[7];
-    if (mat === 0 || mat === 5) { ridge = Math.cos(5 * tv); if (ridge < -.86) t *= .93; }                                           // faint valleys between the ridges
+    if (mat === 0 || mat === 5) { ridge = Math.cos(5 * tv); if (ridge < -.86) t *= mat === 5 ? .78 : .93; else if (mat === 5 && ridge > .9) t += .06; }                                           // faint valleys between the ridges
     if (nz < .34) t *= mat === 1 ? .5 + .5 * Math.max(0, nz) / .34 : .88 + .12 * Math.max(0, nz) / .34;   // darker toward the rim: round forms, and fists read apart
     t = t < 0 ? 0 : t > 1 ? 1 : t; i3 = ((t * 255) | 0) * 3; r = L[i3]; g = L[i3 + 1]; bl = L[i3 + 2];
     if (T) {
@@ -439,6 +439,7 @@ function posePic(o, w, h, ox, oy) {   // render one pose to a finished, outlined
   S.width = R.w; S.height = R.h; sg = S.getContext('2d'); sg.putImageData(new ImageData(R.px, R.w, R.h), 0, 0);
   B = document.createElement('canvas'); B.width = m.c.width; B.height = m.c.height; Bg = B.getContext('2d'); Bg.imageSmoothingQuality = 'high'; Bg.drawImage(S, 0, 0, B.width, B.height);
   m.g.setTransform(1, 0, 0, 1, 0, 0); m.g.drawImage(outlinePic(B, (o.ol || 2.1) * sx * (o.sc || 1), OUTK), 0, 0); m.g.setTransform(sx, 0, 0, sy, 0, 0);
+  toyFinish(m, o, ox, oy);
   return m;
 }
 function spot(u, th, phi, sc) { var p = rotX(bsurf(u, th, sc), phi); return [p.x, p.y, p.z]; }
@@ -674,6 +675,23 @@ function bossDraw(g, n) {
     circ(g, -56, 22, 10.6); fb(g, rg(g, -59, 19, 1, -56, 22, 11, [[0, '#d09a6c'], [1, '#8a5a38']]), O, 2.6);
     g.fillStyle = '#fff6c0'; [[-70, -48, 3], [-34, -52, 2.4], [60, 40, 2.6], [-72, 30, 2]].forEach(function (s) { g.beginPath(); g.moveTo(s[0], s[1] - s[2] * 1.6); g.lineTo(s[0] + s[2] * .5, s[1] - s[2] * .5); g.lineTo(s[0] + s[2] * 1.6, s[1]); g.lineTo(s[0] + s[2] * .5, s[1] + s[2] * .5); g.lineTo(s[0], s[1] + s[2] * 1.6); g.lineTo(s[0] - s[2] * .5, s[1] + s[2] * .5); g.lineTo(s[0] - s[2] * 1.6, s[1]); g.lineTo(s[0] - s[2] * .5, s[1] - s[2] * .5); g.closePath(); g.fill(); });
   }
+}
+function rimH(o, a) {   // a thin white band just inside the right edge of a picture (pure sideways shift, so stacked tiles show no seams)
+  var c = o.c, k = c.width / (o.w || W), t = document.createElement('canvas'), g = t.getContext('2d'), q = o.g;
+  t.width = c.width; t.height = c.height; g.drawImage(c, -3 * K, 0); g.globalCompositeOperation = 'destination-out'; g.drawImage(c, -6.5 * K, 0);
+  g.globalCompositeOperation = 'source-in'; g.fillStyle = 'rgba(255,255,255,' + (a || .38) + ')'; g.fillRect(0, 0, t.width, t.height);
+  q.save(); q.setTransform(1, 0, 0, 1, 0, 0); q.globalCompositeOperation = 'source-atop'; q.drawImage(t, 0, 0); q.restore();
+}
+function toyFinish(m, o, ox, oy) {   // Apple Press: deep warm shade pooled lower right, a long curved gloss streak with a crisp white dot upper left, and a white rim light on the right edge
+  var g = m.g, s = o.sc || 1, sx = m.c.width / m.w, i, u, c, n, r, x, y, pts = [], gr, gold = !!o.gold;
+  g.save(); g.setTransform(sx, 0, 0, sx, 0, 0); g.globalCompositeOperation = 'source-atop';
+  gr = g.createRadialGradient(ox + 32 * s, oy + 26 * s, 2, ox + 32 * s, oy + 26 * s, 54 * s); gr.addColorStop(0, gold ? 'rgba(120,60,0,.34)' : 'rgba(150,64,0,.55)'); gr.addColorStop(1, 'rgba(150,64,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, m.w, m.h);
+  for (i = 0; i <= 8; i++) { u = .1 + i * .045; c = bu(u); n = bn(u); r = br(u); pts.push([ox + (c.x - n.nx * r * .45) * s, oy + (c.y - n.ny * r * .45) * s]); }
+  gr = g.createLinearGradient(pts[0][0], pts[0][1], pts[8][0], pts[8][1]); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.22, 'rgba(255,255,255,.9)'); gr.addColorStop(.7, 'rgba(255,255,255,.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.strokeStyle = gr; g.lineCap = 'round'; g.lineJoin = 'round'; g.globalAlpha = .4; g.lineWidth = 9 * s; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (i = 1; i < 9; i++) g.lineTo(pts[i][0], pts[i][1]); g.stroke(); g.globalAlpha = 1; g.lineWidth = 4.6 * s; g.beginPath(); g.moveTo(pts[0][0], pts[0][1]); for (i = 1; i < 9; i++) g.lineTo(pts[i][0], pts[i][1]); g.stroke();
+  g.lineWidth = 1.6 * s; g.globalAlpha = .75; g.beginPath(); u = .62; for (i = 0; i <= 4; i++) { c = bu(u + i * .035); n = bn(u + i * .035); r = br(u + i * .035); x = ox + (c.x - n.nx * r * .55) * s; y = oy + (c.y - n.ny * r * .55) * s; if (i) g.lineTo(x, y); else g.moveTo(x, y); } g.stroke(); g.globalAlpha = 1;
+  g.fillStyle = 'rgba(255,255,255,.95)'; g.beginPath(); g.arc(pts[2][0], pts[2][1], 1.7 * s, 0, 7); g.fill();
+  g.restore(); rimLight(m);
 }
 function rimLight(p) {   // Apple Press: a thin band of bounced light just inside the right and lower edge of the whole figure (the silhouette minus itself shifted left and up, twice)
   var c = p.c, t = document.createElement('canvas'), g = t.getContext('2d'), k = c.width / p.w;
@@ -1493,6 +1511,7 @@ function planFor(th) {
   var p = PLAN[th]; if (p) return p; var D = DEF[th], s = { tiles: [[], []], caps: [[], []] }, st = [], side, i, v, JG = th === JT;
   st.push(function () { s.sky = mk(W, GY); });
   for (i = 0; i < 6; i++) (function (i) { st.push(function () { var g = s.sky.g, sy = s.sky.c.height / GY, y0 = Math.round(GY * i / 6 * sy) / sy, y1 = i === 5 ? GY : Math.round(GY * (i + 1) / 6 * sy) / sy; g.save(); g.beginPath(); g.rect(0, y0, W, y1 - y0); g.clip(); D.sky(g); g.restore(); }); })(i);
+  for (i = 0; i < 6; i++) (function (i) { st.push(function () { var g = s.sky.g, q = g.createRadialGradient(W / 2, GY * .45, GY * .35, W / 2, GY * .45, GY * 1.05); g.save(); q.addColorStop(0, 'rgba(70,30,100,0)'); q.addColorStop(1, 'rgba(70,30,100,.2)'); g.fillStyle = q; g.fillRect(0, GY * i / 6, W, GY / 6 + .5); g.restore(); }); })(i);   // a soft vignette in the sky (six small strips, like the sky itself): the eye settles on the middle
   function layerSteps(name, P, y, h, fn, wa, fa) {
     if (JG) { chunkStrip(P, y, h, fn, D.wash[0], wa, fa, function (L) { s[name] = L; }).forEach(function (f) { st.push(f); }); return; }
     var nb = Math.max(2, Math.round(P / SLICEW)); stripSteps(P, y, h, fn, D.wash[0], wa, fa, nb, function (L) { s[name] = L; }).forEach(function (f) { st.push(f); });
@@ -1502,11 +1521,11 @@ function planFor(th) {
   layerSteps('top', D.topP, D.topY, D.topH, D.top, D.wash[3]);
   if (JG) {
     chunkStrip(JGW, 0, 72, D.ground, 0, 0, 0, function (L) { s.ground = L; }).forEach(function (f) { st.push(f); });
-  } else st.push(function () { s.ground = mk(GP[th], 72); D.ground(s.ground.g, GP[th]); });
+  } else st.push(function () { s.ground = mk(GP[th], 72); D.ground(s.ground.g, GP[th]); var g = s.ground.g, q = g.createLinearGradient(0, 0, 0, 72); g.save(); g.globalCompositeOperation = 'source-atop'; q.addColorStop(0, 'rgba(255,255,255,.34)'); q.addColorStop(.08, 'rgba(255,255,255,0)'); q.addColorStop(.55, 'rgba(60,30,90,0)'); q.addColorStop(1, 'rgba(60,30,90,.22)'); g.fillStyle = q; g.fillRect(0, 0, GP[th], 72); g.restore(); });   // the floor: a lit top edge and a deeper tone toward the bottom
   var sc = st.length;   // everything above is scenery (what the title screen shows); the obstacle pieces below are only needed once a run starts
   for (side = 0; side < 2; side++) {
-    for (v = 0; v < D.ts[side].nv; v++) (function (side, v) { st.push(slicer(function () { return boldG(OW, D.ts[side].h, function (g) { return D.tile(g, side, v); }, 0); }, function (o) { edgeRows(o); s.tiles[side][v] = o; })); })(side, v);
-    for (i = 0; i < D.kinds; i++) (function (side, i) { st.push(slicer(function () { return boldG(OW, D.capH[side][i], function (g) { return D.cap(g, side, i); }, side ? 1 : 2); }, function (o) { s.caps[side][i] = o; })); })(side, i);
+    for (v = 0; v < D.ts[side].nv; v++) (function (side, v) { st.push(slicer(function () { return boldG(OW, D.ts[side].h, function (g) { return D.tile(g, side, v); }, 0); }, function (o) { rimH(o); edgeRows(o); s.tiles[side][v] = o; })); })(side, v);
+    for (i = 0; i < D.kinds; i++) (function (side, i) { st.push(slicer(function () { return boldG(OW, D.capH[side][i], function (g) { return D.cap(g, side, i); }, side ? 1 : 2); }, function (o) { rimH(o); s.caps[side][i] = o; })); })(side, i);
   }
   var lr = rnd(th * 977 + 13), lout = [];   // the drifting life (balloons, butterflies, sparkles): one sprite per step, so no stage start ever builds them all at once
   (LIFE[th] || []).forEach(function (e) { for (var j = 0; j < e[1]; j++) (function (e, j) { st.push(function () { lout.push(lifeItem(th, e, j, lr)); }); })(e, j); });
@@ -1931,7 +1950,11 @@ function coinFrame(i) {   // a gold banana turning about its long axis (the same
   return COIN[i];
 }
 function coinFrames() { COIN = []; for (var i = 0; i < COINN; i++) (function (i) { TASKQ.push(function () { coinFrame(i); }); })(i); }
-function coin(g, x, y, t) { var m = coinFrame(Math.floor(t * 9) % COINN); put(g, m.c, x - 22, y - 20); }
+function coin(g, x, y, t) {
+  var m = coinFrame(Math.floor(t * 9) % COINN), ph = (t * .9 + x * .013 + y * .007) % 1, a = ph < .22 ? Math.sin(ph / .22 * Math.PI) : 0, r;
+  put(g, m.c, x - 22, y - 20);
+  if (a > .05) { r = 6.5 * a; g.save(); g.globalAlpha = a; g.fillStyle = '#fffbe0'; g.beginPath(); g.moveTo(x - 9, y - 15 - r); g.lineTo(x - 9 + r * .28, y - 15 - r * .28); g.lineTo(x - 9 + r, y - 15); g.lineTo(x - 9 + r * .28, y - 15 + r * .28); g.lineTo(x - 9, y - 15 + r); g.lineTo(x - 9 - r * .28, y - 15 + r * .28); g.lineTo(x - 9 - r, y - 15); g.lineTo(x - 9 - r * .28, y - 15 - r * .28); g.closePath(); g.fill(); g.restore(); }   // a twinkle that crosses each coin now and then (out of step, so the coins do not blink together)
+}
 
 /* ===================== SPECIALS: party balloons, vanilla wafers, the party sky ===================== */
 var BALW = false, BALC = ['#ff4d6d', '#ff9a3c', '#ffd93b', '#4fd36a', '#2fc7c0', '#4d9bff', '#9a6cff', '#ff7ad0', '#ffc43a'], BALP = {}, WAFP = null, PARTY = null;   // the last balloon is the gold one
@@ -2007,7 +2030,7 @@ return { fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: cr
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1410';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1430';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -3402,7 +3425,7 @@ function renderMini() {
   else if (m.practice && (m.ph === 'win' || m.ph === 'lose')) practiceCard(m);
   else if (m.ph === 'win') { ctx.lineWidth = 3; ctx.strokeStyle = INK; rrect(40, 200, 280, 150, 22); fs('rgba(255,252,240,0.95)'); outlined('Made it to shore!', W / 2, 244, 30, '#ffd93b'); outlined('+' + (CFG.friendsPerStage + m.saved + m.bonus) + ' banana friends escaped', W / 2, 292, 17, '#ffffff'); outlined('Next: ' + ART.names[themeOf(stage)], W / 2, 324, 17, '#ffd93b'); }
   else if (m.ph === 'lose') { ctx.fillStyle = 'rgba(58,42,77,0.3)'; ctx.fillRect(0, 0, W, H); ctx.lineWidth = 3; ctx.strokeStyle = INK; rrect(40, 200, 280, 210, 22); fs('rgba(255,252,240,0.96)'); ART.chimp(ctx, 250, 270, 0.62, 0, time); outlined('Splash!', 130, 244, 36, '#ffd93b'); outlined('The Navy got you.', 130, 288, 17, '#ffffff'); ctx.globalAlpha = m.pt > 0.6 ? 1 : 0.3; outlined('Tap to try again', W / 2, 372, 22, '#ffffff'); ctx.globalAlpha = 1; }
-  if (m.paused) { ctx.fillStyle = 'rgba(58,42,77,0.45)'; ctx.fillRect(0, 0, W, H); outlined('Paused', W / 2, 270, 44, '#ffd93b'); outlined('Tap to continue', W / 2, 330, 24, '#ffffff'); mgBtn(PS_BT, 'Settings', '#4a9bd8'); padLine(); if (m.practice) mgBtn(MG_BT, 'Back to title', '#8a6cd8'); else outlined('(the P key pauses too)', W / 2, 366, 15, '#ffffff'); drawExtrasCard(); }
+  if (m.paused) { ctx.fillStyle = 'rgba(58,42,77,0.45)'; ctx.fillRect(0, 0, W, H); outlined('Paused', W / 2, 226, 44, '#ffd93b'); outlined('Tap to continue', W / 2, 286, 24, '#ffffff'); mgBtn(PS_BT, 'Settings', '#4a9bd8'); padLine(); if (m.practice) mgBtn(MG_BT, 'Back to title', '#8a6cd8'); else outlined('(the P key pauses too)', W / 2, 366, 15, '#ffffff'); drawExtrasCard(); }
 }
 function noteBest() {
   if (pracN) return;   // a Relaxed run keeps its own best score, so the normal records stay honest
@@ -3957,6 +3980,7 @@ function pracCard(da) {   // a practiced stage ended
 function deadCard(da) {
   if (pracN) { pracCard(da); return; }
   ctx.globalAlpha = da; ctx.fillStyle = 'rgba(58,42,77,0.28)'; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.translate(0, -60);   // the card sits higher on the screen
   ctx.lineWidth = 3; ctx.strokeStyle = INK; rrect(30, 190, 300, 270, 22); fs('rgba(255,252,240,0.96)');
   ART.chimp(ctx, 268, 292, 0.78, 0, time);
   outlined('Oops!', 128, 236, 42, '#ffd93b', 0, 0, true); ctx.globalAlpha = da;
@@ -3964,7 +3988,7 @@ function deadCard(da) {
   outlinedC(newBest ? 'New best!' : 'Best ' + save.best, 128, 334, 24, newBest ? '#ffd93b' : '#ffffff', 0, 0, true); ctx.globalAlpha = da;
   outlinedC('Stage ' + stage + '   Coins +' + runCoins + '   Taps ' + runFlaps, W / 2, 380, 16, '#ffffff', 0, 0, true); ctx.globalAlpha = da;
   outlinedC('Friends freed ' + save.stats.friends, W / 2, 404, 14, '#ffffff', 0, 0, true); ctx.globalAlpha = deadT >= CFG.retryDelay ? da : 0.3;
-  outlined('Tap to try again', W / 2, 432, 22, '#ffffff', 0, 0, true); ctx.globalAlpha = 1;
+  outlined('Tap to try again', W / 2, 432, 22, '#ffffff', 0, 0, true); ctx.restore(); ctx.globalAlpha = 1;
 }
 
 
@@ -3975,14 +3999,14 @@ function letterPics() {
   if (TTL && TTLK === k) return TTL;
   var lines = [{ t: 'Fancy,', size: 54, x: 150, y: 168, face: ['#ffc21f', '#f2a10a', '#d17f06'], side: '#ffe680' }, { t: 'the Banana', size: 38, x: 150, y: 228, face: ['#ff8a80', '#f0483f', '#c81e36'], side: '#7a1224' }], out = [], kk = k, c0 = document.createElement('canvas').getContext('2d'), li, ln, i, n = 0, wd, sz, px, pad, w, h, c, g2, dep, d;
   for (li = 0; li < lines.length; li++) {
-    ln = lines[li]; sz = ln.size; c0.font = '800 ' + sz + 'px ' + FONT; wd = c0.measureText(ln.t).width; if (wd > 192) { sz = Math.floor(sz * 192 / wd); c0.font = '800 ' + sz + 'px ' + FONT; }
+    ln = lines[li]; sz = ln.size; c0.font = '800 ' + sz + 'px ' + FONT; wd = c0.measureText(ln.t).width + sz * .11 * (ln.t.length - 1); if (wd > 198) { sz = Math.floor(sz * 198 / wd); c0.font = '800 ' + sz + 'px ' + FONT; }   // the letters get a little extra tracking so their sticker edges no longer overlap
     for (i = 0; i < ln.t.length; i++) {
       if (ln.t[i] === ' ') continue;
-      px = c0.measureText(ln.t.slice(0, i)).width; w = c0.measureText(ln.t[i]).width; pad = Math.ceil(sz * .3); dep = Math.max(3, Math.round(sz * .1)); h = Math.ceil(sz * 1.3) + pad * 2 + dep;
+      px = c0.measureText(ln.t.slice(0, i)).width + i * sz * .11; w = c0.measureText(ln.t[i]).width; pad = Math.ceil(sz * .3); dep = Math.max(3, Math.round(sz * .1)); h = Math.ceil(sz * 1.3) + pad * 2 + dep;
       c = document.createElement('canvas'); c.width = Math.ceil((w + pad * 2) * kk); c.height = Math.ceil(h * kk); g2 = c.getContext('2d'); g2.scale(kk, kk); g2.font = '800 ' + sz + 'px ' + FONT; g2.textBaseline = 'middle'; g2.textAlign = 'left'; g2.lineJoin = 'round';
       var cy = pad + sz * .65;
-      for (d = dep; d >= 1; d--) { g2.lineWidth = sz * .27; g2.strokeStyle = d > dep - 1 ? INK : ln.side; g2.strokeText(ln.t[i], pad, cy + d); g2.fillStyle = ln.side; g2.fillText(ln.t[i], pad, cy + d); }
-      g2.lineWidth = sz * .27; g2.strokeStyle = '#fff6df'; g2.strokeText(ln.t[i], pad, cy);                                    // the cream sticker edge
+      for (d = dep; d >= 1; d--) { g2.lineWidth = sz * .23; g2.strokeStyle = d > dep - 1 ? INK : ln.side; g2.strokeText(ln.t[i], pad, cy + d); g2.fillStyle = ln.side; g2.fillText(ln.t[i], pad, cy + d); }
+      g2.lineWidth = sz * .23; g2.strokeStyle = '#fff6df'; g2.strokeText(ln.t[i], pad, cy);                                    // the cream sticker edge
       var gr = g2.createLinearGradient(0, cy - sz * .5, 0, cy + sz * .5); gr.addColorStop(0, ln.face[0]); gr.addColorStop(.5, ln.face[1]); gr.addColorStop(1, ln.face[2]);
       g2.fillStyle = gr; g2.fillText(ln.t[i], pad, cy);
       g2.globalCompositeOperation = 'source-atop'; g2.fillStyle = 'rgba(255,255,255,.34)'; g2.fillRect(0, cy - sz * .56, w + pad * 2, sz * .3); g2.globalCompositeOperation = 'source-over';   // gloss across the top (only on what is already painted)
@@ -4080,10 +4104,10 @@ function render() {
     // splash: the name's letters swoop in, then Fancy zooms in beside them
     var tw = drawTitleWord(), ta = clamp((titleT - 2.5) / 0.4, 0, 1);
     ctx.globalAlpha = ta;
-    outlined('Tap to start', W / 2, 400, 26, '#ffffff');
-    outlined(spdPct() !== 100 ? 'Best (' + spdPct() + '% speed): ' + bestOf() : 'Best: ' + save.best + '   Stage: ' + save.bestStage, W / 2, 452, 20, '#ffffff');
-    outlined('Friends freed: ' + save.stats.friends + (save.stats.plus ? '   Speed +' + Math.min(CFG.plusMax, save.stats.plus) * 10 + '%' : ''), W / 2, 478, 18, '#ffffff');
-    if (save.stats.plus >= 5) { if (save.stats.plus >= CFG.plusMax) { ctx.lineWidth = 4; ['#ff6b81', '#ffd93b', '#7be07b', '#7ad8ff'].forEach(function (c, k) { ctx.strokeStyle = c; ctx.beginPath(); ctx.arc(W - 30, 466, 20 - k * 4, Math.PI, 0); ctx.stroke(); }); } ART.coin(ctx, W - 30, 452, time); }   // trophies: a gold banana at +50% speed, with a rainbow at the +100% top
+    outlined('Tap to start', W / 2, 352, 26, '#ffffff');
+    outlined(spdPct() !== 100 ? 'Best (' + spdPct() + '% speed): ' + bestOf() : 'Best: ' + save.best + '   Stage: ' + save.bestStage, W / 2, 404, 20, '#ffffff');
+    outlined('Friends freed: ' + save.stats.friends + (save.stats.plus ? '   Speed +' + Math.min(CFG.plusMax, save.stats.plus) * 10 + '%' : ''), W / 2, 430, 18, '#ffffff');
+    if (save.stats.plus >= 5) { if (save.stats.plus >= CFG.plusMax) { ctx.lineWidth = 4; ['#ff6b81', '#ffd93b', '#7be07b', '#7ad8ff'].forEach(function (c, k) { ctx.strokeStyle = c; ctx.beginPath(); ctx.arc(W - 30, 418, 20 - k * 4, Math.PI, 0); ctx.stroke(); }); } ART.coin(ctx, W - 30, 404, time); }   // trophies: a gold banana at +50% speed, with a rainbow at the +100% top
     if (!opt('noticker')) drawTicker();
     ctx.globalAlpha = 1;
     outlined(PHASE + ' ' + STAMP, W / 2, 556, 13, '#ffffff');
@@ -4095,7 +4119,7 @@ function render() {
     if (runChal) outlined('Challenge: ' + CHAL[chalIdx() - 1][1], W / 2, 146, 17, '#ffd93b');
   } else if (state === 'paused') {
     if (resT >= 0) { ctx.fillStyle = 'rgba(58,42,77,0.18)'; ctx.fillRect(0, 0, W, H); drawResume(); }
-    else { ctx.fillStyle = 'rgba(58,42,77,0.35)'; ctx.fillRect(0, 0, W, H); outlined('Paused', W / 2, 270, 44, '#ffd93b'); outlined('Tap to continue', W / 2, 330, 24, '#ffffff'); mgBtn(PS_BT, 'Settings', '#4a9bd8'); padLine(); if (pracN) mgBtn(MG_BT, 'Back to title', '#8a6cd8'); else outlined('(the P key pauses too)', W / 2, 366, 15, '#ffffff'); drawExtrasCard(); }
+    else { ctx.fillStyle = 'rgba(58,42,77,0.35)'; ctx.fillRect(0, 0, W, H); outlined('Paused', W / 2, 226, 44, '#ffd93b'); outlined('Tap to continue', W / 2, 286, 24, '#ffffff'); mgBtn(PS_BT, 'Settings', '#4a9bd8'); padLine(); if (pracN) mgBtn(MG_BT, 'Back to title', '#8a6cd8'); else outlined('(the P key pauses too)', W / 2, 366, 15, '#ffffff'); drawExtrasCard(); }
   } else if (state === 'dead') {
     deadCard(clamp(deadT / 0.35, 0, 1));
   } else if (state === 'victory') {
