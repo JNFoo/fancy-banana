@@ -230,9 +230,10 @@ function lit(c, t) { return mix(c, '#ffffff', t); }
 function drk(c, t) { return mix(c, '#2b1a2e', t); }
 function lg(g, x0, y0, x1, y1, st) { var q = g.createLinearGradient(x0, y0, x1, y1); for (var i = 0; i < st.length; i++) q.addColorStop(st[i][0], st[i][1]); return q; }
 function rg(g, x0, y0, r0, x1, y1, r1, st) { var q = g.createRadialGradient(x0, y0, r0, x1, y1, r1); for (var i = 0; i < st.length; i++) q.addColorStop(st[i][0], st[i][1]); return q; }
+var RF = { willReadFrequently: true };   // every picture the art builds stays in plain memory (never a graphics-card texture): the card then only ever sees finished pictures that are really drawn
 function mk(w, h, q, rd) {   // rd: the picture will be read back (getImageData): keep it in memory so that is quick
   q = q || K; var c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w * q)); c.height = Math.max(1, Math.ceil(h * q));
-  var g = rd ? c.getContext('2d', { willReadFrequently: true }) : c.getContext('2d'); if (!g) throw new Error('canvas-memory'); g.setTransform(c.width / w, 0, 0, c.height / h, 0, 0); g.lineJoin = 'round'; g.lineCap = 'round';
+  var g = c.getContext('2d', RF); if (!g) throw new Error('canvas-memory'); g.setTransform(c.width / w, 0, 0, c.height / h, 0, 0); g.lineJoin = 'round'; g.lineCap = 'round';
   return { c: c, g: g, w: w, h: h };
 }
 var LB = 0;   // size of the last rr/ell/circ shape, so the bevel scales with it (0: a hand-drawn path, a middling bevel)
@@ -310,7 +311,7 @@ function setColors(m, s) {   // the new colors are drawn into Fancy's pictures; 
 }
 /* ----- the face, painted flat in (length, around) space and wrapped onto the body by the renderer ----- */
 function faceTex(kind, e, pupils) {   // kind 'hero' | 'friend'; e 0 smile, 1 happy, 2 grit (clenched teeth, slanted brows), 3 blink
-  var c = document.createElement('canvas'); c.width = TU; c.height = TV; var g = c.getContext('2d'), sx = TU / FACE_ARC, sy = TV / (2 * Math.PI * RMAX);
+  var c = document.createElement('canvas'); c.width = TU; c.height = TV; var g = c.getContext('2d', RF), sx = TU / FACE_ARC, sy = TV / (2 * Math.PI * RMAX);
   g.lineJoin = 'round'; g.lineCap = 'round'; g.save(); g.translate(FACE_U * TU, TV / 4); g.scale(sx, -sy);   // y points DOWN the belly: y of the face art = down the screen at the front
   var hero = kind === 'hero', ex = hero ? 9.0 : 7.6, ey = hero ? -5.2 : -3.2, i, d, x;
   if (hero) {                                                                                                          // the red mask, with little upswept tips
@@ -341,11 +342,11 @@ function faceTex(kind, e, pupils) {   // kind 'hero' | 'friend'; e 0 smile, 1 ha
   return c;
 }
 function bandsTex(c, hero) {   // the plain body paint shared by every face: stem and tip ends, and (hero) the red scarf band round the neck
-  var g = c.getContext('2d'); g.save();
+  var g = c.getContext('2d', RF); g.save();
   if (hero) { g.fillStyle = PAL.s; g.fillRect(.15 * TU, 0, .075 * TU, TV); g.fillStyle = rgbS(mixHex(PAL.s, 0, .39)); g.fillRect(.15 * TU, 0, 1.4, TV); g.fillRect(.225 * TU - 1.4, 0, 1.4, TV); g.fillStyle = rgbS(mixHex(PAL.s, 255, .55), .55); g.fillRect(.16 * TU, 0, 2.2, TV); }
   g.restore(); return c;
 }
-function texData(c) { var d = c.getContext('2d').getImageData(0, 0, TU, TV).data; return { d: d }; }
+function texData(c) { var d = c.getContext('2d', RF).getImageData(0, 0, TU, TV).data; return { d: d }; }
 function texAt(T, u, v, out) {   // bilinear, wraps around the body (v), clamps along it (u)
   var x = Math.min(TU - 1.001, Math.max(0, u * TU - .5)), y = (((v / (2 * Math.PI)) * TV - .5) % TV + TV) % TV, x0 = x | 0, y0 = y | 0, fx = x - x0, fy = y - y0, y1 = (y0 + 1) % TV, d = T.d, i00 = (y0 * TU + x0) * 4, i10 = i00 + 4, i01 = (y1 * TU + x0) * 4, i11 = i01 + 4;
   var w00 = (1 - fx) * (1 - fy), w10 = fx * (1 - fy), w01 = (1 - fx) * fy, w11 = fx * fy, a = d[i00 + 3] * w00 + d[i10 + 3] * w10 + d[i01 + 3] * w01 + d[i11 + 3] * w11;
@@ -425,9 +426,9 @@ function bodyScene(R, o) {   // draw one pose into the depth buffer: o = { phi, 
   meshDraw(R, ballFn(e1.x * sc + n1.tx * 2.4, e1.y * sc + n1.ty * 2.4, 0, 4.4 * sc, 4.4 * sc, 4.4 * sc), 8, 12, s, ox, oy, 3, null, phi);                                                               // tip
 }
 function outlinePic(B, rpx, col) {   // thick dark outline all round: the picture, tinted, stamped in a ring behind itself
-  var t = document.createElement('canvas'); t.width = B.width; t.height = B.height; var tg = t.getContext('2d'), o = document.createElement('canvas'), og, i, a;
+  var t = document.createElement('canvas'); t.width = B.width; t.height = B.height; var tg = t.getContext('2d', RF), o = document.createElement('canvas'), og, i, a;
   tg.drawImage(B, 0, 0); tg.globalCompositeOperation = 'source-in'; tg.fillStyle = col; tg.fillRect(0, 0, t.width, t.height);
-  o.width = B.width; o.height = B.height; og = o.getContext('2d');
+  o.width = B.width; o.height = B.height; og = o.getContext('2d', RF);
   for (i = 0; i < 16; i++) { a = i * Math.PI / 8; og.drawImage(t, Math.round(Math.cos(a) * rpx), Math.round(Math.sin(a) * rpx)); }
   for (i = 0; i < 8; i++) { a = i * Math.PI / 4 + .39; og.drawImage(t, Math.cos(a) * rpx * .55, Math.sin(a) * rpx * .55); }
   og.drawImage(B, 0, 0); return o;
@@ -436,8 +437,8 @@ var OUTK = '#3a1f10';
 function posePic(o, w, h, ox, oy) {   // render one pose to a finished, outlined picture w x h (units), origin at (ox, oy) units
   var m = mk(w, h), sx = m.c.width / w, sy = m.c.height / h, ss = sx * SS, R = new Rast(Math.ceil(w * ss), Math.ceil(h * ss)), S = document.createElement('canvas'), sg, B, Bg;
   o.s = ss; o.ox = ox * ss; o.oy = oy * ss; POSEF = o.pose || null; bodyScene(R, o); POSEF = null;
-  S.width = R.w; S.height = R.h; sg = S.getContext('2d'); sg.putImageData(new ImageData(R.px, R.w, R.h), 0, 0);
-  B = document.createElement('canvas'); B.width = m.c.width; B.height = m.c.height; Bg = B.getContext('2d'); Bg.imageSmoothingQuality = 'high'; Bg.drawImage(S, 0, 0, B.width, B.height);
+  S.width = R.w; S.height = R.h; sg = S.getContext('2d', RF); sg.putImageData(new ImageData(R.px, R.w, R.h), 0, 0);
+  B = document.createElement('canvas'); B.width = m.c.width; B.height = m.c.height; Bg = B.getContext('2d', RF); Bg.imageSmoothingQuality = 'high'; Bg.drawImage(S, 0, 0, B.width, B.height);
   m.g.setTransform(1, 0, 0, 1, 0, 0); m.g.drawImage(outlinePic(B, (o.ol || 2.1) * sx * (o.sc || 1), OUTK), 0, 0); m.g.setTransform(sx, 0, 0, sy, 0, 0);
   toyFinish(m, o, ox, oy);
   return m;
@@ -677,7 +678,7 @@ function bossDraw(g, n) {
   }
 }
 function rimH(o, a) {   // a thin white band just inside the right edge of a picture (pure sideways shift, so stacked tiles show no seams)
-  var c = o.c, k = c.width / (o.w || W), t = document.createElement('canvas'), g = t.getContext('2d'), q = o.g;
+  var c = o.c, k = c.width / (o.w || W), t = document.createElement('canvas'), g = t.getContext('2d', RF), q = o.g;
   t.width = c.width; t.height = c.height; g.drawImage(c, -3 * K, 0); g.globalCompositeOperation = 'destination-out'; g.drawImage(c, -6.5 * K, 0);
   g.globalCompositeOperation = 'source-in'; g.fillStyle = 'rgba(255,255,255,' + (a || .38) + ')'; g.fillRect(0, 0, t.width, t.height);
   q.save(); q.setTransform(1, 0, 0, 1, 0, 0); q.globalCompositeOperation = 'source-atop'; q.drawImage(t, 0, 0); q.restore();
@@ -694,7 +695,7 @@ function toyFinish(m, o, ox, oy) {   // Apple Press: deep warm shade pooled lowe
   g.restore(); rimLight(m);
 }
 function rimLight(p) {   // Apple Press: a thin band of bounced light just inside the right and lower edge of the whole figure (the silhouette minus itself shifted left and up, twice)
-  var c = p.c, t = document.createElement('canvas'), g = t.getContext('2d'), k = c.width / p.w;
+  var c = p.c, t = document.createElement('canvas'), g = t.getContext('2d', RF), k = c.width / p.w;
   t.width = c.width; t.height = c.height; g.drawImage(c, -3.5 * k, -1.2 * k); g.globalCompositeOperation = 'destination-out'; g.drawImage(c, -7 * k, -2.6 * k);
   g.globalCompositeOperation = 'source-in'; g.fillStyle = 'rgba(255,255,255,.5)'; g.fillRect(0, 0, t.width, t.height);
   var q = p.g; q.save(); q.setTransform(1, 0, 0, 1, 0, 0); q.globalCompositeOperation = 'source-atop'; q.drawImage(t, 0, 0); q.restore();
@@ -773,7 +774,7 @@ function* toy3(g, w, h, build) {   // draw 3D shapes into a picture w x h (units
   var ss = K * 1.25, R = new Rast(Math.ceil(w * ss), Math.ceil(h * ss)), S, j, sg;
   R.jobs = []; build(R, ss); yield;
   for (j = 0; j < R.jobs.length; j++) { R.jobs[j](); yield; }
-  R.jobs = null; S = scratch(R.w, R.h); sg = S.getContext('2d'); sg.putImageData(new ImageData(R.px, R.w, R.h), 0, 0); yield;
+  R.jobs = null; S = scratch(R.w, R.h); sg = S.getContext('2d', RF); sg.putImageData(new ImageData(R.px, R.w, R.h), 0, 0); yield;
   g.save(); g.imageSmoothingQuality = 'high'; g.drawImage(S, 0, 0, w, h); g.restore();
 }
 function ball3(R, s, x, y, z, rx, ry, rz, mat, nu, nv, T) { meshDraw(R, ballFn(x, y, z, rx, ry, rz), nu || 10, nv || 14, s, 0, 0, mat, T || null, 0); }
@@ -781,13 +782,13 @@ function domeFn(cx, cy, r, rz) {   // a round lollipop face: rim at the edge, th
   return function (u, v) { var ph = u * Math.PI / 2, th = v * PI2, cp = Math.cos(ph), sp = Math.sin(ph); return { x: cx + r * cp * Math.cos(th), y: cy + r * cp * Math.sin(th), z: rz * sp, nx: cp * Math.cos(th) / r, ny: cp * Math.sin(th) / r, nz: sp / rz }; };
 }
 function stripeTex(fn, rgb) {   // a repeating paint (pink on nothing) written straight into a texture: fn(x01, y01) -> 0..1 coverage
-  var c = document.createElement('canvas'), g, im, i, x, y, a; c.width = TU; c.height = TV; g = c.getContext('2d'); im = g.createImageData(TU, TV);
+  var c = document.createElement('canvas'), g, im, i, x, y, a; c.width = TU; c.height = TV; g = c.getContext('2d', RF); im = g.createImageData(TU, TV);
   for (y = 0; y < TV; y++) for (x = 0; x < TU; x++) { a = fn((x + .5) / TU, (y + .5) / TV); i = (y * TU + x) * 4; im.data[i] = rgb ? rgb[0] : 255; im.data[i + 1] = rgb ? rgb[1] : 84; im.data[i + 2] = rgb ? rgb[2] : 130; im.data[i + 3] = Math.round(a * 255); }
   g.putImageData(im, 0, 0); return texData(c);
 }
 function stripe01(s) { s = s - Math.floor(s); var d = Math.abs(s - .25); return Math.max(0, Math.min(1, (.25 - d) / .035 + .5)); }   // a soft-edged stripe: 1 in the middle of the pink half, 0 in the white half
 function dotTex(seed, n, cols, len, wid) {   // small coloured dashes scattered over a surface (sprinkles, chips); wraps round the body
-  var c = document.createElement('canvas'), g, r = rnd(seed), i, x, y, q; c.width = TU; c.height = TV; g = c.getContext('2d'); g.lineCap = 'round';
+  var c = document.createElement('canvas'), g, r = rnd(seed), i, x, y, q; c.width = TU; c.height = TV; g = c.getContext('2d', RF); g.lineCap = 'round';
   for (i = 0; i < n; i++) { x = r() * TU; y = r() * TV; q = r() * PI2; g.strokeStyle = cols[i % cols.length]; g.lineWidth = wid; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(q) * len, y + Math.sin(q) * len); g.stroke(); if (y < len) { g.beginPath(); g.moveTo(x, y + TV); g.lineTo(x + Math.cos(q) * len, y + TV + Math.sin(q) * len); g.stroke(); } }
   return texData(c);
 }
@@ -1510,7 +1511,7 @@ function stripSteps(P, y, h, fn, wc, wa, fa, nb, done) {
 function* boldG(w, h, draw, mode) {   // an obstacle picture with its dark outline, built in slices (draw may be a plain function or a generator)
   var s = mk(w + PAD * 2, h + PAD * 2, 0, true), t, o, i, d, offs = [], r = 2.7, a;
   s.g.translate(PAD, PAD); var rd = draw(s.g); if (rd && rd.next) yield* rd; yield;
-  t = scratch(s.c.width, s.c.height); var tg = t.getContext('2d'); tg.setTransform(1, 0, 0, 1, 0, 0); tg.globalCompositeOperation = 'source-over'; tg.clearRect(0, 0, t.width, t.height);
+  t = scratch(s.c.width, s.c.height); var tg = t.getContext('2d', RF); tg.setTransform(1, 0, 0, 1, 0, 0); tg.globalCompositeOperation = 'source-over'; tg.clearRect(0, 0, t.width, t.height);
   tg.drawImage(s.c, 0, 0); tg.globalCompositeOperation = 'source-in'; tg.fillStyle = INK; tg.fillRect(0, 0, t.width, t.height);
   yield; o = mk(w + PAD * 2, h + PAD * 2);
   for (i = 0; i < 12; i++) { a = i * PI2 / 12; d = [Math.cos(a) * r, Math.sin(a) * r]; if (mode === 0 && Math.abs(d[1]) > .01) continue; if (mode === 1 && d[1] > .3) continue; if (mode === 2 && d[1] < -.3) continue; offs.push(d); }
@@ -1555,7 +1556,7 @@ function planFor(th) {
   return (PLAN[th] = { s: s, st: st, i: 0, sc: sc });
 }
 var TCH = null, TBUD = 0, TWAIT = false, TSKIP = false, TLAST = 0, TBMAX = 420000;   // TBUD: pixels the touch steps may still send to the graphics card in this pump call
-function touch(c) { if (!TCH) { TCH = document.createElement('canvas'); TCH.width = TCH.height = 1; TCH = TCH.getContext('2d'); } TCH.drawImage(c, 0, 0, 1, 1); }
+function touch(c) { if (!TCH) { TCH = document.createElement('canvas'); TCH.width = TCH.height = 1; TCH = TCH.getContext('2d', RF); } TCH.drawImage(c, 0, 0, 1, 1); }
 function sets(th) {
   var s = SET[th]; if (s) return s; var p = planFor(th); TSKIP = true;
   
@@ -1596,15 +1597,15 @@ function put(g, c, x, y) { g.drawImage(c, Math.round(x * K) / K, Math.round(y * 
 function layer(g, L, off) { for (var x = px(-(off % L.P)); x < W; x += L.P) put(g, L.c, x, L.y); }
 function chunky(L) {   // cut a long picture into screen-wide pieces: stamping whole small pictures 1:1 is much cheaper in Firefox than copying a window out of a huge one
   var w = Math.round(W * K), n = Math.ceil(L.c.width / w), i, c, cg, out = [];
-  for (i = 0; i < n; i++) { c = document.createElement('canvas'); c.width = Math.min(w, L.c.width - i * w); c.height = L.c.height; cg = c.getContext('2d'); cg.drawImage(L.c, -i * w, 0); out.push(c); }
+  for (i = 0; i < n; i++) { c = document.createElement('canvas'); c.width = Math.min(w, L.c.width - i * w); c.height = L.c.height; cg = c.getContext('2d', RF); cg.drawImage(L.c, -i * w, 0); out.push(c); }
   L.ch = out; L.c = null; return L;
 }
 function chunkStrip(P, y, h, fn, wc, wa, fa, done) {   // the garden's long pictures: built straight into screen-wide pieces (no giant canvas), a 60-unit band per step
   var L = { ch: [], P: P, y: y, h: h }, st = [], n = Math.ceil(P / W), bands = 6, i, j;
-  for (i = 0; i < n; i++) (function (i) { st.push(function () { var c, g, w, lw = Math.min(W, P - i * W); w = Math.round(lw * K); c = document.createElement('canvas'); c.width = Math.max(1, w); c.height = Math.max(1, Math.ceil(h * K)); g = c.getContext('2d'); g.setTransform(K, 0, 0, K, 0, 0); g.lineJoin = 'round'; g.lineCap = 'round'; c.lw = lw; L.ch.push(c); }); })(i);
+  for (i = 0; i < n; i++) (function (i) { st.push(function () { var c, g, w, lw = Math.min(W, P - i * W); w = Math.round(lw * K); c = document.createElement('canvas'); c.width = Math.max(1, w); c.height = Math.max(1, Math.ceil(h * K)); g = c.getContext('2d', RF); g.setTransform(K, 0, 0, K, 0, 0); g.lineJoin = 'round'; g.lineCap = 'round'; c.lw = lw; L.ch.push(c); }); })(i);
   for (i = 0; i < n; i++) for (j = 0; j < bands; j++) (function (i, j) {
     st.push(function () {
-      var c = L.ch[i], g = c.getContext('2d'), lw = c.lw, x0 = Math.round(lw * j / bands * K) / K, x1 = j === bands - 1 ? lw : Math.round(lw * (j + 1) / bands * K) / K;
+      var c = L.ch[i], g = c.getContext('2d', RF), lw = c.lw, x0 = Math.round(lw * j / bands * K) / K, x1 = j === bands - 1 ? lw : Math.round(lw * (j + 1) / bands * K) / K;
       if (x1 - x0 <= 0) return;
       g.save(); g.beginPath(); g.rect(x0, 0, x1 - x0, h); g.clip(); g.save(); g.translate(-i * W, -y); fn(g, P); g.restore();
       if (wa) { g.globalCompositeOperation = 'source-atop'; g.globalAlpha = wa; g.fillStyle = wc; g.fillRect(x0, 0, x1 - x0, h); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
@@ -1618,7 +1619,7 @@ function chunkStrip(P, y, h, fn, wc, wa, fa, done) {   // the garden's long pict
 function chunkSteps(get, done) {   // the same cut as chunky(), one screen-wide piece per step
   var L, w, n, out = [], st = [], i;
   st.push(function () { L = get(); w = Math.round(W * K); n = Math.ceil(L.c.width / w); });
-  for (i = 0; i < 12; i++) (function (i) { st.push(function () { if (i >= n) return; var c = document.createElement('canvas'), cg; c.width = Math.min(w, L.c.width - i * w); c.height = L.c.height; cg = c.getContext('2d'); cg.drawImage(L.c, -i * w, 0); out.push(c); }); })(i);
+  for (i = 0; i < 12; i++) (function (i) { st.push(function () { if (i >= n) return; var c = document.createElement('canvas'), cg; c.width = Math.min(w, L.c.width - i * w); c.height = L.c.height; cg = c.getContext('2d', RF); cg.drawImage(L.c, -i * w, 0); out.push(c); }); })(i);
   st.push(function () { L.ch = out; L.c = null; done(L); });
   return st;
 }
@@ -1950,7 +1951,7 @@ function ribbon(g, P) {
 var TKB = null;
 function tkBulb(c, lv) {   // a glass bulb in a metal cap at one of 4 brightness levels (0 off and dull, 1 warm, 2 bright, 3 blazing with a white core and a big halo); drawn once per color and level, at 2x, on an 88 px square
   TKB = TKB || {}; var k = c + lv; if (TKB[k]) return TKB[k];
-  var s = document.createElement('canvas'), sz = lv > 1 ? 128 : 88; s.width = s.height = sz; var g = s.getContext('2d'), q;
+  var s = document.createElement('canvas'), sz = lv > 1 ? 128 : 88; s.width = s.height = sz; var g = s.getContext('2d', RF), q;
   g.translate(sz / 2, sz / 2); g.scale(2, 2);
   if (lv > 0) { var hr = [0, 13, 21, 24][lv]; q = g.createRadialGradient(0, 0, 3, 0, 0, hr); q.addColorStop(0, lv > 1 ? '#ffffff' : c); q.addColorStop(.28, c); q.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = [0, .55, .95, 1][lv]; g.fillStyle = q; g.beginPath(); g.arc(0, 0, hr, 0, PI2); g.fill(); g.globalAlpha = 1; }
   g.beginPath(); g.arc(0, 0, 6.4, 0, PI2); g.fillStyle = '#2b2140'; g.fill();                                           // socket ring and outline
@@ -1971,7 +1972,7 @@ function mixc2(c) { return drk(c, .3); }   // an unlit bulb: the same color, dar
 var TKG = null;
 function tkGlow(c, lv) {   // the glare around a lit bulb, drawn with light ADDED to the scene: colored, with a white-hot middle
   TKG = TKG || {}; var k = c + lv; if (TKG[k]) return TKG[k];
-  var s = document.createElement('canvas'); s.width = s.height = 128; var g = s.getContext('2d'), hr = [0, 13, 19, 26][lv], q = g.createRadialGradient(64, 64, 2, 64, 64, hr * 2);
+  var s = document.createElement('canvas'); s.width = s.height = 128; var g = s.getContext('2d', RF), hr = [0, 13, 19, 26][lv], q = g.createRadialGradient(64, 64, 2, 64, 64, hr * 2);
   q.addColorStop(0, '#ffffff'); q.addColorStop(.18, lv === 3 ? '#ffffff' : c); q.addColorStop(.4, c); q.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = [0, .35, .7, .95][lv]; g.fillStyle = q; g.fillRect(0, 0, 128, 128);
   return TKG[k] = s;
 }
@@ -2085,8 +2086,8 @@ function coin(g, x, y, t) {
 var BALW = false, BALC = ['#ff4d6d', '#ff9a3c', '#ffd93b', '#4fd36a', '#2fc7c0', '#4d9bff', '#9a6cff', '#ff7ad0', '#ffc43a'], BALP = {}, WAFP = null, PARTY = null;   // the last balloon is the gold one
 function meshPic(w, h, ol, build) {   // a toon-lit 3D picture w x h (units): build(R, s) draws the meshes; finished with the dark outline all round, like Fancy
   var m = mk(w, h), sx = m.c.width / w, sy = m.c.height / h, ss = sx * SS, R = new Rast(Math.ceil(w * ss), Math.ceil(h * ss)), S = document.createElement('canvas'), sg, B, Bg;
-  build(R, ss); S.width = R.w; S.height = R.h; sg = S.getContext('2d'); sg.putImageData(new ImageData(R.px, R.w, R.h), 0, 0);
-  B = document.createElement('canvas'); B.width = m.c.width; B.height = m.c.height; Bg = B.getContext('2d'); Bg.imageSmoothingQuality = 'high'; Bg.drawImage(S, 0, 0, B.width, B.height);
+  build(R, ss); S.width = R.w; S.height = R.h; sg = S.getContext('2d', RF); sg.putImageData(new ImageData(R.px, R.w, R.h), 0, 0);
+  B = document.createElement('canvas'); B.width = m.c.width; B.height = m.c.height; Bg = B.getContext('2d', RF); Bg.imageSmoothingQuality = 'high'; Bg.drawImage(S, 0, 0, B.width, B.height);
   m.g.setTransform(1, 0, 0, 1, 0, 0); m.g.drawImage(outlinePic(B, ol * sx, OUTK), 0, 0); m.g.setTransform(sx, 0, 0, sy, 0, 0);
   return m;
 }
@@ -2155,7 +2156,7 @@ return { get tlast() { return TLAST; }, tbmax: TBMAX, fightWarm: fightWarm, boss
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1725';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1730';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -2594,12 +2595,13 @@ function fxAdd(x, y, vx, vy, l, c, sz, st, g) {   // a spark from the pool: dead
   var q = fxFree.pop() || {}; q.x = x; q.y = y; q.vx = vx; q.vy = vy; q.l = l; q.t = 0; q.c = c; q.s = sz; q.st = st; q.g = g; fx.push(q);
 }
 function burst(x, y, n, cols, sp, g) { if (calmOn()) n = Math.ceil(n * 0.5); for (var i = 0; i < n && fx.length < fxMax; i++) { var a = frng() * 6.283, v = sp * (0.3 + frng()); fxAdd(x, y, Math.cos(a) * v, Math.sin(a) * v - sp * 0.3, 0.6 + frng() * 0.5, cols[i % cols.length], 2 + frng() * 3, frng() < 0.45, g); } }
+var CRF = { willReadFrequently: true };   // cached pictures stay in plain memory, never graphics-card textures (see art.js RF)
 var smk = [], smkPics = null;   // the Wafer Cannon's smoke: a few soft puffs that rise and spread out of the barrel's dark mouth
 function cannonSmoke(x, y) {
   var n = calmOn() ? 7 : 12, i;
   for (i = 0; i < n && smk.length < 24; i++) smk.push({ x: x - 3 + frng() * 5, y: y + (frng() - 0.5) * 7, vx: -(50 + frng() * 110), vy: -(26 + frng() * 56), r0: 6 + frng() * 4, r1: 26 + frng() * 20, l: 1.3 + frng() * 0.9, t: -i * 0.045 });
 }
-function smkMake(c0, c1) { var c = document.createElement('canvas'), g; c.width = c.height = 64; g = c.getContext('2d'); var gr = g.createRadialGradient(26, 26, 2, 32, 32, 31); gr.addColorStop(0, c0); gr.addColorStop(0.72, c1); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.beginPath(); g.arc(32, 32, 31, 0, 6.2832); g.fill(); return c; }
+function smkMake(c0, c1) { var c = document.createElement('canvas'), g; c.width = c.height = 64; g = c.getContext('2d', CRF); var gr = g.createRadialGradient(26, 26, 2, 32, 32, 31); gr.addColorStop(0, c0); gr.addColorStop(0.72, c1); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.beginPath(); g.arc(32, 32, 31, 0, 6.2832); g.fill(); return c; }
 function drawSmoke() {
   var i, q, u, r, a;
   if (!smk.length) return;
@@ -3918,7 +3920,7 @@ var TSEP = '   ★   ';
 var TKS = null, TKK = 0;   // the headlines drawn once into one long strip; each frame copies the visible part (text drawing is slow in Firefox)
 function tickerStrip() {
   var kk = k, c = document.createElement('canvas'), g2, i, x = 0;
-  c.width = Math.ceil(tickSum * kk) + 2; c.height = Math.ceil(34 * kk); g2 = c.getContext('2d'); g2.scale(kk, kk);
+  c.width = Math.ceil(tickSum * kk) + 2; c.height = Math.ceil(34 * kk); g2 = c.getContext('2d', CRF); g2.scale(kk, kk);
   g2.font = '700 15px ' + FONT; g2.textAlign = 'left'; g2.textBaseline = 'middle'; g2.fillStyle = '#ffffff';
   for (i = 0; i < TKLIST.length; i++) { g2.fillText(TKLIST[i] + TSEP, x, 17); x += tickW[i]; }
   TKS = c; TKK = kk;
@@ -3955,9 +3957,9 @@ function textPic(text, size, fill, lazy) {
   if (lazy) { if (!TXP[key]) { TXP[key] = 1; TEXTQ.push([text, size, fill, key]); } return null; }
   if (TXN > 220) txTrim();
   var c = document.createElement('canvas'), g2, pad = Math.ceil(size * 0.2) + 2, kk = k > 0 ? k : 1, w;
-  g2 = c.getContext('2d'); g2.font = '800 ' + size + 'px ' + FONT; w = g2.measureText(text).width;
+  g2 = c.getContext('2d', CRF); g2.font = '800 ' + size + 'px ' + FONT; w = g2.measureText(text).width;
   e = { c: c, w: w, pad: pad, h: Math.ceil(size * 1.4) + pad * 2 }; c.width = Math.ceil((w + pad * 2) * kk); c.height = Math.ceil(e.h * kk);
-  g2 = c.getContext('2d'); g2.scale(kk, kk); g2.font = '800 ' + size + 'px ' + FONT; g2.textBaseline = 'middle'; g2.textAlign = 'left';
+  g2 = c.getContext('2d', CRF); g2.scale(kk, kk); g2.font = '800 ' + size + 'px ' + FONT; g2.textBaseline = 'middle'; g2.textAlign = 'left';
   g2.lineJoin = 'round'; g2.lineWidth = size * 0.2; g2.strokeStyle = INK; g2.strokeText(text, pad, e.h / 2); g2.fillStyle = fill || '#fff'; g2.fillText(text, pad, e.h / 2);
   e.u = TXF; TXC[key] = e; TXN++; return e;
 }
@@ -4078,7 +4080,7 @@ function drawWind() {
 var TRC1 = [], TRC2 = [];
 (function () { for (var i = 0; i <= 24; i++) { TRC1.push('rgba(255,190,50,' + (i / 24 * 0.5).toFixed(3) + ')'); TRC2.push('rgba(255,255,230,' + (i / 24 * 0.85).toFixed(3) + ')'); } })();   // colour strings made once: nothing new for the garbage collector each frame
 var BUD = [];
-function budPic(i) { var c = BUD[i], g; if (!c || c.kk !== k) { c = document.createElement('canvas'); c.width = Math.round(40 * k); c.height = Math.round(30 * k); g = c.getContext('2d'); g.scale(k, k); ART.friend(g, 20, 16, 0, 0.62, FR_V[i]); c.kk = k; BUD[i] = c; } return c; }
+function budPic(i) { var c = BUD[i], g; if (!c || c.kk !== k) { c = document.createElement('canvas'); c.width = Math.round(40 * k); c.height = Math.round(30 * k); g = c.getContext('2d', CRF); g.scale(k, k); ART.friend(g, 20, 16, 0, 0.62, FR_V[i]); c.kk = k; BUD[i] = c; } return c; }
 function drawBuddies() { for (var i = 0; i < 6; i++) put0(budPic(i), bx - 46 - (i >> 1) * 24 - 20, by + (i % 2 ? 20 : -20) + Math.sin(time * 5 + i * 1.3) * 5 - 15, 40, 30); }   // the Banana Bunch: six little friends flying along behind Fancy
 function drawTrail() {
   var n = trail.length, i, p, q, a, pw = state === 'launch' ? clamp((launchT / CFG.launchSecs - 0.12) / 0.4, 0, 1) : state === 'play' ? 0.25 + 0.75 * clamp(boost / CFG.boostV, 0, 1) : 0, qa;
@@ -4107,9 +4109,9 @@ var FXS = {}, FXR = 6;
 function fxPics(col) {
   var p = FXS[col]; if (p) return p; var kk = k > 0 ? k : 1, n = Math.ceil(FXR * 2 * kk) + 2, c, g2, r, i, s;
   p = FXS[col] = { dot: null, st: [] };
-  c = document.createElement('canvas'); c.width = c.height = n; g2 = c.getContext('2d'); g2.fillStyle = col; g2.beginPath(); g2.arc(n / 2, n / 2, FXR * kk, 0, 7); g2.fill(); p.dot = c;
+  c = document.createElement('canvas'); c.width = c.height = n; g2 = c.getContext('2d', CRF); g2.fillStyle = col; g2.beginPath(); g2.arc(n / 2, n / 2, FXR * kk, 0, 7); g2.fill(); p.dot = c;
   for (i = 0; i < 4; i++) {
-    c = document.createElement('canvas'); c.width = c.height = n; g2 = c.getContext('2d'); g2.translate(n / 2, n / 2); g2.rotate(i * Math.PI / 8); g2.fillStyle = col; s = FXR * kk;
+    c = document.createElement('canvas'); c.width = c.height = n; g2 = c.getContext('2d', CRF); g2.translate(n / 2, n / 2); g2.rotate(i * Math.PI / 8); g2.fillStyle = col; s = FXR * kk;
     g2.fillRect(-s, -s * 0.45, s * 2, s * 0.9); g2.fillRect(-s * 0.45, -s, s * 0.9, s * 2); p.st.push(c);
   }
   return p;
@@ -4190,7 +4192,7 @@ function letterPics() {
       if (ln.t[i] === ' ') continue;
       px = c0.measureText(ln.t.slice(0, i)).width + i * sz * TTK; w = c0.measureText(ln.t[i]).width; pad = Math.ceil(sz * .3); dep = Math.max(3, Math.round(sz * .1)); h = Math.ceil(sz * 1.3) + pad * 2 + dep;
       var cw = Math.ceil((w + pad * 2) * kk), ch = Math.ceil(h * kk), cy = pad + sz * .65, cf = document.createElement('canvas'), gf;
-      c = document.createElement('canvas'); c.width = cf.width = cw; c.height = cf.height = ch; g2 = c.getContext('2d'); gf = cf.getContext('2d');
+      c = document.createElement('canvas'); c.width = cf.width = cw; c.height = cf.height = ch; g2 = c.getContext('2d', CRF); gf = cf.getContext('2d', CRF);
       g2.scale(kk, kk); gf.scale(kk, kk); g2.font = gf.font = '800 ' + sz + 'px ' + FONT; g2.textBaseline = gf.textBaseline = 'middle'; g2.textAlign = gf.textAlign = 'left'; g2.lineJoin = gf.lineJoin = 'round';
       for (d = dep; d >= 1; d--) { g2.lineWidth = sz * .23; g2.strokeStyle = d > dep - 1 ? INK : ln.side; g2.strokeText(ln.t[i], pad, cy + d); g2.fillStyle = ln.side; g2.fillText(ln.t[i], pad, cy + d); }
       g2.lineWidth = sz * .23; g2.strokeStyle = '#fff6df'; g2.strokeText(ln.t[i], pad, cy);                                    // c: the deep side and the cream sticker edge
@@ -4226,7 +4228,7 @@ function titleFancyIn() { return clamp((titleT - 2.05) / 0.6, 0, 1); }
 function drawTapIcon(x, y) {   // a little 'tap' badge: a fingertip dot with two ripples (drawn once, then stamped)
   var kk = k > 0 ? k : 1;
   if (!tapPic || tapPic.k !== kk) {
-    var c = document.createElement('canvas'), g2; c.width = c.height = Math.ceil(26 * kk); g2 = c.getContext('2d'); g2.scale(kk, kk); g2.translate(13, 13); g2.lineJoin = 'round';
+    var c = document.createElement('canvas'), g2; c.width = c.height = Math.ceil(26 * kk); g2 = c.getContext('2d', CRF); g2.scale(kk, kk); g2.translate(13, 13); g2.lineJoin = 'round';
     g2.lineWidth = 4.2; g2.strokeStyle = INK; g2.beginPath(); g2.arc(0, 0, 10.4, 0, 7); g2.stroke(); g2.beginPath(); g2.arc(0, 0, 4.9, 0, 7); g2.stroke();
     g2.lineWidth = 2; g2.strokeStyle = '#7ad8ff'; g2.beginPath(); g2.arc(0, 0, 10.4, 0, 7); g2.stroke();
     g2.beginPath(); g2.arc(0, 0, 4.9, 0, 7); g2.fillStyle = '#ffd93b'; g2.fill(); g2.strokeStyle = INK; g2.lineWidth = 1.8; g2.stroke();
