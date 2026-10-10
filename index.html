@@ -649,7 +649,14 @@ function fxPic(k) {   // 'coco': a coconut with a worried face; 'fist': a rocket
   var p = FXP[k];
   if (!p) {
     p = FXP[k] = mk(44, 44); var g = p.g, i; g.translate(22, 22); g.lineJoin = 'round'; g.lineCap = 'round';
-    if (k === 'coco') {
+    if (k === 'lime') {   // a rocket lime flying to the right: a glossy green lime with little fins and a nozzle
+      g.beginPath(); g.moveTo(-8, 0); g.lineTo(-14, -9); g.lineTo(-3, -5); g.closePath(); fb(g, '#7fc43a', OUTK, 1.6, .6); g.beginPath(); g.moveTo(-8, 0); g.lineTo(-14, 9); g.lineTo(-3, 5); g.closePath(); fb(g, '#5aa028', OUTK, 1.6, .6);
+      rr(g, -11, -3.2, 5, 6.4, 2); fb(g, '#6a7088', OUTK, 1.4, .6);
+      ell(g, 1, 0, 12.5, 8.6); fb(g, rg(g, -2, -4, 1, 1, 0, 14, [[0, '#d8f58a'], [.45, '#8ad63c'], [1, '#3f8a1a']]), OUTK, 2.2, 1.1);
+      g.strokeStyle = 'rgba(40,100,20,.4)'; g.lineWidth = .9; g.beginPath(); g.moveTo(-6, -5); g.quadraticCurveTo(0, -8, 8, -5); g.moveTo(-6, 5); g.quadraticCurveTo(0, 8, 8, 5); g.stroke();
+      g.fillStyle = 'rgba(255,255,255,.65)'; ell(g, -1, -4.4, 4.6, 1.8, -.12); g.fill();
+      ell(g, 11.6, 0, 2.4, 2); fb(g, '#2f6a14', OUTK, 1, .4);
+    } else if (k === 'coco') {
       circ(g, 0, 0, 15); fb(g, rg(g, -5, -6, 1, 0, 0, 18, [[0, '#b8845a'], [.6, '#7a4c2a'], [1, '#3c2212']]), OUTK, 2.6, 1.2);
       g.save(); circ(g, 0, 0, 14); g.clip(); g.strokeStyle = 'rgba(40,20,8,.35)'; g.lineWidth = .9; g.beginPath(); for (i = -3; i < 4; i++) { g.moveTo(i * 5 - 2, -15); g.quadraticCurveTo(i * 5 + 3, 0, i * 5 - 2, 15); } g.stroke(); g.restore();   // coarse husk fibers
       g.fillStyle = 'rgba(255,255,255,.55)'; ell(g, -6, -8.4, 4.4, 2.2, -.6); g.fill();
@@ -666,7 +673,7 @@ function fxPic(k) {   // 'coco': a coconut with a worried face; 'fist': a rocket
   }
   return p;
 }
-function fightWarm(n) { TASKQ.push(function () { bossPic(n); }); TASKQ.push(function () { fxPic('coco'); }); TASKQ.push(function () { fxPic('fist'); }); TASKQ.push(function () { chimpPic([.62, .72, .46, 1.12][n - 1], 2); }); }
+function fightWarm(n) { TASKQ.push(function () { bossPic(n); }); TASKQ.push(function () { fxPic('coco'); }); TASKQ.push(function () { fxPic('fist'); }); TASKQ.push(function () { fxPic('lime'); }); TASKQ.push(function () { chimpPic([.62, .72, .46, 1.12][n - 1], 2); }); }
 function fxs(g, k, x, y, rot) { var p = fxPic(k); g.save(); g.translate(x, y); if (rot) g.rotate(rot); g.drawImage(p.c, -22, -22, 44, 44); g.restore(); }
 
 /* ============================ STAGE SETS ============================ */
@@ -1952,7 +1959,7 @@ return { fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: cr
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1213';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1232';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -2270,6 +2277,7 @@ var UPS = [
   { id: 'wind', name: 'Second wind', desc: 'Once per run, a crash restarts the current stage instead of ending the run', costs: [100] },
   { id: 'rope', name: 'Rope cutter', desc: 'In Chimp\'s Navy, a helper chimp snips the rope: barrel groups split apart before they reach you', costs: [40] },
   { id: 'wshield', name: 'Wafer shield', desc: 'In Chimp\'s Navy, blocks one thrown wafer per run', costs: [30] },
+  { id: 'limes', name: 'Lime defense', desc: 'In boss fights, little rocket limes shoot down a coconut that is about to hit you (2 per fight, per level)', costs: [150, 300] },
   { id: 'practice', name: 'Practice Chimp\'s Navy', desc: 'Play the water level any time from the title screen (nothing is earned)', costs: [40] }
 ];
 function magR() { return CFG.magnetR * (1 + 0.35 * lvl('magnet')); }
@@ -2537,7 +2545,7 @@ function fightNext() { if (!secretsOn()) return 0; for (var n = 1; n <= 4; n++) 
 function fightOn() { return !!save.unlocks.pcf && fightNext() > 0; }
 function wearsCrown() { var u = save.unlocks; return !!u.crown && !u.crownOff; }
 function fightDue() { var gs = stageOfGate(spawned); return themeOf(gs) === CFG.finalTheme && spawned === gateStart(gs + 1) - 2; }
-function ftNew() { return { n: runFight, ph: 'wait', r: 0, rt: 0, t: 0, hold: 0, nx: 0, list: [], hits: 0, cc: 0, h0: 0, c0: 0, blast: null, by: runFight === 3 ? GROUND_Y - 92 : 300, pc: 0, slide: 0, shake: 0, hop: 0, kick: 0 }; }
+function ftNew() { return { n: runFight, ph: 'wait', r: 0, rt: 0, t: 0, hold: 0, nx: 0, list: [], hits: 0, cc: 0, h0: 0, c0: 0, blast: null, lm: 2 * lvl('limes'), lt: 0, limes: [], zaps: 0, by: runFight === 3 ? GROUND_Y - 92 : 300, pc: 0, slide: 0, shake: 0, hop: 0, kick: 0 }; }
 /* Where each boss lets its attacks out, relative to its center: the cannon barrel, the robot's arm and chest lamp, the gorilla's raised fist and feet, the Prince's scepter orb and hand. Nothing ever appears in mid air: an attack starts here, and the boss first lines itself up with where the attack will fly. */
 var FT_MZ = { 1: { waf: [-62, 25] }, 2: { fist: [-52, 30], lane: [-22, 28] }, 3: { coco: [-62, -26], wave: [-30, 90] }, 4: { waf: [-50, -36], lane: [-50, -36], coco: [-56, 12] } };
 var FT_BMIN = 150, FT_BMAX = GROUND_Y - 95;
@@ -2572,8 +2580,32 @@ function ftPattern(F, K) {   // push one volley and say how long until the next
 function ftHit() {
   var F = FT; if (!F || invuln > 0 || F.hold > 0 || F.ph !== 'round') return false;
   if (shield > 0) { shield--; boing(-CFG.bounceVy); F.list.length = 0; return true; }
-  runHurts++; F.hits++; F.list.length = 0; F.ph = 'retry'; F.hold = 1.7; F.shake = 0.4; invuln = 2.2; hurtT = 0.9; vy = -180; fallD = 0; streak = 0;
+  runHurts++; F.hits++; F.list.length = 0; F.limes.length = 0; F.ph = 'retry'; F.hold = 1.7; F.shake = 0.4; invuln = 2.2; hurtT = 0.9; vy = -180; fallD = 0; streak = 0;
   burst(bx, by, 26, ['#ff6b81', '#ffffff', '#ffd93b'], 260, 240); burst(bx, by, 14, ['#ffffff', '#fff2a0'], 380, 60); if (!calmOn()) { flashT = 0.14; punchT = CFG.punchSecs * 0.6; } pop('Oops! Again!', '#ff6b81', 26); return true;
+}
+function ftLimes(F, dt) {   // Lime defense: a coconut that will hit Fancy within about half a second (and he has not dodged) gets a rocket lime shot at it; the lime steers onto the coconut and pops it
+  var i, j, a, L, t, x, y, v, dx, dy, hr, d, sp = 560;
+  if (F.lt > 0) F.lt -= dt;
+  if (F.lm > 0 && F.lt <= 0 && invuln <= 0 && F.ph === 'round') {
+    for (i = 0; i < F.list.length; i++) {
+      a = F.list[i]; if (a.k !== 'coco' || !a.live || a.tg || a.x < bx) continue;
+      x = a.x; y = a.y; v = a.vy; hr = a.r + CFG.bananaR + 1;
+      for (t = 0; t < 0.55; t += 1 / 30) { x += a.vx / 30; y += v / 30; v += a.g / 30; dx = x - bx; dy = y - by; if (dx * dx + dy * dy < hr * hr) break; }
+      if (t < 0.55) { a.tg = 1; F.lm--; F.lt = 0.45; F.limes.push({ x: bx + 14, y: by - 8, vx: 160, vy: -200, a: a, t: 0 }); burst(bx + 12, by - 8, 8, ['#9be84a', '#ffffff'], 150, 80); pop('Lime shot!', '#9be84a', 20); break; }
+    }
+  }
+  for (i = F.limes.length - 1; i >= 0; i--) {
+    L = F.limes[i]; L.t += dt; a = L.a; if (a && F.list.indexOf(a) < 0) a = L.a = null;
+    if (a) { dx = a.x - L.x; dy = a.y - L.y; d = Math.sqrt(dx * dx + dy * dy) || 1; L.vx += (dx / d * sp - L.vx) * Math.min(1, dt * 10); L.vy += (dy / d * sp - L.vy) * Math.min(1, dt * 10); }
+    else L.vy += 500 * dt;
+    L.x += L.vx * dt; L.y += L.vy * dt;
+    if (!calmOn() && frng() < 0.8) fxAdd(L.x - L.vx * 0.03, L.y - L.vy * 0.03, -L.vx * 0.12 + (frng() - 0.5) * 30, -L.vy * 0.12 + (frng() - 0.5) * 30, 0.32, frng() < 0.5 ? '#ffffff' : '#fff2a0', 2 + frng() * 2, false, 0);
+    if (a && (a.x - L.x) * (a.x - L.x) + (a.y - L.y) * (a.y - L.y) < (a.r + 8) * (a.r + 8)) {
+      j = F.list.indexOf(a); if (j >= 0) F.list.splice(j, 1); F.zaps++; F.limes.splice(i, 1);
+      burst(a.x, a.y, 22, ['#a8744c', '#e8d0a0', '#9be84a', '#ffffff'], 280, 170); pop('ZAP!', '#9be84a', 28); if (!calmOn()) punchT = CFG.punchSecs * 0.3; continue;
+    }
+    if (L.t > 1.6 || L.x > W + 40 || L.y > GROUND_Y - 4 || L.y < -40) { burst(L.x, L.y, 8, ['#9be84a', '#ffffff'], 140, 60); F.limes.splice(i, 1); }
+  }
 }
 var FT_CC = ['Close call!', 'So close!', 'Whoa, nice!', 'Phew!'], FT_WORDS = [['Nice job!', 'Way to go!', 'Great dodging!', 'Keep it up!', 'You did it!'], ['Flawless!', 'Perfect dodging!', 'Super smooth!', 'Banana-tastic!'], ['Boss beaten!', 'Champion!', 'Awesome!']];
 function ftCC(F, a) {   // a shot skimmed past Fancy without touching him: a cheer, a little spray of sparkles, and a count for the round
@@ -2641,6 +2673,7 @@ function ftStep(dt, sp) {
       if (!a.cc && a.px >= bx && a.x < bx && Math.abs(dy) < rr2 + 16 + 3 * lvl('dare')) ftCC(F, a);
     }
   }
+  if (F.ph === 'round' || F.limes.length) ftLimes(F, dt);
   if (F.ph === 'round' && F.rt >= FT_ROUND && !F.list.length) {
     if (F.r < 2) { F.r++; F.ph = 'between'; F.hold = 1.5; invuln = Math.max(invuln, 1.7); ftBlast(F, false); burst(bx + 40, by, 20, ['#ffd93b', '#ffffff'], 240, 200); }
     else {
@@ -2713,6 +2746,7 @@ function drawFight() {
   ctx.save(); ctx.translate(p.x + sh + wt * wt * 80, p.y - wt * wt * 70 + wt * 20); if (wt > 0 && !calmOn()) ctx.rotate(wt * 4.5);
   ART.boss(ctx, F.n, 0, 0); if (F.ph === 'won') cryChimp(co[0], co[1], co[2]);
   ctx.restore();
+  drawLimes(F);
   for (i = 0; i < F.list.length; i++) {
     a = F.list[i];
     if (a.k === 'coco' && !a.live) { ART.fxs(ctx, 'coco', a.x, a.y - 15 - (cl ? 0 : Math.abs(Math.sin(time * 9)) * 3), 0); continue; }   // held up in the hand
@@ -2720,10 +2754,19 @@ function drawFight() {
     if (a.k === 'waf') { if (a.x < p.x + a.ox - 46) ART.mg.draw(ctx, 'wafer', a.x, a.y, undefined, 1); }
     else if (a.k === 'fist') { fl = cl ? 0 : Math.sin(time * 40) * 5; ctx.fillStyle = 'rgba(200,205,225,0.4)'; for (g = 0; g < 3; g++) { ctx.beginPath(); ctx.arc(a.x + 54 + g * 17, a.y + Math.sin(time * 9 + g * 2) * 3, 6 + g * 2, 0, 7); ctx.fill(); }
       ctx.fillStyle = 'rgba(255,140,50,0.85)'; ctx.beginPath(); ctx.moveTo(a.x + 12, a.y - 9); ctx.quadraticCurveTo(a.x + 30, a.y - 6, a.x + 50 + fl, a.y); ctx.quadraticCurveTo(a.x + 30, a.y + 6, a.x + 12, a.y + 9); ctx.fill(); ctx.fillStyle = '#ffe27a'; ctx.beginPath(); ctx.moveTo(a.x + 12, a.y - 5); ctx.quadraticCurveTo(a.x + 24, a.y - 3, a.x + 36 + fl * .6, a.y); ctx.quadraticCurveTo(a.x + 24, a.y + 3, a.x + 12, a.y + 5); ctx.fill(); if (a.x < p.x + a.ox - 46) ART.fxs(ctx, 'fist', a.x, a.y, 0); }
-    else if (a.k === 'coco') ART.fxs(ctx, 'coco', a.x, a.y, time * 8);
+    else if (a.k === 'coco') { ART.fxs(ctx, 'coco', a.x, a.y, time * 8); if (a.tg) { ctx.lineWidth = 2.4; ctx.strokeStyle = '#9be84a'; ctx.globalAlpha = 0.6 + 0.4 * Math.sin(time * 24); ctx.beginPath(); ctx.arc(a.x, a.y, a.r + 5, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; } }
     else if (a.k === 'wave') { ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(a.x - 22, GROUND_Y); ctx.quadraticCurveTo(a.x - 6, GROUND_Y - 62, a.x + 8, GROUND_Y - 46); ctx.quadraticCurveTo(a.x + 16, GROUND_Y - 20, a.x + 24, GROUND_Y); ctx.closePath(); fl = ctx.createLinearGradient(0, GROUND_Y - 62, 0, GROUND_Y); fl.addColorStop(0, '#fff8d0'); fl.addColorStop(0.6, '#ffd95a'); fl.addColorStop(1, '#f0a830'); ctx.fillStyle = fl; ctx.fill(); ctx.stroke();
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.beginPath(); ctx.moveTo(a.x - 12, GROUND_Y - 30); ctx.quadraticCurveTo(a.x - 4, GROUND_Y - 54, a.x + 4, GROUND_Y - 44); ctx.stroke();
       ctx.fillStyle = 'rgba(240,222,176,0.8)'; for (g = 0; g < 3; g++) { ctx.beginPath(); ctx.arc(a.x + 30 + g * 13, GROUND_Y - 5 - g * 2, 7 - g * 1.6, 0, 7); ctx.fill(); } }
+  }
+}
+function drawLimes(F) {   // the rocket limes: a little flame behind each, then the lime pointing where it flies
+  var i, L, an, f;
+  for (i = 0; i < F.limes.length; i++) {
+    L = F.limes[i]; an = Math.atan2(L.vy, L.vx); f = calmOn() ? 0 : Math.sin(time * 60 + i) * 2;
+    ctx.save(); ctx.translate(L.x, L.y); ctx.rotate(an);
+    ctx.fillStyle = '#ff9a3c'; ctx.beginPath(); ctx.moveTo(-9, -3.4); ctx.quadraticCurveTo(-18, 0, -25 + f, 0); ctx.quadraticCurveTo(-18, 0, -9, 3.4); ctx.closePath(); ctx.fill(); ctx.fillStyle = '#fff2a0'; ctx.beginPath(); ctx.moveTo(-9, -1.8); ctx.lineTo(-17 + f * 0.5, 0); ctx.lineTo(-9, 1.8); ctx.closePath(); ctx.fill();
+    ctx.restore(); ART.fxs(ctx, 'lime', L.x, L.y, an);
   }
 }
 function drawPieces(g, cx, cy, s) {   // the three crown pieces (lit once earned), or the whole crown once the Duel is won
@@ -3709,7 +3752,7 @@ function drawProgress() {   // ten pips for the ten gates of the stage, then "n 
 }
 var TESTFILE = false, labUsed = false;   // the tester build flips TESTFILE to true; its badge shows only once the Test Lab has changed something (labUsed). The player build never shows it
 var XSHORT = { practice: 'Practice Navy', wshield: 'Wafer shield', rope: 'Rope cutter', superleap: 'Super Leap' };
-var XCHIP = { roomy: ['R', '#7be07b'], gentle: ['G', '#6ec6ff'], shield: ['B', '#ff6b81'], magnet: ['M', '#b45cff'], sweet: ['P', '#ffd93b'], dare: ['D', '#ff8a1f'], golden: ['$', '#f2b81f'], wind: ['W', '#4ad6c8'] };   // the letters of the small row shown while flying (Chimp's Navy extras only appear on the pause list)
+var XCHIP = { roomy: ['R', '#7be07b'], gentle: ['G', '#6ec6ff'], shield: ['B', '#ff6b81'], magnet: ['M', '#b45cff'], sweet: ['P', '#ffd93b'], dare: ['D', '#ff8a1f'], golden: ['$', '#f2b81f'], wind: ['W', '#4ad6c8'], limes: ['L', '#9be84a'] };   // the letters of the small row shown while flying (Chimp's Navy extras only appear on the pause list)
 function extrasList() {   // everything switched on for this run, as [text, color] lines for the pause list
   var L = [], i, u, l, t;
   for (i = 0; i < UPS.length; i++) {
@@ -3717,6 +3760,7 @@ function extrasList() {   // everything switched on for this run, as [text, colo
     t = (XSHORT[u.id] || u.name) + (u.costs.length > 1 ? ' ' + l : '');
     if (u.id === 'shield' && state !== 'mini') t += ' (' + shield + ' left)';
     if (u.id === 'wind' && state !== 'mini') t += windUsed ? ' (used)' : ' (ready)';
+    if (u.id === 'limes') t += FT ? ' (' + FT.lm + ' left)' : '';
     L.push([t, '#ffffff']);
   }
   L.push(['Speed ' + spdPct() + '%', spdPct() === 100 ? '#cfe6ff' : '#ffd93b']);
@@ -3740,7 +3784,7 @@ function drawExtrasRow() {   // tiny badges while flying: a letter per upgrade, 
   if (n) {
     x = W / 2 - (n - 1) * 10; ctx.globalAlpha = 0.72;
     for (i = 0; i < A.length; i++, x += 20) {
-      id = A[i]; l = lvl(id); c = XCHIP[id]; dim = (id === 'shield' && !shield) || (id === 'wind' && windUsed);
+      id = A[i]; l = lvl(id); c = XCHIP[id]; dim = (id === 'shield' && !shield) || (id === 'wind' && windUsed) || (id === 'limes' && FT && !FT.lm);
       ctx.globalAlpha = dim ? 0.3 : 0.78; ctx.lineWidth = 2; ctx.strokeStyle = INK; rrect(x - 8, 144, 16, 16, 5); ctx.fillStyle = c[1]; ctx.fill(); ctx.stroke();
       outlined(c[0], x, 153, 11, '#ffffff');
       for (j = 0; j < l; j++) { ctx.beginPath(); ctx.arc(x - (l - 1) * 2.5 + j * 5, 166, 2, 0, 7); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = INK; ctx.stroke(); }
