@@ -1120,7 +1120,8 @@ var TEXF = {   // the paint textures for the 3D obstacles: each is made once (th
   gingham: function () { return stripeTex(function (x, y) { var a = Math.floor(x * 6) % 2, b = Math.floor(y * 12) % 2; return (a ^ b) ? .78 : .0; }, [217, 69, 59]); },
   sprk: function () { return dotTex(5, 90, SPRK, 9, 4.2); },
   chips: function () { return dotTex(8, 60, ['#2a140c'], 3, 4.5); },
-  bark: function () { return stripeTex(function (x, y) { return thin(y * 5 + x * .6, .06) * .8; }, [70, 38, 14]); },
+  bark: function () { return stripeTex(function (x, y) { return Math.max(thin(x * 7 + .12 * Math.sin(y * 6.283), .05) * .75, thin(x * 3 + .5 + .15 * Math.sin(y * 6.283), .035) * .4); }, [70, 38, 14]); },   // bark grooves run along the trunk and wrap evenly top to bottom, so tiles join without a seam
+  vine: function () { return stripeTex(function (x, y) { return Math.max(thin(y * 4 + x * 2, .09) * .8, thin(y * 4 + x * 2 + .5, .04) * .35); }, [18, 78, 30]); },   // a twisted rope pattern that wraps evenly
   swirl: function () { return stripeTex(function (x, y) { return stripe01(y * 6 + (1 - x) * 1.7); }); },
   pillar: function () { return stripeTex(function (x, y) { return stripe01(y * 4 + x * 1); }); }
 };
@@ -1177,15 +1178,23 @@ function* cap2(g, side) {
     g.globalCompositeOperation = 'source-over';
   }
 }
-function* tile4(g, side, v) {   // Fruit Garden: a tree trunk with a leaf
-  var T = tex3('bark');
-  yield* toy3(g, OW, TH, function (R, s) { cyl3(R, s, 29, 0, 29, TH, 12.5, 12.5, matFor('#b97d44'), T); });
+function* tile4(g, side, v) {   // Fruit Garden: a tree trunk with a leaf; the poles that hang from the leafy roof are thick twisted vines
+  var T = tex3(side ? 'bark' : 'vine');
+  yield* toy3(g, OW, TH, function (R, s) { cyl3(R, s, 29, 0, 29, TH, 12.5, 12.5, matFor(side ? '#b97d44' : '#58b244'), T); });
   var sx = v % 2 ? 17 : 41, d = v % 2 ? -1 : 1, sy = 44 - v * 5; g.beginPath(); g.moveTo(sx, sy); g.quadraticCurveTo(sx + d * 14, sy - 12, sx + d * 20, sy - 4); g.quadraticCurveTo(sx + d * 12, sy + 3, sx, sy + 3); fs(g, '#5fcf4f', '#2f7a35', 1.3);
 }
-function* cap4(g, side, kind) {   // a fruit tree: trunk, then a canopy of 3D leaf puffs with 3D fruit
+function* cap4(g, side, kind) {   // a fruit tree (ground poles) or the end of a hanging vine with fruit (roof poles)
   var flip = !side, Y = function (y) { return flip ? 64 - y : y; }, FC = ['#e8404f', '#f59a2a', '#b8e050'];
+  if (!side) {   // the vine's end: a knot where it thickens into a bud, big leaves to each side, and three fruits hanging below
+    yield* toy3(g, OW, 66, function (R, s) {
+      ball3(R, s, 29, 20, 0, 14.5, 7, 14.5, matFor('#3f9a38'), 8, 18);
+      ball3(R, s, 29, 35, 0, 17, 16, 17, matFor('#63cc52'), 12, 20);
+      [[21, 50], [37, 50], [29, 57]].forEach(function (f) { ball3(R, s, f[0], f[1], 14, 5.6, kind === 2 ? 6.6 : 5.6, 5.6, matFor(FC[kind]), 8, 12); });
+    });
+    [-1, 1].forEach(function (d) { var x0 = 29 + d * 12; g.beginPath(); g.moveTo(x0, 26); g.quadraticCurveTo(29 + d * 30, 22, 29 + d * 27, 46); g.quadraticCurveTo(29 + d * 14, 44, x0, 26); fs(g, '#5fcf4f', '#2f7a35', 1.3); });
+    return;
+  }
   yield* toy3(g, OW, 66, function (R, s) {
-    if (side) cyl3(R, s, 29, 46, 29, 67, 12.5, 12.5, matFor('#b97d44')); else cyl3(R, s, 29, -1, 29, 22, 12.5, 12.5, matFor('#b97d44'));
     [[14, 34, 12, 0], [44, 34, 12, 0], [19, 19, 13, 3], [39, 19, 13, 3], [29, 45, 12, 2], [29, 30, 17.5, 6]].forEach(function (c, i) { ball3(R, s, c[0], Y(c[1]), c[3], c[2], c[2], c[2], matFor(i % 2 ? '#52bd4a' : '#63cc52'), 12, 18); });
     [[19, 21], [41, 23], [29, 35], [13, 39], [45, 40], [28, 50]].forEach(function (f) { ball3(R, s, f[0], Y(f[1]) + (flip ? 1 : 0), 14, 5.6, kind === 2 ? 6.6 : 5.6, 5.6, matFor(FC[kind]), 8, 12); });
   });
@@ -1343,13 +1352,19 @@ var J = {
     }
     for (x = 20; x < P; x += 38 + r() * 30) { p = pj(x, P); if (p > .5 && r() < .8) { c = ['#ff6b8a', '#ffd23f', '#b07aff', '#ff9a3c'][Math.floor(r() * 4)]; for (i = 0; i < 5; i++) { ell(g, x + Math.cos(i * 1.256) * 3.6, 554 + Math.sin(i * 1.256) * 3.6, 2.8, 2.8); fs(g, c, drk(c, .3), .8); } circ(g, x, 554, 2); fs(g, '#ffd84a', null); } }   // jungle flowers
   },
-  top: function (g, P) {
-    var r = rnd(12), x, p, d, l, i;
-    for (x = -10; x < P + 10; x += 22) {
-      p = pj(x, P); d = .1 + .9 * sstep((p - .08) / .6); if (r() > d) continue; l = 14 + r() * (14 + 22 * p);
-      g.save(); g.translate(x, 2 + r() * 8); g.rotate(.5 - r()); g.beginPath(); g.moveTo(0, 0); g.bezierCurveTo(l * .5, 2, l * .6, l * .8, 0, l); g.bezierCurveTo(-l * .5, l * .8, -l * .5, 2, 0, 0); fs(g, lg(g, -l * .4, 0, l * .4, 0, [[0, '#2f8a3a'], [.5, '#62d04e'], [1, '#226a2c']]), '#17481f', 1.3); g.restore();
+  top: function (g, P) {   // a solid leafy roof along the top edge (thicker deeper in the island); leaves and vines grow out of it, so nothing floats
+    var r = rnd(12), x, p, th, cy, rr, c, d, l, i;
+    for (x = -8; x < P + 10; x += 9) {
+      p = pj(x, P); th = (4 + 24 * sstep((p - .1) / .55)) * sstep((p - .03) / .1); if (th < .5) continue;
+      cy = -8 + th * (.3 + .4 * r()); rr = 12 + r() * 8; c = mix('#4fb84a', '#1f6a2c', sstep((p - .15) / .6) * (.6 + .4 * r()));
+      circ(g, x, cy, rr); fs(g, rg(g, x - 4, cy - 4, 2, x, cy, rr * 1.2, [[0, lit(c, .3)], [1, c]]), drk(c, .45), 1.3);
     }
-    for (x = 20; x < P; x += 58) { p = pj(x, P); if (p < .42 || r() > .85) continue; l = 24 + r() * 40 * p; g.strokeStyle = '#2b7a35'; g.lineWidth = 2.3; g.beginPath(); g.moveTo(x, 8); g.quadraticCurveTo(x + 7, 8 + l * .55, x - 1, 8 + l); g.stroke(); for (i = 1; i < 4; i++) { ell(g, x + (i % 2 ? 4 : -4), 8 + l * i / 4, 4.5, 2.6, i % 2 ? .6 : -.6); fs(g, '#5fcf4f', '#2f7a35', .9); } }
+    for (x = -10; x < P + 10; x += 22) {
+      p = pj(x, P); th = (4 + 24 * sstep((p - .1) / .55)) * sstep((p - .03) / .1); if (th < 10 || r() > .75) continue;
+      l = 14 + r() * (12 + 20 * p);
+      g.save(); g.translate(x, 2 + r() * 4); g.rotate(.5 - r()); g.beginPath(); g.moveTo(0, 0); g.bezierCurveTo(l * .5, 2, l * .6, l * .8, 0, l); g.bezierCurveTo(-l * .5, l * .8, -l * .5, 2, 0, 0); fs(g, lg(g, -l * .4, 0, l * .4, 0, [[0, '#2f8a3a'], [.5, '#62d04e'], [1, '#226a2c']]), '#17481f', 1.3); g.restore();
+    }
+    for (x = 20; x < P; x += 58) { p = pj(x, P); if (p < .42 || r() > .85) continue; l = 24 + r() * 40 * p; g.strokeStyle = '#2b7a35'; g.lineWidth = 2.3; g.beginPath(); g.moveTo(x, 4); g.quadraticCurveTo(x + 7, 8 + l * .55, x - 1, 8 + l); g.stroke(); for (i = 1; i < 4; i++) { ell(g, x + (i % 2 ? 4 : -4), 8 + l * i / 4, 4.5, 2.6, i % 2 ? .6 : -.6); fs(g, '#5fcf4f', '#2f7a35', .9); } }
   },
   ground: function (g, P) {
     var r = rnd(5), x, p, c1, c2, i;
@@ -1365,6 +1380,7 @@ var J = {
   }
 };
 DEF[4] = {
+  ov: 22,
   ts: [{ pitch: 70, h: 70, nv: 4 }, { pitch: 70, h: 70, nv: 4 }], kinds: 3, capH: [[66, 66, 66], [66, 66, 66]],
   sky: function (g) {
     g.fillStyle = lg(g, 0, 0, 0, GY, [[0, '#8fd6ff'], [.7, '#dff4ff'], [1, '#cdeeb8']]); g.fillRect(0, 0, W, GY);
@@ -1524,8 +1540,8 @@ function planFor(th) {
   } else st.push(function () { s.ground = mk(GP[th], 72); D.ground(s.ground.g, GP[th]); var g = s.ground.g, q = g.createLinearGradient(0, 0, 0, 72); g.save(); g.globalCompositeOperation = 'source-atop'; q.addColorStop(0, 'rgba(255,255,255,.34)'); q.addColorStop(.08, 'rgba(255,255,255,0)'); q.addColorStop(.55, 'rgba(60,30,90,0)'); q.addColorStop(1, 'rgba(60,30,90,.22)'); g.fillStyle = q; g.fillRect(0, 0, GP[th], 72); g.restore(); });   // the floor: a lit top edge and a deeper tone toward the bottom
   var sc = st.length;   // everything above is scenery (what the title screen shows); the obstacle pieces below are only needed once a run starts
   for (side = 0; side < 2; side++) {
-    for (v = 0; v < D.ts[side].nv; v++) (function (side, v) { st.push(slicer(function () { return boldG(OW, D.ts[side].h, function (g) { return D.tile(g, side, v); }, 0); }, function (o) { cylShade(o); rimH(o); edgeRows(o); shadowOf(o); s.tiles[side][v] = o; })); })(side, v);
-    for (i = 0; i < D.kinds; i++) (function (side, i) { st.push(slicer(function () { return boldG(OW, D.capH[side][i], function (g) { return D.cap(g, side, i); }, side ? 1 : 2); }, function (o) { capFinish(o); rimH(o); shadowOf(o); s.caps[side][i] = o; })); })(side, i);
+    for (v = 0; v < D.ts[side].nv; v++) (function (side, v) { st.push(slicer(function () { return boldG(OW, D.ts[side].h, function (g) { return D.tile(g, side, v); }, 0); }, function (o) { cylShade(o); rimH(o); edgeRows(o); s.tiles[side][v] = o; })); })(side, v);
+    for (i = 0; i < D.kinds; i++) (function (side, i) { st.push(slicer(function () { return boldG(OW, D.capH[side][i], function (g) { return D.cap(g, side, i); }, side ? 1 : 2); }, function (o) { capFinish(o); rimH(o); s.caps[side][i] = o; })); })(side, i);
   }
   var lr = rnd(th * 977 + 13), lout = [];   // the drifting life (balloons, butterflies, sparkles): one sprite per step, so no stage start ever builds them all at once
   (LIFE[th] || []).forEach(function (e) { for (var j = 0; j < e[1]; j++) (function (e, j) { st.push(function () { lout.push(lifeItem(th, e, j, lr)); }); })(e, j); });
@@ -1533,7 +1549,7 @@ function planFor(th) {
   st.push(function () {   // last: touch every finished picture once (a 1-pixel stamp), a step at a time, so the first real draw of a new stage is not the moment each one is first used
     var cs = [], k, L;
     ['sky', 'far', 'mid', 'top', 'ground'].forEach(function (n) { L = s[n]; if (!L) return; if (L.c) cs.push(L.c); if (L.ch) L.ch.forEach(function (c) { cs.push(c); }); });
-    for (k = 0; k < 2; k++) { s.tiles[k].forEach(function (o) { cs.push(o.c); if (o.sh) cs.push(o.sh); }); s.caps[k].forEach(function (o) { cs.push(o.c); if (o.sh) cs.push(o.sh); }); }
+    for (k = 0; k < 2; k++) { s.tiles[k].forEach(function (o) { cs.push(o.c); }); s.caps[k].forEach(function (o) { cs.push(o.c); }); }
     cs.forEach(function (c) { st.push(function () { touch(c); }); });
   });
   return (PLAN[th] = { s: s, st: st, i: 0, sc: sc });
@@ -1624,8 +1640,9 @@ function edgeRows(o) {   // which pixel rows of a finished tile hold the picture
   }
 }
 function cylShade(o) {   // makes a pole a round tube: a dark edge, a bright soft lobe on the left, a form shadow down the right. Only sideways, so stacked tiles still join without a seam.
-  var c = o.c, w = c.width, h = c.height, mn = w, mx = 0, i, d, x, y, g = o.g, q;
-  for (i = 0; i < 3; i++) { y = Math.floor(h * [.3, .5, .7][i]); d = g.getImageData(0, y, w, 1).data; for (x = 0; x < w; x++) if (d[x * 4 + 3] > 120) { if (x < mn) mn = x; if (x > mx) mx = x; } }
+  var c = o.c, w = c.width, h = c.height, ls = [], rs = [], i, d, x, y, g = o.g, q, mn, mx;
+  for (i = 0; i < 9; i++) { y = Math.floor(h * (.06 + i * .11)); d = g.getImageData(0, y, w, 1).data; for (x = 0; x < w; x++) if (d[x * 4 + 3] > 120) { ls.push(x); break; } for (x = w - 1; x >= 0; x--) if (d[x * 4 + 3] > 120) { rs.push(x); break; } }
+  if (ls.length < 4) return; ls.sort(function (a, b) { return a - b; }); rs.sort(function (a, b) { return a - b; }); mn = ls[ls.length >> 1]; mx = rs[rs.length >> 1];   // the MEDIAN edges of the body over nine rows, so a leaf or a branch on one tile cannot shift its shading against the next tile (that made visible joints)
   if (mx - mn < 8) return;
   q = g.createLinearGradient(mn, 0, mx, 0); q.addColorStop(0, 'rgba(40,20,70,.3)'); q.addColorStop(.1, 'rgba(40,20,70,0)'); q.addColorStop(.2, 'rgba(255,255,255,.42)'); q.addColorStop(.34, 'rgba(255,255,255,.05)'); q.addColorStop(.56, 'rgba(45,20,80,0)'); q.addColorStop(.86, 'rgba(45,20,80,.4)'); q.addColorStop(1, 'rgba(45,20,80,.16)');
   g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-atop'; g.fillStyle = q; g.fillRect(0, 0, w, h); g.restore();
@@ -1639,20 +1656,10 @@ function capFinish(o) {   // the glossy toy finish on an end piece: a warm shade
   g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(w * .27, h * .24, Math.max(1.5, w * .022), 0, PI2); g.fill();
   g.restore();
 }
-function shadowOf(o) {   // a half-size dark copy of a finished picture: drawn bigger and a little to the lower right it becomes a soft shadow on the scenery behind
-  var c = o.c, h2 = document.createElement('canvas'), g;
-  h2.width = Math.max(1, Math.ceil(c.width / 2)); h2.height = Math.max(1, Math.ceil(c.height / 2)); g = h2.getContext('2d');
-  g.drawImage(c, 0, 0, h2.width, h2.height); g.globalCompositeOperation = 'source-in'; g.fillStyle = 'rgb(36,20,70)'; g.fillRect(0, 0, h2.width, h2.height);
-  o.sh = h2; return o;
-}
 function piece(g, s, D, th, side, x, edge, o, kind) {
-  var t = D.ts[side], cp = s.caps[side][kind], ch = cp.h, ys = [], y, i, W2 = OW + PAD * 2;
-  if (side) { for (y = edge + ch - 6; y < GY + 4; y += t.pitch) ys.push(y); } else { for (y = edge - ch + 6 - t.h; y > -t.h - 2; y -= t.pitch) ys.push(y); }
-  var X = Math.round((x - PAD) * K), tl, sx = Math.round((x - PAD + 9) * K) / K;
-  g.save(); g.globalAlpha = .36;   // the soft shadow of the whole piece on the scenery (light from the upper left)
-  for (i = 0; i < ys.length; i++) { tl = s.tiles[side][(o.col + i) % t.nv]; if (tl.sh) g.drawImage(tl.sh, sx, Math.round((ys[i] - PAD + 8) * K) / K, tl.c.width / K, tl.c.height / K + 1 / K); }
-  if (cp.sh) g.drawImage(cp.sh, sx, Math.round(((side ? edge : edge - ch) - PAD + 8) * K) / K, cp.c.width / K, cp.c.height / K);
-  g.restore();
+  var t = D.ts[side], cp = s.caps[side][kind], ch = cp.h, ys = [], y, i, W2 = OW + PAD * 2, ov = D.ov || 6;   // ov: how far the pole runs in under the cap
+  if (side) { for (y = edge + ch - ov; y < GY + 4; y += t.pitch) ys.push(y); } else { for (y = edge - ch + ov - t.h; y > -t.h - 2; y -= t.pitch) ys.push(y); }
+  var X = Math.round((x - PAD) * K), tl, sx = Math.round((x - PAD + 7) * K) / K;
   for (i = 0; i < ys.length; i++) {   // first a copy of each tile's last picture row, one row further down: it shows only where rounding left a gap between two tiles (the next tile is drawn over it otherwise)
     tl = s.tiles[side][(o.col + i) % t.nv];
     if (tl.r1 >= 0) g.drawImage(tl.c, 0, tl.r1, tl.c.width, 1, X / K, (Math.round((ys[i] - PAD) * K) + tl.r1 + 1) / K, tl.c.width / K, 1 / K);
@@ -1943,23 +1950,35 @@ function ribbon(g, P) {
 var TKB = null;
 function tkBulb(c, lv) {   // a glass bulb in a metal cap at one of 4 brightness levels (0 off and dull, 1 warm, 2 bright, 3 blazing with a white core and a big halo); drawn once per color and level, at 2x, on an 88 px square
   TKB = TKB || {}; var k = c + lv; if (TKB[k]) return TKB[k];
-  var s = document.createElement('canvas'); s.width = s.height = 88; var g = s.getContext('2d'), q;
-  g.translate(44, 44); g.scale(2, 2);
-  if (lv > 0) { var hr = [0, 11, 15, 21][lv]; q = g.createRadialGradient(0, 0, 3, 0, 0, hr); q.addColorStop(0, lv === 3 ? '#ffffff' : c); q.addColorStop(.25, c); q.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = [0, .5, .85, 1][lv]; g.fillStyle = q; g.beginPath(); g.arc(0, 0, hr, 0, PI2); g.fill(); g.globalAlpha = 1; }
+  var s = document.createElement('canvas'), sz = lv > 1 ? 128 : 88; s.width = s.height = sz; var g = s.getContext('2d'), q;
+  g.translate(sz / 2, sz / 2); g.scale(2, 2);
+  if (lv > 0) { var hr = [0, 13, 21, 24][lv]; q = g.createRadialGradient(0, 0, 3, 0, 0, hr); q.addColorStop(0, lv > 1 ? '#ffffff' : c); q.addColorStop(.28, c); q.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = [0, .55, .95, 1][lv]; g.fillStyle = q; g.beginPath(); g.arc(0, 0, hr, 0, PI2); g.fill(); g.globalAlpha = 1; }
   g.beginPath(); g.arc(0, 0, 6.4, 0, PI2); g.fillStyle = '#2b2140'; g.fill();                                           // socket ring and outline
   q = g.createLinearGradient(-5, -5, 5, 5); q.addColorStop(0, '#f2f5ff'); q.addColorStop(.5, '#9aa3bd'); q.addColorStop(1, '#4e5470'); g.beginPath(); g.arc(0, 0, 5.8, 0, PI2); g.fillStyle = q; g.fill();   // the metal cap
   g.beginPath(); g.arc(0, 0, 4.7, 0, PI2); g.fillStyle = lv ? c : mixc2(c); g.fill();
   q = g.createRadialGradient(-1.2, -1.4, .2, 0, 0, 5);
   if (lv === 0) { q.addColorStop(0, 'rgba(255,255,255,.55)'); q.addColorStop(.4, 'rgba(255,255,255,.06)'); q.addColorStop(1, 'rgba(20,10,40,.28)'); }
   else if (lv === 1) { q.addColorStop(0, 'rgba(255,255,255,.7)'); q.addColorStop(.45, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(20,10,40,.1)'); }
-  else { q.addColorStop(0, '#ffffff'); q.addColorStop(lv === 3 ? .75 : .45, lv === 3 ? '#ffffff' : '#fff6d0'); q.addColorStop(1, c); }
+  else { q.addColorStop(0, '#ffffff'); q.addColorStop(lv === 3 ? .4 : .22, '#ffffff'); q.addColorStop(lv === 3 ? .7 : .6, c); q.addColorStop(1, c); }
   g.beginPath(); g.arc(0, 0, 4.7, 0, PI2); g.fillStyle = q; g.fill();
   g.lineWidth = .9; g.strokeStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(0, 0, 3.3, 3.5, 4.9); g.stroke();   // the curved window shine
   g.beginPath(); g.arc(-1.7, -1.9, 1, 0, PI2); g.fillStyle = 'rgba(255,255,255,.95)'; g.fill();
   g.beginPath(); g.arc(1.8, 2.1, .55, 0, PI2); g.fillStyle = 'rgba(255,255,255,.55)'; g.fill();
+  if (lv >= 2) { var L = lv === 3 ? 30 : 17, ray = function (len, w, rot) { g.save(); g.rotate(rot); g.beginPath(); g.moveTo(-len, 0); g.quadraticCurveTo(0, -w, len, 0); g.quadraticCurveTo(0, w, -len, 0); var rg2 = g.createRadialGradient(0, 0, 0, 0, 0, len); rg2.addColorStop(0, 'rgba(255,255,255,1)'); rg2.addColorStop(.6, 'rgba(255,255,255,.75)'); rg2.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = rg2; g.fill(); g.restore(); }; ray(L, 1.7, 0); ray(L, 1.7, PI2 / 4); if (lv === 3) { ray(L * .6, 1.2, PI2 / 8); ray(L * .6, 1.2, -PI2 / 8); } }   // sparkle glints: a four-point star that flashes on the brightest bulbs
   return TKB[k] = s;
 }
 function mixc2(c) { return drk(c, .3); }   // an unlit bulb: the same color, dark and dull
+var TKG = null;
+function tkGlow(c, lv) {   // the glare around a lit bulb, drawn with light ADDED to the scene: colored, with a white-hot middle
+  TKG = TKG || {}; var k = c + lv; if (TKG[k]) return TKG[k];
+  var s = document.createElement('canvas'); s.width = s.height = 128; var g = s.getContext('2d'), hr = [0, 13, 19, 26][lv], q = g.createRadialGradient(64, 64, 2, 64, 64, hr * 2);
+  q.addColorStop(0, '#ffffff'); q.addColorStop(.18, lv === 3 ? '#ffffff' : c); q.addColorStop(.4, c); q.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = [0, .35, .7, .95][lv]; g.fillStyle = q; g.fillRect(0, 0, 128, 128);
+  return TKG[k] = s;
+}
+function tkDraw(g, c, lv, x, y, bz) {   // a bulb with its glare behind it (the dim ones are drawn from a smaller picture: less to paint)
+  if (lv > 2) { g.save(); g.globalCompositeOperation = 'lighter'; g.drawImage(tkGlow(c, lv), x - bz / 2, y - bz / 2, bz, bz); g.restore(); }   // only the blazing ones add light (cheap on slow drawing); the others carry their glow inside their picture
+  var z = lv > 1 ? bz : bz * 88 / 128; g.drawImage(tkBulb(c, lv), x - z / 2, y - z / 2, z, z);
+}
 function tkLv(i, n, t, flash) {   // the brightness level of bulb i of n: a bright head that races round with a fading tail, and a blink of the whole string now and then
   if (flash) return 3;
   var w = (((i - t * 9) % n) + n) % n;   // 0 at the head, growing behind it
@@ -1987,15 +2006,15 @@ function track(g, x, t, p, th) {
   for (i = 0; i < 10; i++) { g.fillStyle = i % 2 ? '#fff' : '#2b2140'; g.fillRect(cx + 30 + i * 6, ty - 15, 6, 15); g.fillStyle = i % 2 ? '#2b2140' : '#fff'; g.fillRect(cx + 30 + i * 6, ty, 6, 15); }   // checkered start
   g.strokeStyle = '#2b2140'; g.lineWidth = 1.6; g.strokeRect(cx + 30, ty - 15, 60, 30);
   q = g.createLinearGradient(0, ty - 15, 0, ty + 15); q.addColorStop(0, 'rgba(255,255,255,.35)'); q.addColorStop(.5, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(20,10,40,.3)'); g.fillStyle = q; g.fillRect(cx + 30, ty - 15, 60, 30);
-  var fl2 = ((t * .62) % 1) < .13, nb = 22, lvl, bz = 58;
+  var fl2 = ((t * .62) % 1) < .13, nb = 22, lvl, bz = 84;
   g.save(); g.lineCap = 'butt'; g.beginPath(); g.arc(cx, cy, r + 24, 0, PI2); g.lineWidth = 17; g.strokeStyle = '#2b2140'; g.stroke(); g.lineWidth = 13.4; g.strokeStyle = '#4a3a6c'; g.stroke(); g.lineWidth = 2; g.strokeStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.arc(cx, cy, r + 21.5, 0, PI2); g.stroke(); g.restore();   // a dark light strip behind the bulbs so they glow against it
   g.save(); g.beginPath(); g.moveTo(Math.max(-20, cx - 270), ty - 26); g.lineTo(cx + 36, ty - 26); g.lineWidth = 17; g.lineCap = 'round'; g.strokeStyle = '#2b2140'; g.stroke(); g.lineWidth = 13.4; g.strokeStyle = '#4a3a6c'; g.stroke(); g.restore();   // every 1.6 s the whole string blinks for a moment
   for (i = 0; i < nb; i++) {                                                                                                    // a chasing ring of glowing bulbs
-    a = i / nb * PI2; lvl = tkLv(i, nb, t, fl2); g.drawImage(tkBulb(lc[i % 3], lvl), cx + Math.cos(a) * (r + 24) - bz / 2, cy + Math.sin(a) * (r + 24) - bz / 2, bz, bz);
+    a = i / nb * PI2; lvl = tkLv(i, nb, t, fl2); tkDraw(g, lc[i % 3], lvl, cx + Math.cos(a) * (r + 24), cy + Math.sin(a) * (r + 24), bz);
   }
   for (i = 0; i < 9; i++) {   // and a row of bulbs along the run-up, chasing on from the ring
     var bx2 = cx - 250 + i * 32; if (bx2 < -30 || bx2 > W + 30) continue;
-    lvl = tkLv(nb + (8 - i), nb + 9, t * 1.0, fl2); g.drawImage(tkBulb(lc[(i + 1) % 3], lvl), bx2 - bz / 2, ty - 26 - bz / 2, bz, bz);
+    lvl = tkLv(nb + (8 - i), nb + 9, t * 1.0, fl2); tkDraw(g, lc[(i + 1) % 3], lvl, bx2, ty - 26, bz);
   }
   [[cx - 70, ty], [cx, cy - r], [cx + 70, ty]].forEach(function (c2) {                                                          // bolted metal collars
     rr(g, c2[0] - 13, c2[1] - 26, 26, 52, 7); fs(g, P[10], '#2b2140', 2.2);
@@ -2037,8 +2056,9 @@ function coinFrame(i) {   // a GOLD banana turning about its up-down axis like a
   function rib(f0, col, lw) { g.beginPath(); for (var k2 = 1; k2 < N; k2++) { var p = S.mid[k2], o = f0 * p[4]; if (k2 === 1) g.moveTo(p[0] + p[2] * o, p[1] + p[3] * o); else g.lineTo(p[0] + p[2] * o, p[1] + p[3] * o); } g.strokeStyle = col; g.lineWidth = lw; g.stroke(); }
   rib(-.6, 'rgba(255,244,170,.9)', 1.5); rib(-.28, 'rgba(170,100,0,.5)', 1); rib(.1, 'rgba(170,100,0,.45)', 1); rib(.5, 'rgba(140,76,0,.5)', 1.1); rib(.8, 'rgba(255,214,90,.6)', 1.1);   // the peel ridges
   g.fillStyle = 'rgba(120,60,0,.3)'; g.beginPath(); g.ellipse(5, 13.6, 11, 3.2, -.25, 0, PI2); g.fill();
+  var fr = ((i / COINN) * 2) % 1, sa = Math.sin(fr * Math.PI), sxp = -24 + fr * 48;   // the shine lives ON the face: it sweeps across it once per half turn and squeezes with it, so it never slides over the edge or the background
+  g.save(); g.rotate(.5); g.fillStyle = 'rgba(255,255,255,' + (.62 * sa) + ')'; g.fillRect(sxp - 2.2, -30, 4.4, 60); g.fillStyle = 'rgba(255,255,255,' + (.3 * sa) + ')'; g.fillRect(sxp + 4.6, -30, 2.4, 60); g.restore();
   g.restore();
-  g.fillStyle = 'rgba(255,255,255,.5)'; g.save(); g.translate(base + ox + sn * 9 * 0 + (((i % COINN) / COINN) * 70 - 24) * ac * SC, by0); g.rotate(.5); g.fillRect(-2, -30, 4.2, 60); g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(4, -30, 2.6, 60); g.restore();   // a shine sweeping across the face as it turns
   g.fillStyle = 'rgba(110,60,0,' + (.32 * (1 - ac)) + ')'; g.fillRect(0, 0, 44, 48);   // the face darkens as it turns away
   g.restore();
   path(ox); g.lineWidth = 1.1; g.strokeStyle = '#7a4500'; g.stroke();
@@ -2129,7 +2149,7 @@ return { fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: cr
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1629';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1700';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -2568,6 +2588,23 @@ function fxAdd(x, y, vx, vy, l, c, sz, st, g) {   // a spark from the pool: dead
   var q = fxFree.pop() || {}; q.x = x; q.y = y; q.vx = vx; q.vy = vy; q.l = l; q.t = 0; q.c = c; q.s = sz; q.st = st; q.g = g; fx.push(q);
 }
 function burst(x, y, n, cols, sp, g) { if (calmOn()) n = Math.ceil(n * 0.5); for (var i = 0; i < n && fx.length < fxMax; i++) { var a = frng() * 6.283, v = sp * (0.3 + frng()); fxAdd(x, y, Math.cos(a) * v, Math.sin(a) * v - sp * 0.3, 0.6 + frng() * 0.5, cols[i % cols.length], 2 + frng() * 3, frng() < 0.45, g); } }
+var smk = [], smkPics = null;   // the Wafer Cannon's smoke: a few soft puffs that rise and spread out of the barrel's dark mouth
+function cannonSmoke(x, y) {
+  var n = calmOn() ? 7 : 12, i;
+  for (i = 0; i < n && smk.length < 24; i++) smk.push({ x: x - 3 + frng() * 5, y: y + (frng() - 0.5) * 7, vx: -(50 + frng() * 110), vy: -(26 + frng() * 56), r0: 6 + frng() * 4, r1: 26 + frng() * 20, l: 1.3 + frng() * 0.9, t: -i * 0.045 });
+}
+function smkMake(c0, c1) { var c = document.createElement('canvas'), g; c.width = c.height = 64; g = c.getContext('2d'); var gr = g.createRadialGradient(26, 26, 2, 32, 32, 31); gr.addColorStop(0, c0); gr.addColorStop(0.72, c1); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.beginPath(); g.arc(32, 32, 31, 0, 6.2832); g.fill(); return c; }
+function drawSmoke() {
+  var i, q, u, r, a;
+  if (!smk.length) return;
+  if (!smkPics) smkPics = [smkMake('rgba(70,62,84,1)', 'rgba(88,80,102,.92)'), smkMake('rgba(246,243,250,1)', 'rgba(226,220,236,.9)')];
+  for (i = 0; i < smk.length; i++) {
+    q = smk[i]; if (q.t < 0) continue; u = q.t / q.l; r = q.r0 + (q.r1 - q.r0) * (1 - (1 - u) * (1 - u)); a = 0.85 * Math.pow(1 - u, 1.2);
+    ctx.globalAlpha = a * (1 - Math.min(1, u * 1.5)); if (ctx.globalAlpha > 0.01) ctx.drawImage(smkPics[0], q.x - r, q.y - r, r * 2, r * 2);
+    ctx.globalAlpha = a * Math.min(1, u * 1.5); if (ctx.globalAlpha > 0.01) ctx.drawImage(smkPics[1], q.x - r, q.y - r, r * 2, r * 2);
+  }
+  ctx.globalAlpha = 1;
+}
 
 /* The launch track (drawn live in art.js: a huge loop-de-loop). Fancy rides the flat run-up, loops the big ring, and leaves up the ramp.
    Numbers are in the track's own units: ART.TK holds the ring; the camera slides sideways during the loop so the whole ring stays on screen. */
@@ -2630,7 +2667,7 @@ function resetWorld() {
   if (pracN) { stage = pracN; spawned = score = gateStart(pracN); }
   if (contN > 1 && !pracN) { stage = contN; spawned = score = gateStart(contN); contN = 0; }   // Continue: carry on from the stage the closed tab had reached
   pracEnd = ''; bgTheme = bgFrom = themeOf(stage); bgT = 1; newBest = false; runStartBest = bestOf();
-  cardT = -1; topT = 0; pendNext = ''; nextT = 0; washA = 0; MG = null; rsgT = -1; celT = 0; launchT = 0; trackX = CFG.bananaX - LP.x0; trackOn = true; boost = 0; boostT = 99; fx.length = 0; punchT = whooshT = invuln = spinT = gardenD0 = 0; shield = lvl('shield');
+  cardT = -1; topT = 0; pendNext = ''; nextT = 0; washA = 0; MG = null; rsgT = -1; celT = 0; launchT = 0; trackX = CFG.bananaX - LP.x0; trackOn = true; boost = 0; boostT = 99; fx.length = 0; smk.length = 0; punchT = whooshT = invuln = spinT = gardenD0 = 0; shield = lvl('shield');
   ART.keep([bgTheme]);
   runCoins = 0; streak = 0; bestStreak = 0; goldNext = CFG.goldStreak; VAULT = null; hugT = 0; hugKind = ''; pops.length = 0; trail.length = 0; flashT = 0; lastAfter = 0; scrollDX = 0; curSpeed = 0;
   spawnOb(W + CFG.firstGate);   // the first obstacle waits far out: the blast off flies faster than normal for a moment
@@ -2826,7 +2863,7 @@ function ftStep(dt, sp) {
       a.d = 0;
       if (a.k !== 'coco' && a.k !== 'wave' && Math.abs(F.by - (a.y - a.oy)) > 5) continue;   // wait until the boss has lined up
       a.live = true;
-      if (a.k === 'waf' || a.k === 'fist') { a.x = p.x + a.ox; a.y = p.y + a.oy; F.kick = 1; burst(a.x - 24, a.y, 7, ['#ffffff', '#fff2a0', '#ffb347'], 150, 10); }   // fired: a puff at the barrel and a little recoil
+      if (a.k === 'waf' || a.k === 'fist') { a.x = p.x + a.ox; a.y = p.y + a.oy; F.kick = 1; burst(a.x - 24, a.y, 7, ['#ffffff', '#fff2a0', '#ffb347'], 150, 10); if (F.n === 1 && a.k === 'waf') cannonSmoke(p.x - 88, p.y + 25); }   // fired: a puff at the barrel and a little recoil (the first boss also blows a plume of smoke out of its dark muzzle)
       else if (a.k === 'lane') a.y = p.y + a.oy;
       else if (a.k === 'wave') { a.x = p.x + a.ox; burst(a.x, GROUND_Y - 6, 10, ['#e8d0a0', '#ffffff'], 160, 40); if (!calmOn()) punchT = CFG.punchSecs * 0.2; }
     }
@@ -2959,7 +2996,7 @@ function drawBlast(F) {   // the encouraging word: it pops in with a bounce, sit
 }
 function drawFtHud() {   // three round segments, each with a star at its end that lights when that round is survived
   var F = FT, gap = 7, sw = 62, x0 = W / 2 - (3 * sw + 2 * gap) / 2, i, x, u, done, cur, sx, sy, j, an, rad;
-  if (F.blast) drawBlast(F);
+  if (F.blast) { ctx.save(); ctx.translate(0, HUDUP); drawBlast(F); ctx.restore(); }
   if (F.ph === 'intro') return;
   for (i = 0; i < 3; i++) {
     x = x0 + i * (sw + gap); done = F.ph === 'won' || i < F.r; cur = i === F.r && !done; u = done ? 1 : cur ? clamp(F.rt / FT_ROUND, 0, 1) : 0;
@@ -3162,6 +3199,7 @@ function update(dt) {
   time += dt; if (state === 'launch' || state === 'play' || (state === 'mini' && MG && !MG.paused && MG.ph !== 'lose')) runSecs += dt; if (flapAnim > 0) flapAnim -= dt; if (punchT > 0) punchT -= dt; if (whooshT > 0) whooshT -= dt; if (invuln > 0) invuln -= dt; if (flashT > 0) flashT -= dt; if (celT > 0) celT = Math.max(0, celT - dt);
   for (var ti = tapFx.length - 1; ti >= 0; ti--) { tapFx[ti].t += dt; if (tapFx[ti].t > 0.4) tapFx.splice(ti, 1); }
   for (var pi = pops.length - 1; pi >= 0; pi--) { pops[pi].t += dt; pops[pi].y -= 26 * dt; if (pops[pi].t > 1.1) pops.splice(pi, 1); }
+  for (var si = smk.length - 1; si >= 0; si--) { var sm = smk[si]; sm.t += dt; if (sm.t > sm.l) { smk.splice(si, 1); continue; } if (sm.t > 0) { sm.x += sm.vx * dt; sm.y += sm.vy * dt; sm.vx -= sm.vx * 1.7 * dt; sm.vy -= (14 + sm.vy * 0.9) * dt; } }
   for (var f = fx.length - 1; f >= 0; f--) { var q = fx[f]; q.t += dt; if (q.t > q.l) { if (fxFree.length < 90) fxFree.push(q); fx[f] = fx[fx.length - 1]; fx.pop(); continue; } q.x += q.vx * dt; q.y += q.vy * dt; q.vy += q.g * dt; }
   if (bgT < 1) { bgT = Math.min(1, bgT + dt / 0.9); if (bgT >= 1) ART.keep([bgTheme]); }
   if (state !== 'launch') zoomK = 1;
@@ -3960,6 +3998,7 @@ function rsgWord(t, x, y) {   // t seconds into Ready (0), Set (beat), Go (2 bea
   var base = n === 2 ? 108 : 72;   // GO! is the big moment: bigger than Ready and Set
   ctx.globalAlpha = a; outlined(['Ready', 'Set', 'GO!'][n], x, y, base * s, ['#ff6b81', '#ffd93b', '#7be07b'][n], 'center', base); ctx.globalAlpha = 1;
 }
+var HUDUP = 38;   // the progress pips, text and badges ride this much higher now that the big count sits at the very top
 function drawProgress() {   // ten pips for the ten gates of the stage, then "n to go" and the record to beat
   var gps = gpsOf(stage), done = score - gateStart(stage), i, x0 = W / 2 - (gps - 1) * 7, rec = pracN ? 0 : runStartBest, t;
   for (i = 0; i < gps; i++) { ctx.beginPath(); ctx.arc(x0 + i * 14, 114, 4.2, 0, 7); ctx.fillStyle = i < done ? '#ffd93b' : 'rgba(255,255,255,0.35)'; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = INK; ctx.stroke(); }
@@ -4071,6 +4110,7 @@ function fxPics(col) {
 }
 function drawFx() {
   var i, q, a, p, d, kk = k > 0 ? k : 1, ph;
+  drawSmoke();
   for (i = 0; i < fx.length; i++) {
     q = fx[i]; a = 1 - q.t / q.l; ctx.globalAlpha = a < 0.35 ? a / 0.35 : 1; p = fxPics(q.c); d = q.s * 2 * (FXR * 2 + 2 / kk) / (FXR * 2);
     ph = q.st ? p.st[((q.t * 9 / (Math.PI / 8)) | 0) & 3] : p.dot;   // a plus sign turns 90 degrees onto itself: four poses are a full spin
@@ -4233,14 +4273,14 @@ function render() {
     if (mirOn()) ctx.restore();
   }
   if (state === 'play' || state === 'paused' || state === 'dead') {
-    outlinedC(String(BAL ? BAL.popped : score), W / 2, 84, 64, '#ffffff');
+    outlinedC(String(BAL ? BAL.popped : score), W / 2, 37, 64, '#ffffff');   // the big gate count: its top edge lines up with the top of the pause button and the banana counter
     if (state !== 'dead') {
       var lh = opt('lefty'), hx = function (x) { return lh ? W - x : x; }, ha = lh ? 'right' : 'left';   // left-handed: the counters move to the right so the pause button can sit at the left
       ART.coin(ctx, hx(24), 26, time); outlinedC(String(runCoins), hx(42), 27, 22, '#ffffff', ha);
       drawTapIcon(hx(24), 58); outlinedC(String(runFlaps), hx(42), 59, 20, '#ffffff', ha);   // taps this run
       if (streak >= 2) outlinedC('x' + streak + ' perfect', hx(14), 86, 16, '#ffd93b', ha);
     }
-    if (state === 'play' || state === 'paused') { drawPauseBtn(PB, .5); if (BAL) drawBalHud(); else if (FT && FT.ph !== 'wait') drawFtHud(); else drawProgress(); if (state === 'play') drawExtrasRow(); }   // the pause button, and how far along the stage is
+    if (state === 'play' || state === 'paused') { drawPauseBtn(PB, .5); ctx.save(); ctx.translate(0, -HUDUP); if (BAL) drawBalHud(); else if (FT && FT.ph !== 'wait') drawFtHud(); else drawProgress(); if (state === 'play') drawExtrasRow(); ctx.restore(); }   // the pause button, and how far along the stage is
     lap('hud');
   }
   if (state === 'title') {
