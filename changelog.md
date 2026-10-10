@@ -1,5 +1,6 @@
 # What's new
 
+- **2026.10.09.2003 (alpha):** The beach at the end of the water level has two signs (Prince Chimp’s Tropical Jungle Island, AKA Rhode Island) and a big Prince Chimp above them. The whirlpool is 20% bigger and the gull has a proper shadow. The main game now has a pause button (top right) and the P key.
 - **2026.10.09.1957 (alpha):** The water level has a pause button (top right; the P key works too, and it pauses by itself if you switch tabs). The seagull and whirlpool look much more 3D. Fancy's gloves are now tucked in at his sides.
 - **2026.10.09.1953 (alpha):** In the water level, Fancy's red mask and eyes now peek over the front as he flies.
 - **2026.10.09.1907 (alpha):** In the water level Fancy is now drawn from above: a banana with his red scarf and a big red cape streaming behind, white fists out front, and the whole hero leans into your turns. Barrels and submarines are redrawn as clean 3D-style toys seen from a little above; the new chimp hats stay.
