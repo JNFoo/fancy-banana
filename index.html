@@ -1550,17 +1550,17 @@ function planFor(th) {
     var cs = [], k, L;
     ['sky', 'far', 'mid', 'top', 'ground'].forEach(function (n) { L = s[n]; if (!L) return; if (L.c) cs.push(L.c); if (L.ch) L.ch.forEach(function (c) { cs.push(c); }); });
     for (k = 0; k < 2; k++) { s.tiles[k].forEach(function (o) { cs.push(o.c); }); s.caps[k].forEach(function (o) { cs.push(o.c); }); }
-    cs.forEach(function (c) { st.push(function () { touch(c); }); });
+    cs.forEach(function (c) { st.push(function () { if (TSKIP) return; if (TWAIT && TBUD <= 0) return 'wait'; TBUD -= c.width * c.height; touch(c); }); });   // each touch sends a whole picture to the graphics card: only a limited number of pixels per frame (see pump), or a burst of them can freeze the card for a fifth of a second
   });
   return (PLAN[th] = { s: s, st: st, i: 0, sc: sc });
 }
-var TCH = null;
+var TCH = null, TBUD = 0, TWAIT = false, TSKIP = false, TLAST = 0, TBMAX = 420000;   // TBUD: pixels the touch steps may still send to the graphics card in this pump call
 function touch(c) { if (!TCH) { TCH = document.createElement('canvas'); TCH.width = TCH.height = 1; TCH = TCH.getContext('2d'); } TCH.drawImage(c, 0, 0, 1, 1); }
 function sets(th) {
-  var s = SET[th]; if (s) return s; var p = planFor(th);
+  var s = SET[th]; if (s) return s; var p = planFor(th); TSKIP = true;
   
   while (p.i < p.st.length) { if (p.st[p.i]() !== true) p.i++; }
-  SET[th] = p.s; delete PLAN[th]; return p.s;
+  TSKIP = false; SET[th] = p.s; delete PLAN[th]; return p.s;
 }
 function scenery(th) {   // just the sky, hills and ground: enough to draw the title screen. The obstacle pieces keep building in the background (pump) or when a run needs them (sets)
   var s = SET[th]; if (s) return s; var p = planFor(th);
@@ -1570,7 +1570,7 @@ function scenery(th) {   // just the sky, hills and ground: enough to draw the t
 function warm(th) { if (!SET[th] && QUEUE.indexOf(th) < 0) { planFor(th); QUEUE.push(th); } }
 
 function pump(ms, min) {   // run queued build steps for about `ms` milliseconds, and at least `min` steps (default 1); returns true while work is left
-  var t0 = performance.now(), th, p, c = 0, mn = min || 1, s0;
+  var t0 = performance.now(), th, p, c = 0, mn = min || 1, s0, r; TWAIT = ms < 1000; TBUD = TBMAX; TLAST = 0;
   while (TASKQ.length) {  TASKQ.shift()();  if (++c >= mn && performance.now() - t0 >= ms) return true; }
   while (MGQ.length) {  MGQ.shift()();  if (++c >= mn && performance.now() - t0 >= ms) return true; }
   while (QUEUE.length) {
@@ -1578,10 +1578,10 @@ function pump(ms, min) {   // run queued build steps for about `ms` milliseconds
     if (!p) { QUEUE.shift(); continue; }
     if (p.i >= p.st.length) { sets(th); QUEUE.shift(); continue; }
     
-    if (p.st[p.i]() !== true) p.i++; 
+    r = p.st[p.i](); if (r === 'wait') break; if (r !== true) p.i++; 
     if (++c >= mn && performance.now() - t0 >= ms) break;
   }
-  return QUEUE.length > 0;
+  TLAST = TBMAX - TBUD; return QUEUE.length > 0;
 }
 function pend(th, mg) {   // how many build steps are still waiting before theme th is ready (th < 0: only the picture and mini game queues)
   var n = TASKQ.length + (mg ? MGQ.length : 0), i, q, p;
@@ -2059,6 +2059,12 @@ function coinFrame(i) {   // a GOLD banana turning about its up-down axis like a
   var fr = ((i / COINN) * 2) % 1, sa = Math.sin(fr * Math.PI), sxp = -24 + fr * 48;   // the shine lives ON the face: it sweeps across it once per half turn and squeezes with it, so it never slides over the edge or the background
   g.save(); g.rotate(.5); g.fillStyle = 'rgba(255,255,255,' + (.62 * sa) + ')'; g.fillRect(sxp - 2.2, -30, 4.4, 60); g.fillStyle = 'rgba(255,255,255,' + (.3 * sa) + ')'; g.fillRect(sxp + 4.6, -30, 2.4, 60); g.restore();
   g.restore();
+  g.save(); g.translate(base + ox, by0); g.scale(Math.max(.02, ac) * SC, SC);   // the gloss is drawn the same way up on the front and the back (light from the upper left), and squeezes with the face as it turns
+  q = g.createLinearGradient(-10, -9, 12, 14); q.addColorStop(0, 'rgba(0,0,0,0)'); q.addColorStop(.5, 'rgba(0,0,0,0)'); q.addColorStop(1, 'rgba(150,76,0,.45)'); g.fillStyle = q; g.fillRect(-22, -22, 44, 46);   // deep gold toward the lower right
+  g.beginPath(); for (var k3 = 3; k3 < N - 4; k3++) { var pp = S.mid[k3], oo = -.5 * pp[4]; if (k3 === 3) g.moveTo(pp[0] + pp[2] * oo, pp[1] + pp[3] * oo); else g.lineTo(pp[0] + pp[2] * oo, pp[1] + pp[3] * oo); }
+  g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = 3.4; g.stroke(); g.strokeStyle = 'rgba(255,255,255,.95)'; g.lineWidth = 1.4; g.stroke();   // the long shine streak
+  pp = S.mid[4]; oo = -.5 * pp[4]; g.fillStyle = 'rgba(255,255,255,.55)'; g.beginPath(); g.arc(pp[0] + pp[2] * oo, pp[1] + pp[3] * oo, 3, 0, PI2); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(pp[0] + pp[2] * oo, pp[1] + pp[3] * oo, 1.7, 0, PI2); g.fill();   // and its bright dot
+  g.restore();
   g.fillStyle = 'rgba(110,60,0,' + (.32 * (1 - ac)) + ')'; g.fillRect(0, 0, 44, 48);   // the face darkens as it turns away
   g.restore();
   path(ox); g.lineWidth = 1.1; g.strokeStyle = '#7a4500'; g.stroke();
@@ -2143,13 +2149,13 @@ function balBack(g, off) { var P = party(); put(g, P.sky.c, 0, 0); layer(g, P.cl
 function balGround(g, off) { var F = party().floor, x; for (x = px(-(off % 72)); x < W; x += 72) put(g, F.c, x, GY); }
 function balWarm() { var i; if (BALW) return; BALW = true; TASKQ.push(party); for (i = 0; i < BALC.length; i++) (function (i) { TASKQ.push(function () { balloonPic(i); }); })(i); TASKQ.push(waferPic); }
 
-return { fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: crownDraw, setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { draw: mgdraw, water: mgwater, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, pend: pend, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
+return { get tlast() { return TLAST; }, tbmax: TBMAX, fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: crownDraw, setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { draw: mgdraw, water: mgwater, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, pend: pend, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
 })();
 
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1700';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1719';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
