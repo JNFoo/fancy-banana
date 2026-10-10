@@ -1887,26 +1887,33 @@ var TKP = [['#a8386a', '#ff7fb0', 'rgba(255,230,240,.8)', '#ff9ec4', '#ffffff', 
 /* A glossy chrome-and-enamel tube. The light is up and to the left, so each pass is the same path nudged toward the light (highlight) or away from it (shade):
    that gives a real round tube on the curves too, with no pictures to store. */
 function ribbon(g, P) {
-  g.lineCap = 'butt'; g.lineWidth = 36; g.strokeStyle = P[0]; g.stroke();                                          // dark rim
+  g.lineCap = 'butt'; g.lineWidth = 39.5; g.strokeStyle = '#2b2140'; g.stroke();                                   // the dark outline
+  g.lineWidth = 36; g.strokeStyle = P[0]; g.stroke();                                          // dark rim
   g.lineWidth = 31; g.strokeStyle = P[1]; g.stroke();                                                              // enamel body
   g.save(); g.translate(5.5, 6.5); g.lineWidth = 16; g.strokeStyle = 'rgba(20,10,40,.42)'; g.stroke(); g.restore();    // shade side
   g.save(); g.translate(-2.5, -3); g.lineWidth = 19; g.strokeStyle = 'rgba(255,255,255,.26)'; g.stroke(); g.restore();   // broad soft light
   g.save(); g.translate(-5, -6); g.lineWidth = 7; g.strokeStyle = P[2]; g.stroke(); g.restore();                   // bright band
   g.save(); g.translate(-6.2, -7.4); g.lineWidth = 3.2; g.strokeStyle = '#fff'; g.stroke(); g.restore();             // chrome glint
   g.save(); g.translate(7.4, 8.6); g.lineWidth = 2; g.strokeStyle = 'rgba(255,255,255,.35)'; g.stroke(); g.restore();   // bounce light on the shade rim
+  g.save(); g.translate(8.4, 9.8); g.lineWidth = 1.4; g.strokeStyle = 'rgba(255,255,255,.7)'; g.stroke(); g.restore();   // a crisp rim light on the lower right edge
 }
 var TKB = null;
-function tkBulb(c, lit) {   // a round bulb with a glow: drawn once per color, at 2x
+function tkBulb(c, lit) {   // a glass bulb in a metal cap: a lit one glows with a hot white core, an unlit one is dull glass; drawn once per color, at 2x
   TKB = TKB || {}; var k = c + lit; if (TKB[k]) return TKB[k];
   var s = document.createElement('canvas'); s.width = s.height = 64; var g = s.getContext('2d'), q;
   g.translate(32, 32); g.scale(2, 2);
-  if (lit) { q = g.createRadialGradient(0, 0, 2, 0, 0, 15); q.addColorStop(0, c); q.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = .7; g.fillStyle = q; g.beginPath(); g.arc(0, 0, 16, 0, PI2); g.fill(); g.globalAlpha = 1; }
-  g.beginPath(); g.arc(0, 0, 6, 0, PI2); g.fillStyle = '#2b2140'; g.fill();                                           // socket ring
-  q = g.createRadialGradient(-1.6, -1.8, .4, 0, 0, 5); q.addColorStop(0, '#fff'); q.addColorStop(.4, c); q.addColorStop(1, c);
-  g.globalAlpha = 1; g.beginPath(); g.arc(0, 0, 4.9, 0, PI2); g.fillStyle = q; g.fill(); g.globalAlpha = 1;
-  g.beginPath(); g.arc(-1.6, -1.8, 1.1, 0, PI2); g.fillStyle = 'rgba(255,255,255,.9)'; g.fill();
+  if (lit) { q = g.createRadialGradient(0, 0, 2, 0, 0, 15.5); q.addColorStop(0, c); q.addColorStop(1, 'rgba(255,255,255,0)'); g.globalAlpha = .8; g.fillStyle = q; g.beginPath(); g.arc(0, 0, 16, 0, PI2); g.fill(); g.globalAlpha = 1; }
+  g.beginPath(); g.arc(0, 0, 6.4, 0, PI2); g.fillStyle = '#2b2140'; g.fill();                                           // socket ring and outline
+  q = g.createLinearGradient(-5, -5, 5, 5); q.addColorStop(0, '#f2f5ff'); q.addColorStop(.5, '#9aa3bd'); q.addColorStop(1, '#4e5470'); g.beginPath(); g.arc(0, 0, 5.8, 0, PI2); g.fillStyle = q; g.fill();   // the metal cap
+  g.beginPath(); g.arc(0, 0, 4.7, 0, PI2); g.fillStyle = lit ? c : mixc2(c); g.fill();
+  q = g.createRadialGradient(-1.5, -1.7, .3, 0, 0, 5); if (lit) { q.addColorStop(0, '#ffffff'); q.addColorStop(.35, lit ? '#fff7d0' : c); q.addColorStop(.7, c); q.addColorStop(1, c); } else { q.addColorStop(0, 'rgba(255,255,255,.7)'); q.addColorStop(.4, 'rgba(255,255,255,.08)'); q.addColorStop(1, 'rgba(20,10,40,.22)'); }
+  g.beginPath(); g.arc(0, 0, 4.7, 0, PI2); g.fillStyle = q; g.fill();
+  g.lineWidth = .9; g.strokeStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(0, 0, 3.3, 3.5, 4.9); g.stroke();   // the curved window shine
+  g.beginPath(); g.arc(-1.7, -1.9, 1, 0, PI2); g.fillStyle = 'rgba(255,255,255,.95)'; g.fill();
+  g.beginPath(); g.arc(1.8, 2.1, .55, 0, PI2); g.fillStyle = 'rgba(255,255,255,.55)'; g.fill();
   return TKB[k] = s;
 }
+function mixc2(c) { return drk(c, .16); }   // an unlit bulb: the same color, dark and dull
 function tkBolt(g, x, y) { circ(g, x, y, 2.4); fs(g, '#cfd6e6', '#2b2140', 1); g.fillStyle = '#fff'; g.fillRect(x - 1.2, y - 1.4, 1.4, 1.2); }
 function tkPath(g, x, cx, ty) { g.beginPath(); g.moveTo(x - 400, ty); g.lineTo(cx + 70, ty); g.quadraticCurveTo(cx + 140, ty, cx + 200, ty - 85); }
 function track(g, x, t, p, th) {
@@ -1916,7 +1923,7 @@ function track(g, x, t, p, th) {
     g.fillStyle = 'rgba(30,20,60,.22)'; g.beginPath(); g.ellipse(px0 + 11, GY + 4, 24, 6, 0, 0, PI2); g.fill();                  // contact shadow
     g.fillStyle = P[3]; g.fillRect(px0, ty, 22, GY - ty + 6); g.fillStyle = P[6]; for (var y = ty + 34; y < GY; y += 46) g.fillRect(px0, y, 22, 10);
     q = g.createLinearGradient(px0, 0, px0 + 22, 0); q.addColorStop(0, 'rgba(20,10,40,.45)'); q.addColorStop(.18, 'rgba(20,10,40,.05)'); q.addColorStop(.3, 'rgba(255,255,255,.55)'); q.addColorStop(.42, 'rgba(255,255,255,.1)'); q.addColorStop(.75, 'rgba(20,10,40,.1)'); q.addColorStop(1, 'rgba(20,10,40,.5)');
-    g.fillStyle = q; g.fillRect(px0, ty, 22, GY - ty + 6); g.strokeStyle = P[0]; g.lineWidth = 1.6; g.strokeRect(px0, ty, 22, GY - ty + 6);
+    g.fillStyle = q; g.fillRect(px0, ty, 22, GY - ty + 6); g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(px0 + 19.4, ty, 1.4, GY - ty + 6); g.strokeStyle = '#2b2140'; g.lineWidth = 2.2; g.strokeRect(px0, ty, 22, GY - ty + 6);   // the white rim light on the right, a dark outline all round
     [ty + 2, GY - 6].forEach(function (fy) { rr(g, px0 - 5, fy - 4, 32, 10, 4); fs(g, P[4], P[0], 1.6); g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(px0 - 2, fy - 2.4, 26, 2); tkBolt(g, px0 - 0.5, fy + 1); tkBolt(g, px0 + 22.5, fy + 1); });
   });
   g.lineJoin = 'round';
@@ -1931,28 +1938,55 @@ function track(g, x, t, p, th) {
   q = g.createLinearGradient(0, ty - 15, 0, ty + 15); q.addColorStop(0, 'rgba(255,255,255,.35)'); q.addColorStop(.5, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(20,10,40,.3)'); g.fillStyle = q; g.fillRect(cx + 30, ty - 15, 60, 30);
   for (i = 0; i < 22; i++) {                                                                                                    // a chasing ring of glowing bulbs
     a = i / 22 * PI2; var bc = lc[(i + ph) % 3], bl = ((i + ph) % 3) === 0 ? 1 : 0, bs = tkBulb(bc, bl);
-    g.drawImage(bs, cx + Math.cos(a) * (r + 24) - 16, cy + Math.sin(a) * (r + 24) - 16, 32, 32);
+    var bz = bl ? 42 : 36; g.drawImage(bs, cx + Math.cos(a) * (r + 24) - bz / 2, cy + Math.sin(a) * (r + 24) - bz / 2, bz, bz);
   }
   [[cx - 70, ty], [cx, cy - r], [cx + 70, ty]].forEach(function (c2) {                                                          // bolted metal collars
     rr(g, c2[0] - 13, c2[1] - 26, 26, 52, 7); fs(g, P[10], '#2b2140', 2.2);
     q = g.createLinearGradient(c2[0] - 13, 0, c2[0] + 13, 0); q.addColorStop(0, 'rgba(255,255,255,.55)'); q.addColorStop(.35, 'rgba(255,255,255,.05)'); q.addColorStop(1, 'rgba(20,10,40,.45)');
     rr(g, c2[0] - 13, c2[1] - 26, 26, 52, 7); g.fillStyle = q; g.fill();
     g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(c2[0] - 9, c2[1] - 22, 5, 4);
+    g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(c2[0] - 10.5, c2[1] - 9, 3, 18); g.fillStyle = 'rgba(255,255,255,.5)'; g.fillRect(c2[0] + 10, c2[1] - 22, 1.3, 44);   // a long shine down the left and a rim light on the right
+    g.fillStyle = 'rgba(30,16,60,.35)'; g.fillRect(c2[0] - 12, c2[1] - 2, 24, 4); g.fillStyle = 'rgba(255,255,255,.45)'; g.fillRect(c2[0] - 12, c2[1] - 3, 24, 1.2);   // a grooved band across the middle
     tkBolt(g, c2[0] - 7, c2[1] - 20); tkBolt(g, c2[0] + 7, c2[1] - 20); tkBolt(g, c2[0] - 7, c2[1] + 20); tkBolt(g, c2[0] + 7, c2[1] + 20);
   });
+  a = (t * .7) % 1; q = a < .3 ? Math.sin(a / .3 * Math.PI) : 0;   // a twinkle that travels round the big ring
+  if (q > .05) { var ta = -2.2 + t * 2.1, sx = cx + Math.cos(ta) * (r - 6), sy = cy + Math.sin(ta) * (r - 6), sr = 7 * q; g.fillStyle = 'rgba(255,255,255,' + q + ')'; g.beginPath(); g.moveTo(sx, sy - sr); g.lineTo(sx + sr * .24, sy - sr * .24); g.lineTo(sx + sr, sy); g.lineTo(sx + sr * .24, sy + sr * .24); g.lineTo(sx, sy + sr); g.lineTo(sx - sr * .24, sy + sr * .24); g.lineTo(sx - sr, sy); g.lineTo(sx - sr * .24, sy - sr * .24); g.closePath(); g.fill(); }
   g.lineCap = 'round';
 }
 /* the golden banana coin: 8 pre-drawn frames of it spinning */
 var COIN = null, COINN = 12;
-function coinFrame(i) {   // a gold banana turning about its long axis (the same 3D body as Fancy, no face): 12 steps
+function coinFrame(i) {   // a golden banana, drawn flat as a side view with five peel ridges, a brown stem and tip: it rocks gently and a shine sweeps along it (12 steps)
   if (!COIN) COIN = [];
-  if (!COIN[i]) COIN[i] = posePic({ gold: true, hero: false, sc: .4, ol: 3.6, phi: 0, pose: poseFn(-.62, i / COINN * PI2) }, 44, 48, 22, 27);
-  return COIN[i];
+  if (COIN[i]) return COIN[i];
+  var m = mk(44, 48), g = m.g, N = 18, P0 = [-16, -6], P1 = [.5, 19], P2 = [16.5, -9], j, t, u, cx, cy, dx, dy, l, w, nx, ny, up = [], dn = [], mid = [], q, f = i / COINN, sw = Math.sin(f * PI2), sh = (f * 1.6 - .3);
+  for (j = 0; j <= N; j++) {
+    t = j / N; u = 1 - t; cx = u * u * P0[0] + 2 * u * t * P1[0] + t * t * P2[0]; cy = u * u * P0[1] + 2 * u * t * P1[1] + t * t * P2[1];
+    dx = 2 * u * (P1[0] - P0[0]) + 2 * t * (P2[0] - P1[0]); dy = 2 * u * (P1[1] - P0[1]) + 2 * t * (P2[1] - P1[1]); l = Math.sqrt(dx * dx + dy * dy) || 1; nx = -dy / l; ny = dx / l;
+    w = 1.6 + 7.4 * Math.pow(Math.sin(Math.min(1, t * .96 + .02) * PI2 / 2), .62); up.push([cx - nx * w, cy - ny * w]); dn.push([cx + nx * w, cy + ny * w]); mid.push([cx, cy, nx, ny, w]);
+  }
+  function body() { g.beginPath(); g.moveTo(up[0][0], up[0][1]); for (var k = 1; k <= N; k++) g.lineTo(up[k][0], up[k][1]); for (var k = N; k >= 0; k--) g.lineTo(dn[k][0], dn[k][1]); g.closePath(); }
+  function rib(f0, c, lw) { g.beginPath(); for (var k = 1; k < N; k++) { var p = mid[k], o = f0 * p[4]; if (k === 1) g.moveTo(p[0] + p[2] * o, p[1] + p[3] * o); else g.lineTo(p[0] + p[2] * o, p[1] + p[3] * o); } g.strokeStyle = c; g.lineWidth = lw; g.stroke(); }
+  g.save(); g.translate(22, 22.5); g.rotate(sw * .2); g.lineJoin = 'round'; g.lineCap = 'round';
+  g.save(); g.translate(0, 20); g.scale(1, .2); g.beginPath(); g.arc(0, 0, 14, 0, PI2); g.fillStyle = 'rgba(40,24,60,.2)'; g.fill(); g.restore();   // a soft shadow below
+  g.beginPath(); g.moveTo(P2[0] - 2, P2[1] + 1); g.lineTo(P2[0] + 2.6, P2[1] - 5.2); g.lineWidth = 6.6; g.strokeStyle = INK; g.stroke(); g.lineWidth = 4; g.strokeStyle = '#7a4a16'; g.stroke(); g.lineWidth = 1.4; g.strokeStyle = '#c98b3a'; g.beginPath(); g.moveTo(P2[0] - 1.4, P2[1] + .2); g.lineTo(P2[0] + 1.6, P2[1] - 4.4); g.stroke();   // the stem
+  body(); g.lineWidth = 4; g.strokeStyle = INK; g.stroke();
+  q = g.createLinearGradient(0, -4, 0, 12); q.addColorStop(0, '#fff6a8'); q.addColorStop(.38, '#ffd633'); q.addColorStop(.75, '#f0a800'); q.addColorStop(1, '#c97a00'); body(); g.fillStyle = q; g.fill();
+  g.save(); body(); g.clip();
+  rib(-.62, 'rgba(255,250,200,.85)', 1.2); rib(-.3, 'rgba(160,96,0,.55)', 1); rib(.1, 'rgba(160,96,0,.5)', 1); rib(.5, 'rgba(120,64,0,.55)', 1.1); rib(.8, 'rgba(255,225,120,.55)', 1);   // the peel ridges
+  g.lineWidth = 2.4; g.strokeStyle = 'rgba(255,255,255,.55)'; rib(-.8, 'rgba(255,255,255,.7)', 1.8);   // a rim of light along the top
+  g.save(); g.translate(sh * 50 - 12, 0); g.rotate(.5); g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(-2, -30, 4.5, 60); g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(4, -30, 3, 60); g.restore();   // a shine that sweeps along
+  g.fillStyle = 'rgba(255,255,255,.9)'; g.beginPath(); g.ellipse(-7.4, 6.6, 2.4, 1.1, .6, 0, PI2); g.fill();   // a crisp glint
+  g.fillStyle = 'rgba(120,60,0,.28)'; g.beginPath(); g.ellipse(5, 13.6, 11, 3.2, -.25, 0, PI2); g.fill();   // deeper gold underneath
+  g.restore();
+  g.lineWidth = 1.1; g.strokeStyle = '#8a5200'; body(); g.stroke();
+  g.fillStyle = '#4a2a10'; g.beginPath(); g.ellipse(P0[0] - .4, P0[1] - .2, 2.6, 2.3, -.5, 0, PI2); g.fill(); g.lineWidth = 1; g.strokeStyle = INK; g.stroke();   // the dark tip
+  g.restore();
+  return COIN[i] = m;
 }
 function coinFrames() { COIN = []; for (var i = 0; i < COINN; i++) (function (i) { TASKQ.push(function () { coinFrame(i); }); })(i); }
 function coin(g, x, y, t) {
-  var m = coinFrame(Math.floor(t * 9) % COINN), ph = (t * .9 + x * .013 + y * .007) % 1, a = ph < .22 ? Math.sin(ph / .22 * Math.PI) : 0, r;
-  put(g, m.c, x - 22, y - 20);
+  var m = coinFrame(Math.floor(t * 7) % COINN), ph = (t * .9 + x * .013 + y * .007) % 1, a = ph < .22 ? Math.sin(ph / .22 * Math.PI) : 0, r;
+  put(g, m.c, x - 22, y - 21);
   if (a > .05) { r = 6.5 * a; g.save(); g.globalAlpha = a; g.fillStyle = '#fffbe0'; g.beginPath(); g.moveTo(x - 9, y - 15 - r); g.lineTo(x - 9 + r * .28, y - 15 - r * .28); g.lineTo(x - 9 + r, y - 15); g.lineTo(x - 9 + r * .28, y - 15 + r * .28); g.lineTo(x - 9, y - 15 + r); g.lineTo(x - 9 - r * .28, y - 15 + r * .28); g.lineTo(x - 9 - r, y - 15); g.lineTo(x - 9 - r * .28, y - 15 - r * .28); g.closePath(); g.fill(); g.restore(); }   // a twinkle that crosses each coin now and then (out of step, so the coins do not blink together)
 }
 
@@ -2030,7 +2064,7 @@ return { fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: cr
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1430';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.1603';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 Jawad Niazi. All Rights Reserved.';
 
@@ -2921,7 +2955,7 @@ function startVault(kind) {
   var n = kind === 'gold' ? CFG.goldN : kind === 'drawer' ? CFG.drawerN : CFG.vaultN, sx = kind === 'gold' ? 28 : kind === 'drawer' ? 36 : 34, cs = [], i, y;
   hugT = 0; hugKind = '';
   for (i = 0; i < n; i++) {
-    y = kind === 'sky' ? 230 + Math.sin(i * 0.62) * 105 : kind === 'gold' ? 250 + Math.sin(i * 0.55) * 120 : GROUND_Y - 44 - Math.abs(Math.sin(i * 0.5)) * 290;   // lazy waves up high; a bigger wave; bouncy arcs off the floor
+    y = kind === 'sky' ? 230 + Math.sin(i * 0.62) * 105 : kind === 'gold' ? 250 + Math.sin(i * 0.55) * 120 : GROUND_Y - 62 - Math.abs(Math.sin(i * 0.5)) * 272;   // lazy waves up high; a bigger wave; bouncy arcs off the floor
     cs.push({ x: W + 50 + i * sx, y: y, got: false, ph: i * 0.7 });
   }
   VAULT = { kind: kind, t: 0, cs: cs, got: 0, n: n, bz: 0 };
@@ -2993,6 +3027,7 @@ function die() {
    ART.warm(themeOf(1));   // build the first stage's pictures while the Oops card shows, so the next try starts instantly
   
 }
+function pumpNeed() { var nt = themeOf(stage + 1); return state === 'play' && nt !== themeOf(stage) && !ART.ready(nt) && score - gateStart(stage) >= 2; }   // the next stage's pictures are still being built and half the stage is gone: build faster
 function stageUp() {
   var done = themeOf(stage); cardStage = stage; stage++; save.stats.friends += CFG.friendsPerStage;
   giveCoins(CFG.stageCoins, bx + 20, by); burst(bx + 20, by, 26, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 300, 340); pop('Stage bonus +' + CFG.stageCoins + '!', '#ffd93b', 22);   // a little fanfare
@@ -3002,6 +3037,7 @@ function stageUp() {
   if (pendNext === 'win') { save.stats.wins++; save.stats.friends += CFG.winBonus; nextT = 0.8; if (runChal && !pracN) { var bk = 'b_' + runChal; if (!save.unlocks[bk]) { save.unlocks[bk] = 1; badgeNew = CHAL[chalIdx() - 1][1]; } } }   // the finale gets its own victory screen instead of a stage card
   else { cardT = 0; cardY = cardGoal = mirY(by) < 335 ? 345 : 125; nextT = pendNext ? CFG.cardSecs + 0.35 : 0; rsgT = 0; rsgGo = false; celT = CFG.celSecs; }   // a little celebration roll, once around
   if (pendNext !== 'win' && !pracN) save.cont = { st: stage, tm: Math.round(runSecs) };   // where to carry on if the tab is closed mid-run
+  if (pendNext !== 'win' && themeOf(stage + 1) !== themeOf(stage)) ART.warm(themeOf(stage + 1));   // start building the look of the stage after this one right away (it used to wait for the first gate: too late on a slow laptop)
   persist();
 }
 function onHidden() {
@@ -3472,6 +3508,7 @@ var giftT = 0, giftS = 0, giftSt = 0, fwk = [], fwkT = 0;   // the balloon hand-
 function rainOk() { return save.stats.streak >= 10; }   // earned by a best perfect streak of 10
 function rainOn() { return rainOk() && !save.unlocks.rainOff; }
 var RB = []; (function () { for (var i = 0; i < 36; i++) RB.push('hsl(' + i * 10 + ',92%,60%)'); })();
+var FLN = 18;   // pennant string length in points (40% shorter than the old 30)
 function flagsOn() { var u = save.unlocks; return !!u.flags && !u.flagsOff; }
 function waferOn() { return save.stats.wins >= CFG.waferWins; }
 function fmtM(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
@@ -3480,20 +3517,20 @@ function secretsFound() { var u = save.unlocks; return (u.balloons ? 1 : 0) + (u
 /* --- the pennant string --- */
 function flagStep(dt, sp) {
   var i, p; for (i = 0; i < fl.length; i++) fl[i].x -= sp * dt * 0.6;   // the string drags behind Fancy, a little slower than the world
-  flAcc += dt; if (flAcc >= 0.03) { flAcc = 0; p = fl.length >= 30 ? fl.shift() : { x: 0, y: 0 }; p.x = bx - 17; p.y = by + 3; fl.push(p); }
+  flAcc += dt; if (flAcc >= 0.03) { flAcc = 0; p = fl.length >= FLN ? fl.shift() : { x: 0, y: 0 }; p.x = bx - 17; p.y = by + 3; fl.push(p); }
 }
 function drawFlags() {   // a thin string drawn as one smooth curve, with small pennants that stream back and flutter more toward the loose end
-  var n = fl.length, i, c = 0, p, a, b, tx, ty, tl, w, d, calm = calmOn();
+  var n = fl.length, i, c = 0, p, a, b, tx, ty, tl, w, wx, d, calm = calmOn();
   if (n < 4) return;
   ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(fl[n - 1].x, fl[n - 1].y);
   for (i = n - 2; i > 0; i--) ctx.quadraticCurveTo(fl[i].x, fl[i].y, (fl[i].x + fl[i - 1].x) / 2, (fl[i].y + fl[i - 1].y) / 2);
   ctx.lineTo(fl[0].x, fl[0].y); ctx.strokeStyle = INK; ctx.lineWidth = 2.6; ctx.stroke(); ctx.strokeStyle = '#fffdf6'; ctx.lineWidth = 1; ctx.stroke();
   for (var ii = n - 4; ii >= 3; ii -= 2.5, c++) {
     i = Math.round(ii); p = fl[i]; a = fl[i + 1]; b = fl[i - 1]; tx = a.x - b.x; ty = a.y - b.y; tl = Math.sqrt(tx * tx + ty * ty) || 1; tx = tx / tl * 3.8; ty = ty / tl * 3.8;
-    d = (n - 1 - i) / n; w = calm ? 0 : Math.sin(time * 11 + c * 1.7) * (0.8 + 3 * d);
+    d = (n - 1 - i) / n; w = calm ? 0 : Math.sin(time * 11 + c * 1.7) * (1.2 + 2.6 * d); wx = calm ? 0 : Math.cos(time * 8.3 + c * 1.3) * (0.8 + 2.2 * d);   // wind flutter, both up-down and back-forth, so it still shows when the string runs straight up or down
     ctx.beginPath(); ctx.moveTo(p.x + tx, p.y + ty);
-    ctx.quadraticCurveTo(p.x - 1 + w * 0.2, p.y + 3.8 + w * 0.5, p.x - 8.2 + w * 0.3, p.y + 5.4 + w);
-    ctx.quadraticCurveTo(p.x - 5.5 + w * 0.2, p.y + 1.4 + w * 0.3, p.x - tx, p.y - ty); ctx.closePath();
+    ctx.quadraticCurveTo(p.x - 1 + w * 0.2 + wx * 0.3, p.y + 3.8 + w * 0.5, p.x - 8.2 + w * 0.3 + wx, p.y + 5.4 + w);
+    ctx.quadraticCurveTo(p.x - 5.5 + w * 0.2 + wx * 0.3, p.y + 1.4 + w * 0.3, p.x - tx, p.y - ty); ctx.closePath();
     ctx.fillStyle = FLC[c % FLC.length]; ctx.fill(); ctx.lineWidth = 1.2; ctx.strokeStyle = INK; ctx.stroke();
   }
 }
@@ -3521,9 +3558,21 @@ function startBalloons() {
 function balPop(b) {
   var B = BAL, col = ART.bal.cols[b.ci], n = calmOn() ? 6 : 11, i, a, v, c = b.gold ? 5 : 1;
   B.popped++; runPops++; B.combo++; B.comboT = 1.2; var ex = B.combo >= 7 ? 3 : B.combo >= 5 ? 2 : B.combo >= 3 ? 1 : 0; c += ex; B.coins += c; giveCoins(c, b.x, b.y);   // a chain of quick pops pays extra: +1 from the 3rd, +2 from the 5th, +3 from the 7th
-  for (i = 0; i < n; i++) { a = frng() * 6.283; v = 90 + frng() * 150; shd.push({ x: b.x + Math.cos(a) * 8, y: b.y + Math.sin(a) * 8, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, r: frng() * 6.28, vr: (frng() - 0.5) * 18, t: 0, l: 0.6 + frng() * 0.35, s: 5.5 + frng() * 5, c: col }); }
+  var st = b.gold ? 6 : Math.floor(frng() * 6), sh, cnt = st === 1 ? n + 8 : st === 4 ? 8 : st === 3 ? 5 : n;   // each balloon pops its own way: six styles (a gold one always bursts into stars)
+  if (calmOn()) cnt = Math.min(cnt, 7);
+  for (i = 0; i < cnt; i++) {
+    a = st === 4 ? i / cnt * 6.283 : frng() * 6.283; v = 90 + frng() * 150;
+    sh = { x: b.x + Math.cos(a) * 8, y: b.y + Math.sin(a) * 8, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 60, r: frng() * 6.28, vr: (frng() - 0.5) * 18, t: 0, l: 0.6 + frng() * 0.35, s: 5.5 + frng() * 5, c: col, k: 0, g: 1, cv: 0, fl: 0 };
+    if (st === 1) { sh.k = 1; sh.vx *= 0.8; sh.vy = Math.sin(a) * v * 0.7 - 110; sh.g = 0.22; sh.fl = 1; sh.l = 1.0 + frng() * 0.5; sh.s = 3 + frng() * 2.6; sh.c = frng() < 0.4 ? '#ffffff' : frng() < 0.5 ? '#ffd93b' : col; }   // confetti: little squares that drift down and flutter
+    else if (st === 2) { v = 120 + frng() * 70; sh.vx = Math.cos(a) * v; sh.vy = Math.sin(a) * v; sh.cv = 5.5; sh.g = 0.3; sh.vr = 14; sh.l = 0.8 + frng() * 0.3; }   // a swirl: pieces curl as they fly
+    else if (st === 3) { v = 230 + frng() * 120; sh.vx = Math.cos(a) * v; sh.vy = Math.sin(a) * v; sh.k = 3; sh.s = 8 + frng() * 4; sh.l = 0.38 + frng() * 0.12; sh.g = 0.5; }   // a snap: a few long slivers fly out fast
+    else if (st === 4) { v = 170; sh.vx = Math.cos(a) * v; sh.vy = Math.sin(a) * v; sh.g = 0.35; sh.l = 0.7; sh.s = 7.5; }   // a tidy ring of eight pieces
+    else if (st === 5) { sh.vx *= 0.35; sh.vy = 20 + frng() * 60; sh.g = 1.7; sh.s = 6 + frng() * 5; sh.l = 0.9; }   // a limp one: the pieces just drop
+    else if (st === 6) { v = 110 + frng() * 150; sh.vx = Math.cos(a) * v; sh.vy = Math.sin(a) * v - 40; sh.k = 2; sh.s = 6 + frng() * 5; sh.c = frng() < 0.5 ? '#ffd93b' : '#fff2a0'; sh.l = 0.8 + frng() * 0.4; sh.g = 0.6; sh.vr = (frng() - 0.5) * 10; }   // gold: a burst of sparkling stars
+    shd.push(sh);
+  }
   if (shd.length > 90) shd.splice(0, shd.length - 90);
-  B.pw.push({ x: b.x, y: b.y, t: 0, ci: b.ci });
+  B.pw.push({ x: b.x, y: b.y, t: 0, ci: b.ci, st: st, col: col });
   burst(b.x, b.y, 8, [col, '#ffffff', '#fff2a0'], 200, 220);
   if (b.gold) pop('GOLD! +5', '#ffd93b', 22); else if (B.combo >= 3 && B.combo % 2 === 1) pop('CHAIN x' + B.combo + '  +' + ex, col, 20);
 }
@@ -3551,20 +3600,27 @@ function balFinish() {
   burst(W / 2, 220, 40, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 300, 340);
 }
 function shardStep(dt) {
-  for (var i = shd.length - 1; i >= 0; i--) { var s = shd[i]; s.t += dt; if (s.t > s.l) { shd[i] = shd[shd.length - 1]; shd.pop(); continue; } s.x += s.vx * dt; s.y += s.vy * dt; s.vy += 520 * dt; s.r += s.vr * dt; }
+  for (var i = shd.length - 1; i >= 0; i--) { var s = shd[i]; s.t += dt; if (s.t > s.l) { shd[i] = shd[shd.length - 1]; shd.pop(); continue; } if (s.cv) { var ca = s.cv * dt, cc = Math.cos(ca), cs = Math.sin(ca), nvx = s.vx * cc - s.vy * cs; s.vy = s.vx * cs + s.vy * cc; s.vx = nvx; } s.x += s.vx * dt + (s.fl ? Math.sin(s.t * 9 + s.r) * 22 * dt : 0); s.y += s.vy * dt; s.vy += 520 * (s.g || 1) * dt; s.r += s.vr * dt * (s.fl ? 1.6 : 1); }
 }
 function drawBalloons() {
   var B = BAL, i, b, s, p, u, f, a, k2, y;
   if (B) for (i = 0; i < B.list.length; i++) { b = B.list[i]; if (b.x > -50 && b.x < W + 50) ART.bal.draw(ctx, b.ci, b.x, b.y + Math.sin(time * 1.7 + b.ph) * 5); }
   if (B) for (i = 0; i < B.pw.length; i++) {   // the pop: a quick squash and white flash, then a ring
     p = B.pw[i]; f = p.t / 0.4; if (p.t < 0.07) { u = p.t / 0.07; ART.bal.draw(ctx, p.ci, p.x, p.y, 1 + 0.3 * u, 1 - 0.2 * u); }
-    ctx.globalAlpha = Math.max(0, 1 - f * 1.6) * 0.85; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(p.x, p.y, 8 + 30 * Math.min(1, f * 3), 0, 7); ctx.fill();
-    ctx.globalAlpha = 1 - f; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 5 * (1 - f) + 1; ctx.beginPath(); ctx.arc(p.x, p.y, 12 + 52 * f, 0, 7); ctx.stroke(); ctx.globalAlpha = 1;
+    var ps = p.st | 0;
+    if (ps !== 5) { ctx.globalAlpha = Math.max(0, 1 - f * 1.6) * (ps === 3 ? 1 : 0.85); ctx.fillStyle = ps === 6 ? '#fff2a0' : '#ffffff'; ctx.beginPath(); ctx.arc(p.x, p.y, (ps === 3 ? 5 : 8) + (ps === 3 ? 44 : 30) * Math.min(1, f * 3), 0, 7); ctx.fill(); }   // the flash
+    if (ps === 0 || ps === 2 || ps === 4 || ps === 6) { ctx.globalAlpha = 1 - f; ctx.strokeStyle = ps === 4 ? p.col : '#ffffff'; ctx.lineWidth = (ps === 4 ? 8 : 5) * (1 - f) + 1; ctx.beginPath(); ctx.arc(p.x, p.y, 12 + (ps === 4 ? 70 : 52) * f, 0, 7); ctx.stroke(); }   // the ring
+    if (ps === 2 && f > 0.1) { ctx.globalAlpha = (1 - f) * 0.8; ctx.strokeStyle = p.col; ctx.lineWidth = 3 * (1 - f) + 1; ctx.beginPath(); ctx.arc(p.x, p.y, 6 + 34 * (f - 0.1), 0, 7); ctx.stroke(); }   // a second, inner ring
+    if (ps === 3) { ctx.globalAlpha = 1 - f; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.4; ctx.beginPath(); for (var rr2 = 0; rr2 < 8; rr2++) { var ra = rr2 * 0.785 + 0.2; ctx.moveTo(p.x + Math.cos(ra) * (10 + 20 * f), p.y + Math.sin(ra) * (10 + 20 * f)); ctx.lineTo(p.x + Math.cos(ra) * (24 + 46 * f), p.y + Math.sin(ra) * (24 + 46 * f)); } ctx.stroke(); }   // a crack of spokes
+    ctx.globalAlpha = 1;
   }
   ctx.lineJoin = 'round'; ctx.lineWidth = 1.5; ctx.strokeStyle = INK;
   for (i = 0; i < shd.length; i++) {
     s = shd[i]; ctx.globalAlpha = clamp((s.l - s.t) / 0.25, 0, 1); ctx.fillStyle = s.c; ctx.beginPath();
-    for (k2 = 0; k2 < 3; k2++) { a = s.r + k2 * 2.094; y = s.s * (k2 ? 0.8 : 1.5); ctx.lineTo(s.x + Math.cos(a) * y, s.y + Math.sin(a) * y); }
+    if (s.k === 1) { var cq = Math.cos(s.r) * s.s, sq = Math.sin(s.r) * s.s * (0.3 + 0.7 * Math.abs(Math.sin(s.t * 8 + s.r))); ctx.moveTo(s.x + cq, s.y + sq); ctx.lineTo(s.x - sq, s.y + cq * 0.5); ctx.lineTo(s.x - cq, s.y - sq); ctx.lineTo(s.x + sq, s.y - cq * 0.5); }
+    else if (s.k === 2) { for (k2 = 0; k2 < 8; k2++) { a = s.r + k2 * 0.785; y = s.s * (k2 % 2 ? 0.3 : 1.15); ctx.lineTo(s.x + Math.cos(a) * y, s.y + Math.sin(a) * y); } }
+    else if (s.k === 3) { a = Math.atan2(s.vy, s.vx); ctx.moveTo(s.x + Math.cos(a) * s.s, s.y + Math.sin(a) * s.s); ctx.lineTo(s.x - Math.cos(a) * s.s * 0.6 - Math.sin(a) * 1.8, s.y - Math.sin(a) * s.s * 0.6 + Math.cos(a) * 1.8); ctx.lineTo(s.x - Math.cos(a) * s.s * 0.6 + Math.sin(a) * 1.8, s.y - Math.sin(a) * s.s * 0.6 - Math.cos(a) * 1.8); }
+    else for (k2 = 0; k2 < 3; k2++) { a = s.r + k2 * 2.094; y = s.s * (k2 ? 0.8 : 1.5); ctx.lineTo(s.x + Math.cos(a) * y, s.y + Math.sin(a) * y); }
     ctx.closePath(); ctx.fill(); ctx.stroke();
   }
   ctx.globalAlpha = 1;
@@ -3957,6 +4013,8 @@ function cardWarm() {   // queue (lazily, one per frame) every picture of text t
   var nx = themeOf(stage + 1);
   txWarm('Stage ' + stage + ' clear!', 30, '#ffd93b', true); txWarm(CFG.friendsPerStage + ' banana friends escaped!', 17, '#ffffff');
   txWarm('Bonus: Chimp\'s Navy!', 17, '#ffd93b'); txWarm('Bonus: Balloon Party!', 17, '#ffd93b'); txWarm('Next: ' + ART.names[nx], 17, '#ffd93b');
+  txWarm('Ready', 72, '#ff6b81'); txWarm('Set', 72, '#ffd93b'); txWarm('GO!', 108, '#7be07b');   // the Ready, Set, GO words that follow the card
+  ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff', '#7be07b'].forEach(fxPics);   // and the confetti colors of the stage bonus burst
 }
 function stageCard() {
   var t = cardT, a = clamp(Math.min(t / 0.3, (CFG.cardSecs - t) / 0.3), 0, 1), e = a * a * (3 - 2 * a);
@@ -3999,34 +4057,37 @@ function letterPics() {
   if (TTL && TTLK === k) return TTL;
   var lines = [{ t: 'Fancy,', size: 54, x: 150, y: 168, face: ['#ffc21f', '#f2a10a', '#d17f06'], side: '#ffe680' }, { t: 'the Banana', size: 38, x: 150, y: 228, face: ['#ff8a80', '#f0483f', '#c81e36'], side: '#7a1224' }], out = [], kk = k, c0 = document.createElement('canvas').getContext('2d'), li, ln, i, n = 0, wd, sz, px, pad, w, h, c, g2, dep, d;
   for (li = 0; li < lines.length; li++) {
-    ln = lines[li]; sz = ln.size; c0.font = '800 ' + sz + 'px ' + FONT; wd = c0.measureText(ln.t).width + sz * .11 * (ln.t.length - 1); if (wd > 198) { sz = Math.floor(sz * 198 / wd); c0.font = '800 ' + sz + 'px ' + FONT; }   // the letters get a little extra tracking so their sticker edges no longer overlap
+    ln = lines[li]; sz = ln.size; c0.font = '800 ' + sz + 'px ' + FONT; wd = c0.measureText(ln.t).width + sz * TTK * (ln.t.length - 1); if (wd > 198) { sz = Math.floor(sz * 198 / wd); c0.font = '800 ' + sz + 'px ' + FONT; }   // the letters sit shoulder to shoulder: their sticker edges touch and are drawn as one merged shape (all edges first, then all faces)
     for (i = 0; i < ln.t.length; i++) {
       if (ln.t[i] === ' ') continue;
-      px = c0.measureText(ln.t.slice(0, i)).width + i * sz * .11; w = c0.measureText(ln.t[i]).width; pad = Math.ceil(sz * .3); dep = Math.max(3, Math.round(sz * .1)); h = Math.ceil(sz * 1.3) + pad * 2 + dep;
-      c = document.createElement('canvas'); c.width = Math.ceil((w + pad * 2) * kk); c.height = Math.ceil(h * kk); g2 = c.getContext('2d'); g2.scale(kk, kk); g2.font = '800 ' + sz + 'px ' + FONT; g2.textBaseline = 'middle'; g2.textAlign = 'left'; g2.lineJoin = 'round';
-      var cy = pad + sz * .65;
+      px = c0.measureText(ln.t.slice(0, i)).width + i * sz * TTK; w = c0.measureText(ln.t[i]).width; pad = Math.ceil(sz * .3); dep = Math.max(3, Math.round(sz * .1)); h = Math.ceil(sz * 1.3) + pad * 2 + dep;
+      var cw = Math.ceil((w + pad * 2) * kk), ch = Math.ceil(h * kk), cy = pad + sz * .65, cf = document.createElement('canvas'), gf;
+      c = document.createElement('canvas'); c.width = cf.width = cw; c.height = cf.height = ch; g2 = c.getContext('2d'); gf = cf.getContext('2d');
+      g2.scale(kk, kk); gf.scale(kk, kk); g2.font = gf.font = '800 ' + sz + 'px ' + FONT; g2.textBaseline = gf.textBaseline = 'middle'; g2.textAlign = gf.textAlign = 'left'; g2.lineJoin = gf.lineJoin = 'round';
       for (d = dep; d >= 1; d--) { g2.lineWidth = sz * .23; g2.strokeStyle = d > dep - 1 ? INK : ln.side; g2.strokeText(ln.t[i], pad, cy + d); g2.fillStyle = ln.side; g2.fillText(ln.t[i], pad, cy + d); }
-      g2.lineWidth = sz * .23; g2.strokeStyle = '#fff6df'; g2.strokeText(ln.t[i], pad, cy);                                    // the cream sticker edge
-      var gr = g2.createLinearGradient(0, cy - sz * .5, 0, cy + sz * .5); gr.addColorStop(0, ln.face[0]); gr.addColorStop(.5, ln.face[1]); gr.addColorStop(1, ln.face[2]);
-      g2.fillStyle = gr; g2.fillText(ln.t[i], pad, cy);
-      g2.globalCompositeOperation = 'source-atop'; g2.fillStyle = 'rgba(255,255,255,.34)'; g2.fillRect(0, cy - sz * .56, w + pad * 2, sz * .3); g2.globalCompositeOperation = 'source-over';   // gloss across the top (only on what is already painted)
-      out.push({ c: c, x: ln.x + px - pad, y: ln.y - cy, w: c.width / kk, h: c.height / kk, i: n++, ch: ln.t[i] });
+      g2.lineWidth = sz * .23; g2.strokeStyle = '#fff6df'; g2.strokeText(ln.t[i], pad, cy);                                    // c: the deep side and the cream sticker edge
+      var gr = gf.createLinearGradient(0, cy - sz * .5, 0, cy + sz * .5); gr.addColorStop(0, ln.face[0]); gr.addColorStop(.5, ln.face[1]); gr.addColorStop(1, ln.face[2]);
+      gf.fillStyle = gr; gf.fillText(ln.t[i], pad, cy);
+      gf.globalCompositeOperation = 'source-atop'; gf.fillStyle = 'rgba(255,255,255,.34)'; gf.fillRect(0, cy - sz * .56, w + pad * 2, sz * .3); gf.globalCompositeOperation = 'source-over';   // cf: the face, with gloss across the top (only on what is painted)
+      out.push({ c: c, f: cf, x: ln.x + px - pad, y: ln.y - cy, w: c.width / kk, h: c.height / kk, i: n++, ch: ln.t[i] });
     }
   }
   TTLK = k; TTL = out; return out;
 }
+var TTK = 0.0;   // extra letter spacing on the title, as a share of the type size
 var LDIR = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 function drawTitleWord() {
   var L = letterPics(), i, q, t, u, e, dx, dy, rot, sx, sy, dir, n = L.length, landed = 0, cxp, cyp, sh;
   ctx.save(); ctx.translate(150, 236); ctx.rotate(-0.035); ctx.translate(-150, -236);   // the whole word leans -2 degrees from its lower left, like a sticker slapped on slightly crooked
   if (n) { sh = ctx.createRadialGradient(246, 252, 4, 246, 252, 112); sh.addColorStop(0, 'rgba(40,24,60,.38)'); sh.addColorStop(1, 'rgba(40,24,60,0)'); ctx.save(); ctx.globalAlpha = clamp((titleT - 0.5) / 1.5, 0, 1); ctx.translate(246, 252); ctx.scale(1, .16); ctx.translate(-246, -252); ctx.fillStyle = sh; ctx.beginPath(); ctx.arc(246, 252, 112, 0, 7); ctx.fill(); ctx.restore(); }   // a soft ground shadow under the word (the extruded sides give the hard edge)
+  for (i = 0; i < n; i++) { q = L[i]; if (clamp((titleT - 0.12 - i * 0.075) / 0.8, 0, 1) >= 1) { landed++; put0(q.c, q.x, q.y, q.w, q.h); } }   // landed letters: every sticker edge first, so neighbors merge into one shape...
+  for (i = 0; i < n; i++) { q = L[i]; if (clamp((titleT - 0.12 - i * 0.075) / 0.8, 0, 1) >= 1) put0(q.f, q.x, q.y, q.w, q.h); }   // ...then every face on top
   for (i = 0; i < n; i++) {
-    q = L[i]; t = titleT - 0.12 - i * 0.075; u = clamp(t / 0.8, 0, 1); if (t < 0) continue;
-    if (u >= 1) { landed++; put0(q.c, q.x, q.y, q.w, q.h); continue; }
+    q = L[i]; t = titleT - 0.12 - i * 0.075; u = clamp(t / 0.8, 0, 1); if (t < 0 || u >= 1) continue;
     dir = LDIR[i % 4]; e = easeOutBounce(u); var f = 1 - e;
     dx = dir[0] * 330 * f + (dir[0] ? 0 : (i % 8 < 4 ? -40 : 40) * f); dy = dir[1] * 420 * f; rot = ((i % 2) ? 1 : -1) * 2.4 * f; sx = 1 + .9 * f; sy = Math.max(.12, Math.cos(f * 1.35));
     cxp = q.x + q.w / 2 + dx; cyp = q.y + q.h / 2 + dy;
-    ctx.save(); ctx.translate(cxp, cyp); ctx.rotate(rot); ctx.scale(sx, sy); ctx.drawImage(q.c, -q.w / 2, -q.h / 2, q.w, q.h); ctx.restore();
+    ctx.save(); ctx.translate(cxp, cyp); ctx.rotate(rot); ctx.scale(sx, sy); ctx.drawImage(q.c, -q.w / 2, -q.h / 2, q.w, q.h); ctx.drawImage(q.f, -q.w / 2, -q.h / 2, q.w, q.h); ctx.restore();
   }
   ctx.restore();
   return landed === n && n > 0;
@@ -4265,7 +4326,7 @@ function frame(t) {
   requestAnimationFrame(frame);
   if (!autoRun) { last = t; return; }
   var fs = performance.now(), ri = t - last, dt = Math.min(0.05, ri / 1000 || 0), p0 = REC ? fs : 0; last = t; acc += dt; wlSync(); govStep(ri, t); if (padOn || padTest) padStep();
-  try { while (acc >= CFG.step) { update(CFG.step); acc -= CFG.step; } var p1 = REC ? performance.now() : 0, still = washA <= 0 && ((state === 'paused' && resT < 0) || (state === 'mini' && MG && MG.paused)); if (!(still && stillDrawn) && !(opt('saver') && t - lastDraw < 28)) { renders++; lastDraw = t; render(); stillDrawn = still; if (washA > 0) { ctx.globalAlpha = washA; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; } }   /* a paused game does not change: draw it once, then rest (saves battery and heat); the Battery saver draws at most every 28 ms */ if (TEXTQ.length) { var tq = TEXTQ.shift(); delete TXP[tq[3]]; textPic(tq[0], tq[1], tq[2]); } if (renders > 1) { if (performance.now() - fs < 6 || ++pumpSkip >= 4) { pumpSkip = 0; ART.pump(CFG.pumpMs); } } /* background art building only when this frame was cheap (or every 4th frame at the latest), so a slow phone is not made slower right when it struggles */ if (REC) REC(t, dt, p1 - p0, performance.now() - p1); } catch (e) { logError('frame', e); acc = 0; softFail(e); }
+  try { while (acc >= CFG.step) { update(CFG.step); acc -= CFG.step; } var p1 = REC ? performance.now() : 0, still = washA <= 0 && ((state === 'paused' && resT < 0) || (state === 'mini' && MG && MG.paused)); if (!(still && stillDrawn) && !(opt('saver') && t - lastDraw < 28)) { renders++; lastDraw = t; render(); stillDrawn = still; if (washA > 0) { ctx.globalAlpha = washA; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; } }   /* a paused game does not change: draw it once, then rest (saves battery and heat); the Battery saver draws at most every 28 ms */ if (TEXTQ.length) { var tq = TEXTQ.shift(); delete TXP[tq[3]]; textPic(tq[0], tq[1], tq[2]); } if (renders > 1) { if (performance.now() - fs < 6 || ++pumpSkip >= 4) { pumpSkip = 0; ART.pump(pumpNeed() ? CFG.pumpMs * 2.2 : CFG.pumpMs); } } /* background art building only when this frame was cheap (or every 4th frame at the latest), so a slow phone is not made slower right when it struggles */ if (REC) REC(t, dt, p1 - p0, performance.now() - p1); } catch (e) { logError('frame', e); acc = 0; softFail(e); }
 }
 requestAnimationFrame(frame);
 
