@@ -1,15 +1,41 @@
 # Fancy, the Banana (beta)
 
-A cartoony one-tap arcade game: guide a small flying banana through gaps without touching anything. Tap, click, or press Space to flap.
+A silent, one-tap, side-scrolling arcade game. Guide Fancy, a small flying banana in a hero mask and scarf, through the gaps and free his banana friends from Evil Prince Chimp.
 
-**Beta:** the game is feature-complete and now being polished and tested. Small things will still change between versions.
+**Play it: https://jnfoo.github.io/fancy-banana/**
 
-- Plays in any modern browser, on a laptop or a phone. One file, works offline, no sign-in, nothing leaves your device.
-- Fancy is a SuperBanana (a real 3D toy in the Apple Press look) with a hero mask, a scarf and two red-cuffed white gloves up front. Evil Prince Chimp has taken the banana friends; clear a stage (ten gates) and five of them escape.
-- Six illustrated stages (Candy Shop, Jam Jar Pantry, Ice Cream Parlor, Silverware Drawer, Fruit Garden, Chimp's Jungle Kingdom) with a water shoot-'em-up bonus game after stage 4 (drag to steer, Fancy fires on his own); every run starts with a loop-de-loop launch and a football-spiral spin. The Fruit Garden begins on a beach and turns into the jungle island.
-- Beat Prince Chimp in the jungle, then keep your upgrades and banana credits or start fresh. The game never gets harder.
-- Your best score and stage, your banana friends freed and your costumes are saved on your device. Use Save to copy a save code and move your progress between devices.
-- Grab golden coins, fly through gap middles for PERFECT streaks, and skim obstacles for close calls. Spend your banana credits (friends freed plus coins) on upgrades (wider gaps, gentler fall, a free bounce, an extra mini-game heart; the shop shows only what you can afford), and pick a costume on the title screen.
-- A silent game by design: no sound or music.
+<p align="center">
+  <img src="screenshots/title.jpg" width="150" alt="The title screen">
+  <img src="screenshots/candy-shop.jpg" width="150" alt="Stage 1, the Candy Shop">
+  <img src="screenshots/silverware-drawer.jpg" width="150" alt="Stage 4, the Silverware Drawer">
+  <img src="screenshots/water-level.jpg" width="150" alt="Chimp's Navy, the water bonus level">
+  <img src="screenshots/fruit-garden.jpg" width="150" alt="Stage 5, the Fruit Garden">
+</p>
 
-Play: open `index.html` (or the hosted page once it is turned on).
+**Status: beta.** The game is feature-complete and being polished and tested, so small things still change between versions. What changed and when is in [changelog.md](changelog.md).
+
+## How to play
+
+- **Tap, click or press Space** to flap. Fly through the gates; touch an obstacle or the ground and the run ends.
+- Every ten gates is a new stage, and each stage clear sets five banana friends free.
+- Grab golden banana coins, fly through the middle of a gap for a PERFECT streak, and skim an edge for a close call.
+- After stage 4 comes **Chimp's Navy**, a water bonus level seen from above: drag, move the mouse or use the arrow keys to steer, and tap to leap over submarines and barrels.
+- Spend your banana credits (friends freed plus coins) on upgrades such as wider gaps, a gentler fall, a free bounce, a banana magnet and Potassium Power, and pick a costume on the title screen.
+- Every run starts with a loop-de-loop launch, and Prince Chimp is waiting at the end of the Jungle Kingdom.
+- Beat him and the game starts to hide things: there are secrets, challenges, costumes and a few surprises for anyone who keeps playing.
+
+**Stages:** Candy Shop, Jam Jar Pantry, Ice Cream Parlor, Silverware Drawer, the water level, then the Fruit Garden (it starts on a beach and turns into the jungle island) and Prince Chimp's Jungle Kingdom. In each run, one of stages 2 to 4 is picked by chance and flipped like a card, so Fancy flies right to left.
+
+## Made to be comfortable
+
+Calm mode (no flashes, shake or zoom), game speed from 100% down to 60%, left-handed layout, large buttons and text, a battery saver, full screen, a pause button (or the P key), game controller support, and no sound or music at all. Progress is saved in your browser; use **Save** to copy a save code or file and move to another device.
+
+## Technical notes
+
+- The whole game is one HTML file: no install, no sign-in, no network requests, nothing leaves your device, and it works offline. Open `index.html` in any modern browser on a laptop or a phone.
+- It uses plain HTML canvas and JavaScript with no libraries. There are no image files in the game: all of its art is drawn by code when it starts and built in small background steps so play stays smooth.
+- Physics runs at a fixed 120 steps a second and the picture is drawn where things will be when it is shown. Test builds run in Firefox (used as the stress test) and Chromium.
+- Version numbers look like `2026.10.10.2346`: year, month, day and the time (US Eastern). The current one is shown under the title on the title screen.
+- This repository holds the built game (`index.html`), the [changelog](changelog.md) and the screenshots above.
+
+© 2026 JNFoo. All rights reserved.
