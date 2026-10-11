@@ -760,10 +760,17 @@ function bossPart(n, k) {
   if (!p) { p = BOSSP[key] = mk(d[0], d[1]); p.g.translate(d[2] - d[4], d[3] - d[5]); bossDraw(p.g, n, k); rimLight(p); p.px = d[2]; p.py = d[3]; }
   return p;
 }
+function bbox(c) {   // the box (device pixels) that holds everything painted in a picture, found once: copying only that box costs less, because a copy pays for the transparent pixels too (software drawing)
+  try { var w = c.width, h = c.height, d = c.getContext('2d').getImageData(0, 0, w, h).data, x0 = w, y0 = h, x1 = -1, y1 = -1, x, y; for (y = 0; y < h; y++) for (x = 0; x < w; x++) if (d[(y * w + x) * 4 + 3]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 < 0) return [0, 0, 1, 1]; x0 = Math.max(0, x0 - 1); y0 = Math.max(0, y0 - 1); return [x0, y0, Math.min(w, x1 + 2) - x0, Math.min(h, y1 + 2) - y0]; } catch (e) { return [0, 0, c.width, c.height]; }
+}
+function putT(g, p, x, y) {   // put() for a big picture with a lot of empty space around the painted part: same device pixels, smaller copy
+  var b = p.bb || (p.bb = bbox(p.c)); x = Math.round(x * K) / K; y = Math.round(y * K) / K; g.drawImage(p.c, b[0], b[1], b[2], b[3], x + b[0] / K, y + b[1] / K, b[2] / K, b[3] / K);
+}
 function bossTurn(g, n, k, x, y, rot) {   // a part drawn turned by rot (radians, clockwise) about its pivot, which sits at (x, y)
-  var p = bossPart(n, k); x = px(x); y = px(y);
-  if (!rot) { put(g, p.c, x - p.px, y - p.py); return; }
-  g.save(); g.translate(x, y); g.rotate(rot); g.drawImage(p.c, -p.px, -p.py, p.c.width / K, p.c.height / K); g.restore();
+  var p = bossPart(n, k), b; x = px(x); y = px(y);
+  if (!rot) { putT(g, p, x - p.px, y - p.py); return; }
+  b = p.bb || (p.bb = bbox(p.c)); g.save(); g.translate(x, y); g.rotate(rot); g.drawImage(p.c, b[0], b[1], b[2], b[3], -p.px + b[0] / K, -p.py + b[1] / K, b[2] / K, b[3] / K); g.restore();
 }
 var HNDP = {};
 function handDraw(g, open, m) {   // a chimp's hand, centered on 0,0: a relaxed fist, or an open palm with spread fingers (for holding a coconut up). m = -1 draws the other hand (fingers, knuckles and thumb on the opposite side; the shading and light stay put)
@@ -773,9 +780,10 @@ function handDraw(g, open, m) {   // a chimp's hand, centered on 0,0: a relaxed 
     ell(g, -11 * m, 7, 3.6, 6.4, -1.15 * m); fb(g, sk(-11 * m, 7, 6), O, 2);
     circ(g, 0, 3, 10.5); fb(g, sk(0, 3, 11), O, 2.4);
   } else {
+    var f = -m;   // a fist: the thumb sits on the side toward the body (the finger knuckles on the outer side), for the hand on either side
     circ(g, 0, 0, 10.6); fb(g, sk(0, 0, 11), O, 2.4);
-    for (i = 0; i < 3; i++) { circ(g, (-9 + (i === 1 ? -1 : 0)) * m, -6 + i * 6, 3.8); fb(g, sk(-9 * m, -6 + i * 6, 4), O, 1.8); }
-    ell(g, 3 * m, -8, 3.6, 5, .6 * m); fb(g, sk(3 * m, -8, 5), O, 1.8);
+    for (i = 0; i < 3; i++) { circ(g, (-9 + (i === 1 ? -1 : 0)) * f, -6 + i * 6, 3.8); fb(g, sk(-9 * f, -6 + i * 6, 4), O, 1.8); }
+    ell(g, 3 * f, -8, 3.6, 5, .6 * f); fb(g, sk(3 * f, -8, 5), O, 1.8);
   }
   g.fillStyle = 'rgba(255,255,255,.4)'; ell(g, -3.5, -2.6, 3.6, 2, -.6); g.fill();
 }
@@ -795,8 +803,8 @@ function boss(g, n, cx, cy, pose) {   // pose (optional): the gorilla's arm angl
     g.save(); g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath(); g.moveTo(ax, ay); g.lineTo(ex, ey); g.lineTo(hx, hy);
     g.strokeStyle = OUTK; g.lineWidth = 21; g.stroke(); g.strokeStyle = '#c28652'; g.lineWidth = 16; g.stroke(); g.strokeStyle = 'rgba(255,225,185,.5)'; g.lineWidth = 4; g.save(); g.translate(-2, -2.5); g.stroke(); g.restore(); g.restore();
   }
-  put(g, bossPic(n).c, cx - 110, cy - 124);
-  if (n === 3) { bossTurn(g, 3, 'l', cx + 30, cy + 10, q.l || 0); bossTurn(g, 3, 'r', cx - 33, cy + 8, q.r || 0); put(g, bossPart(3, 'head').c, cx - 110, cy - 124); }
+  putT(g, bossPic(n), cx - 110, cy - 124);
+  if (n === 3) { bossTurn(g, 3, 'l', cx + 30, cy + 10, q.l || 0); bossTurn(g, 3, 'r', cx - 33, cy + 8, q.r || 0); putT(g, bossPart(3, 'head'), cx - 110, cy - 124); }
   else if (n === 4) {
     bossTurn(g, 4, 'sc', cx - 56, cy + 22, q.s || 0);
     if (q.f > 0.02) { g.save(); g.globalCompositeOperation = 'lighter'; var ox = -56 + Math.sin(q.s || 0) * 0 , a = q.s || 0, dx = 6 * Math.cos(a) + 58 * Math.sin(a), dy = 6 * Math.sin(a) - 58 * Math.cos(a), gr = g.createRadialGradient(cx - 56 + dx, cy + 22 + dy, 2, cx - 56 + dx, cy + 22 + dy, 34); gr.addColorStop(0, 'rgba(255,230,240,' + (0.9 * q.f).toFixed(2) + ')'); gr.addColorStop(1, 'rgba(255,90,130,0)'); g.fillStyle = gr; g.fillRect(cx - 56 + dx - 36, cy + 22 + dy - 36, 72, 72); g.restore(); }
@@ -956,7 +964,7 @@ function arenaLive(g, cr) {
   if (A.front) put(g, A.front.c, 0, 0); else { put(g, A.fl.c, 0, 0); put(g, A.fr.c, W - 140, 0); }
   return true;
 }
-function fightWarm(n) { TASKQ.push(function () { bossPic(n); }); TASKQ.push(function () { fxPic('coco'); }); TASKQ.push(function () { fxPic('fist'); }); TASKQ.push(function () { fxPic('lime'); }); TASKQ.push(function () { chimpPic([.62, .72, .46, 1.12][n - 1], 2); });  if (n === 3) { TASKQ.push(function () { bossPart(3, 'head'); bossPart(3, 'r'); bossPart(3, 'l'); }); arenaTasks(); } if (n === 4) TASKQ.push(function () { bossPart(4, 'sc'); handPic(0); handPic(1); }); }
+function fightWarm(n) { TASKQ.push(function () { var q = bossPic(n); q.bb = q.bb || bbox(q.c); }); TASKQ.push(function () { fxPic('coco'); }); TASKQ.push(function () { fxPic('fist'); }); TASKQ.push(function () { fxPic('lime'); }); TASKQ.push(function () { chimpPic([.62, .72, .46, 1.12][n - 1], 2); });  if (n === 3) { TASKQ.push(function () { ['head', 'r', 'l'].forEach(function (k) { var q = bossPart(3, k); q.bb = q.bb || bbox(q.c); }); }); arenaTasks(); } if (n === 4) TASKQ.push(function () { bossPart(4, 'sc'); handPic(0); handPic(1); }); }
 function fxs(g, k, x, y, rot) { var p = fxPic(k); g.save(); g.translate(x, y); if (rot) g.rotate(rot); g.drawImage(p.c, -22, -22, 44, 44); g.restore(); }
 
 /* ============================ STAGE SETS ============================ */
@@ -3551,6 +3559,13 @@ function ftPose(F) {   // how the gorilla's arms and the Prince's hands and scep
   }
   F.pose = q; return q;
 }
+var SPT = null;
+function fightSpot(x, y) {   // the soft light behind a boss: one baked picture stamped on whole device pixels (a radial gradient over 260 x 260 units cost over a millisecond every frame in Firefox)
+  var m = ctx.getTransform(), s = m.a, c, g, fl;
+  if (m.b || m.c || m.a !== m.d) { fl = ctx.createRadialGradient(x, y + 10, 8, x, y + 10, 130); fl.addColorStop(0, 'rgba(255,246,208,0.34)'); fl.addColorStop(1, 'rgba(255,246,208,0)'); ctx.fillStyle = fl; ctx.fillRect(x - 130, y - 120, 260, 260); return; }
+  if (!SPT || SPT.s !== s) { c = document.createElement('canvas'); c.width = c.height = Math.ceil(260 * s); g = c.getContext('2d'); g.scale(s, s); fl = g.createRadialGradient(130, 130, 8, 130, 130, 130); fl.addColorStop(0, 'rgba(255,246,208,0.34)'); fl.addColorStop(1, 'rgba(255,246,208,0)'); g.fillStyle = fl; g.fillRect(0, 0, 260, 260); SPT = { s: s, c: c }; }
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(SPT.c, Math.round(m.e + (x - 130) * s), Math.round(m.f + (y - 120) * s)); ctx.restore();
+}
 function drawFight() {
   var F = FT, p = ftBoss(F), i, a, f, g, sh = F.shake > 0 && !calmOn() ? Math.sin(time * 80) * 4 : 0, cl = calmOn(), al, ex, mx, my, fl;
   for (i = 0; i < F.list.length; i++) {   // warnings first, behind everything
@@ -3573,7 +3588,7 @@ function drawFight() {
   var wt = F.ph === 'won' ? Math.max(0, F.t - 1.4) : 0, co = [[-2, -14, 0.62], [0, -30, 0.72], [34, -66, 0.46], [0, 0, 1.12]][F.n - 1];   // beaten: the boss spins away up and to the right, crying
   if (wt <= 0 || F.n === 1) {   // a soft spotlight behind the boss and its shadow on the floor: smaller and fainter the higher it hovers
     var hh = clamp((GROUND_Y - p.y) / 330, 0, 1), sa = (1 - hh * 0.75) * 0.3 * (wt > 0 ? 0 : 1);
-    if (wt <= 0) { fl = ctx.createRadialGradient(p.x, p.y + 10, 8, p.x, p.y + 10, 130); fl.addColorStop(0, 'rgba(255,246,208,0.34)'); fl.addColorStop(1, 'rgba(255,246,208,0)'); ctx.fillStyle = fl; ctx.fillRect(p.x - 130, p.y - 120, 260, 260); }
+    if (wt <= 0) fightSpot(p.x, p.y);
     ctx.globalAlpha = sa; ctx.fillStyle = '#3a2a4d'; ctx.beginPath(); ctx.ellipse(p.x - 6, GROUND_Y - 4, 66 - hh * 22, 9 - hh * 3, 0, 0, 7); ctx.fill(); ctx.globalAlpha = 1;
   }
   if (F.n === 1) drawBalloonsWagon(F, p, sh, wt, cl);
