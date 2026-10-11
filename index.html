@@ -72,6 +72,9 @@ button.pf,button:focus-visible,textarea:focus-visible{outline:calc(3*var(--u)) s
 .pips{display:flex;gap:calc(3*var(--u))}
 .pips s{width:calc(9*var(--u));height:calc(9*var(--u));border-radius:50%;border:calc(1.6*var(--u)) solid #3a2a4d;background:#fff}
 .pips s.on{background:#ffd93b}
+.pclw{position:sticky;top:0;height:0;z-index:4;text-align:right;overflow:visible}
+.pcl{position:relative;top:calc(-4*var(--u));right:calc(-4*var(--u));width:calc(36*var(--u));height:calc(36*var(--u));min-width:0;min-height:0;padding:0;border-radius:50%;font-size:calc(22*var(--u));line-height:1;background:linear-gradient(180deg,#ff9a8a,#ff6b5a);color:#fff}
+body.big .pcl{width:calc(48*var(--u));height:calc(48*var(--u))}
 #uClose{position:absolute;top:calc(8*var(--u));right:calc(8*var(--u));z-index:3;width:calc(40*var(--u));height:calc(40*var(--u));min-width:0;min-height:0;padding:0;border-radius:50%;font-size:calc(24*var(--u));line-height:1;background:linear-gradient(180deg,#ff9a8a,#ff6b5a);color:#fff}
 body.big #uClose{width:calc(52*var(--u));height:calc(52*var(--u));min-width:0;min-height:0}
 body.big .ut{min-height:calc(120*var(--u))}
@@ -127,27 +130,28 @@ textarea{width:100%;height:calc(96*var(--u));font:calc(12*var(--u))/1.3 ui-monos
 <div id="padHint" hidden></div>
 <div id="toast" role="status" aria-live="polite"></div>
 <section id="pHelp" class="panel" hidden aria-label="Help">
+<div class="pclw"><button class="pcl" aria-label="Close" tabindex="-1">&times;</button></div>
 <h2>How to play</h2>
-<div class="hrow"><canvas class="hic" data-k="banana" width="112" height="88" aria-hidden="true"></canvas><p>Tap, click, or press Space to flap. Fly the banana through the gaps. Every gate you pass scores 1.</p></div>
-<div class="hrow"><canvas class="hic" data-k="gate" width="112" height="88" aria-hidden="true"></canvas><p>Touch an obstacle or the ground and the run ends. You can pop off the top of the screen for a moment, but you get pulled back down.</p></div>
-<div class="hrow"><canvas class="hic" data-k="friends" width="112" height="88" aria-hidden="true"></canvas><p>At first, every 10 gates is a new stage, and each stage you clear sets 5 banana friends free from Prince Chimp!</p></div>
-<div class="hrow"><canvas class="hic" data-k="coin" width="112" height="88" aria-hidden="true"></canvas><p>Grab the golden coins in the gaps. They are banana credits for the Upgrades shop.</p></div>
-<div class="hrow"><canvas class="hic" data-k="star" width="112" height="88" aria-hidden="true"></canvas><p>Fly through the middle of a gap for a PERFECT, and chain them for streak bonuses. Skim close past an obstacle for a Close call bonus.</p></div>
+<div class="hrow"><canvas class="hic" data-k="banana" width="112" height="88" aria-hidden="true"></canvas><p>Tap, click or press Space to flap through the gaps. Each gate scores 1.</p></div>
+<div class="hrow"><canvas class="hic" data-k="gate" width="112" height="88" aria-hidden="true"></canvas><p>Touch an obstacle or the ground and the run ends.</p></div>
+<div class="hrow"><canvas class="hic" data-k="friends" width="112" height="88" aria-hidden="true"></canvas><p>At first, every 10 gates is a new stage, and each stage sets 5 banana friends free!</p></div>
+<div class="hrow"><canvas class="hic" data-k="coin" width="112" height="88" aria-hidden="true"></canvas><p>Golden coins are banana credits for the Upgrades shop.</p></div>
+<div class="hrow"><canvas class="hic" data-k="star" width="112" height="88" aria-hidden="true"></canvas><p>Fly through the middle of a gap for a PERFECT. Skim an edge for a Close call.</p></div>
 <h3>Chimp's Navy, the water bonus after stage 4</h3>
-<div class="hrow"><canvas class="hic" data-k="sub" width="112" height="88" aria-hidden="true"></canvas><p>Seen from above. Drag your finger, move the mouse, use the arrow keys, or push the controller's d-pad or stick to steer Fancy.</p></div>
-<div class="hrow"><canvas class="hic" data-k="barrels" width="112" height="88" aria-hidden="true"></canvas><p>Tap, click or press Space (or any controller button) to LEAP over chimp submarines and roped barrels of chimps. You cannot steer while you are in the air, so time it.</p></div>
-<div class="hrow"><canvas class="hic" data-k="gull" width="112" height="88" aria-hidden="true"></canvas><p>Seagulls cannot be leapt (unless you buy Super Leap). Steer around them.</p></div>
+<div class="hrow"><canvas class="hic" data-k="sub" width="112" height="88" aria-hidden="true"></canvas><p>Seen from above. Drag, move the mouse or use the arrow keys to steer.</p></div>
+<div class="hrow"><canvas class="hic" data-k="barrels" width="112" height="88" aria-hidden="true"></canvas><p>Tap or press Space to LEAP over subs and barrels. No steering in the air!</p></div>
+<div class="hrow"><canvas class="hic" data-k="gull" width="112" height="88" aria-hidden="true"></canvas><p>Steer around seagulls: no leaping them.</p></div>
 <div class="hrow"><canvas class="hic" data-k="whirl" width="112" height="88" aria-hidden="true"></canvas><p>Whirlpools slow you down.</p></div>
 <div class="hrow"><canvas class="hic" data-k="heart" width="112" height="88" aria-hidden="true"></canvas><p>You have 3 hearts. If the Navy gets you, you try just that part again.</p></div>
-<div class="hrow"><canvas class="hic" data-k="bubble" width="112" height="88" aria-hidden="true"></canvas><p>Pop bubbles to free extra friends, then reach Prince Chimp's beach.</p></div>
+<div class="hrow"><canvas class="hic" data-k="bubble" width="112" height="88" aria-hidden="true"></canvas><p>Pop bubbles to free friends. A heart buoy half way wins back a heart.</p></div>
 <h3>Good to know</h3>
-<div class="hrow"><canvas class="hic" data-k="pause" width="112" height="88" aria-hidden="true"></canvas><p>The pause button, the P key, or Start on a controller holds the game still.</p></div>
-<div class="hrow"><canvas class="hic" data-k="pad" width="112" height="88" aria-hidden="true"></canvas><p>Controller: any button flaps, Start pauses, and the d-pad or stick moves around the menus (A picks, B goes back). On a pause screen, Y opens Settings.</p></div>
-<div class="hrow"><canvas class="hic" data-k="chimp" width="112" height="88" aria-hidden="true"></canvas><p>The last stage is Prince Chimp's jungle kingdom. Beat it and you can keep your upgrades and credits or start fresh. It never gets harder. In the Upgrades shop you can buy Super Leap and a Practice button for the title screen.</p></div>
+<div class="hrow"><canvas class="hic" data-k="pause" width="112" height="88" aria-hidden="true"></canvas><p>The pause button or the P key holds the game still.</p></div>
+<div class="hrow"><canvas class="hic" data-k="pad" width="112" height="88" aria-hidden="true"></canvas><p>Controller: any button flaps, Start pauses, the d-pad moves through menus (A picks, B goes back).</p></div>
+<div class="hrow"><canvas class="hic" data-k="chimp" width="112" height="88" aria-hidden="true"></canvas><p>The last stage is Prince Chimp's jungle kingdom. Beat it to keep your upgrades or start fresh.</p></div>
 <h3>Secrets</h3>
 <div id="secList"></div>
 <h3>Your progress</h3>
-<p>Progress is saved on this device, in this browser. To move between your laptop and your phone, open Save, copy the save code, and load it on the other device.</p>
+<p>Progress is saved in this browser. To move to another device, copy your save code from Save.</p>
 <p id="fileNote" hidden>This copy was opened from a file, so the browser keeps its progress for this exact file location only.</p>
 <h3>Records</h3>
 <dl id="recs"></dl>
@@ -156,12 +160,14 @@ textarea{width:100%;height:calc(96*var(--u));font:calc(12*var(--u))/1.3 ui-monos
 <div class="row"><button id="hClose">Close</button></div>
 </section>
 <section id="pPrac" class="panel" hidden aria-label="Practice">
+<div class="pclw"><button class="pcl" aria-label="Close" tabindex="-1">&times;</button></div>
 <h2>Practice</h2>
 <p>Play any level you have cleared. Nothing is earned, so it is safe to try things.</p>
 <div id="pracList"></div>
 <div class="row"><button id="pracClose">Close</button></div>
 </section>
 <section id="pSet" class="panel" hidden aria-label="Settings">
+<div class="pclw"><button class="pcl" aria-label="Close" tabindex="-1">&times;</button></div>
 <h2>Settings</h2>
 <button class="opt cmp" id="sCalm" aria-pressed="false"><span>Calm mode<small>No flashes, shake or zoom; less confetti.</small></span><b id="sCalmN"></b></button>
 <button class="opt cmp" id="sSpeed"><span>Game speed<small id="sSpeedNote">Slower speeds keep their own best score.</small></span><b id="sSpeedN"></b></button>
@@ -173,6 +179,7 @@ textarea{width:100%;height:calc(96*var(--u));font:calc(12*var(--u))/1.3 ui-monos
 <div class="row"><button id="bFull" class="alt" hidden>Full screen</button><button id="setClose">Close</button></div>
 </section>
 <section id="pWear" class="panel" hidden aria-label="Costume">
+<div class="pclw"><button class="pcl" aria-label="Close" tabindex="-1">&times;</button></div>
 <h2>Costume</h2>
 <p>Pick how Fancy looks.</p>
 <button class="opt" id="wPlain"><canvas id="cvPlain" width="176" height="120"></canvas><span>Plain Fancy<small>Cape only</small></span></button>
@@ -186,6 +193,7 @@ textarea{width:100%;height:calc(96*var(--u));font:calc(12*var(--u))/1.3 ui-monos
 <div class="row"><button id="wClose">Close</button></div>
 </section>
 <section id="pChal" class="panel" hidden aria-label="Challenges">
+<div class="pclw"><button class="pcl" aria-label="Close" tabindex="-1">&times;</button></div>
 <h2>Challenges</h2>
 <p>Pick one for your next run. Reach the end of the game in it to earn its badge and a new scarf and mask color. Normal runs never change.</p>
 <div id="chList"></div>
@@ -195,6 +203,7 @@ textarea{width:100%;height:calc(96*var(--u));font:calc(12*var(--u))/1.3 ui-monos
 <div class="row"><button id="chClose">Close</button></div>
 </section>
 <section id="pMuse" class="panel" hidden aria-label="Banana Museum">
+<div class="pclw"><button class="pcl" aria-label="Close" tabindex="-1">&times;</button></div>
 <h2>Banana Museum</h2>
 <p>You found the secret door! Here is everything Fancy has discovered.</p>
 <h3>The lost friends</h3>
@@ -221,6 +230,7 @@ textarea{width:100%;height:calc(96*var(--u));font:calc(12*var(--u))/1.3 ui-monos
 <div id="upList"></div>
 </section>
 <section id="pSave" class="panel" hidden aria-label="Save and load">
+<div class="pclw"><button class="pcl" aria-label="Close" tabindex="-1">&times;</button></div>
 <h2>Save</h2>
 <p id="storeWarn" class="warn" hidden>This browser is not keeping progress (a private window, perhaps). Copy your save code to keep it.</p>
 <p>Your save code:</p>
@@ -1009,6 +1019,7 @@ function scoop(g, cx, cy, r, c, seed) {
 function ruffle(g, cx, y, w, c) { var n = 5, i; g.beginPath(); g.moveTo(cx - w / 2, y); for (i = 0; i < n; i++) g.arc(cx - w / 2 + (i + .5) * w / n, y, w / n / 2, Math.PI, 0, true); g.lineTo(cx + w / 2, y + 7); g.lineTo(cx - w / 2, y + 7); g.closePath(); }
 DEF[2] = {
   ts: [{ pitch: 70, h: 70, nv: 1 }, { pitch: 48, h: 60, nv: 4 }], kinds: 1, capH: [[60], [74]],
+  noCyl: 1,   // these are stacks of scoops and discs, not tubes: the sideways tube shading would stripe straight across their curves; each ball is lit by its own surface instead
   sky: function (g) {
     g.fillStyle = lg(g, 0, 0, 0, GY, [[0, '#d5f6ef'], [1, '#bde6f2']]); g.fillRect(0, 0, W, GY);
     g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 2; for (var i = -440; i < W + 440; i += 36) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i + 440, 440); g.moveTo(i + 440, 0); g.lineTo(i, 440); g.stroke(); }
@@ -1573,7 +1584,7 @@ function planFor(th) {
   } else st.push(function () { s.ground = mk(GP[th], 72); D.ground(s.ground.g, GP[th]); var g = s.ground.g, q = g.createLinearGradient(0, 0, 0, 72); g.save(); g.globalCompositeOperation = 'source-atop'; q.addColorStop(0, 'rgba(255,255,255,.34)'); q.addColorStop(.08, 'rgba(255,255,255,0)'); q.addColorStop(.55, 'rgba(60,30,90,0)'); q.addColorStop(1, 'rgba(60,30,90,.22)'); g.fillStyle = q; g.fillRect(0, 0, GP[th], 72); g.restore(); var gc = s.ground.c, ex = Math.ceil(K), gw = document.createElement('canvas'), wg; gw.width = gc.width + ex; gw.height = gc.height; wg = gw.getContext('2d', RF); wg.drawImage(gc, 0, 0); wg.drawImage(gc, 0, 0, ex, gc.height, gc.width, 0, ex, gc.height); s.ground.c = gw; });   // the floor: a lit top edge and a deeper tone toward the bottom; one picture-pixel of the next tile is added on the right, so the floor can slide by fractions of a pixel without a hairline between tiles
   var sc = st.length;   // everything above is scenery (what the title screen shows); the obstacle pieces below are only needed once a run starts
   for (side = 0; side < 2; side++) {
-    for (v = 0; v < D.ts[side].nv; v++) (function (side, v) { st.push(slicer(function () { return boldG(OW, D.ts[side].h, function (g) { return D.tile(g, side, v); }, 0, th === 5 ? OLG : null); }, function (o) { cylShade(o); rimH(o); edgeRows(o); s.tiles[side][v] = o; })); })(side, v);
+    for (v = 0; v < D.ts[side].nv; v++) (function (side, v) { st.push(slicer(function () { return boldG(OW, D.ts[side].h, function (g) { return D.tile(g, side, v); }, 0, th === 5 ? OLG : null); }, function (o) { if (!D.noCyl) cylShade(o); rimH(o); edgeRows(o); s.tiles[side][v] = o; })); })(side, v);
     for (i = 0; i < D.kinds; i++) (function (side, i) { st.push(slicer(function () { return boldG(OW, D.capH[side][i], function (g) { return D.cap(g, side, i); }, side ? 1 : 2, th === 5 ? OLG : null); }, function (o) { capFinish(o); rimH(o); s.caps[side][i] = o; })); })(side, i);
   }
   var lr = rnd(th * 977 + 13), lout = [];   // the drifting life (balloons, butterflies, sparkles): one sprite per step, so no stage start ever builds them all at once
@@ -1628,7 +1639,13 @@ function px(x) { return Math.round(x * K) / K; }
 function put(g, c, x, y) { g.drawImage(c, Math.round(x * K) / K, Math.round(y * K) / K, c.width / K, c.height / K); }
 function putX(g, c, x, y) { g.drawImage(c, x, Math.round(y * K) / K, c.width / K, c.height / K); }   // slides sideways by fractions of a pixel (so a gate glides instead of stepping), still on whole rows
 function putS(g, c, x, y) { g.drawImage(c, x, y, c.width / K, c.height / K); }   // a lone moving picture: any fraction, both ways
-function layer(g, L, off) { for (var x = px(-(off % L.P)); x < W; x += L.P) put(g, L.c, x, L.y); }
+function subpx() { return K < 1.75; }   // on a sharp screen (two or more device pixels to a unit) a whole-device-pixel step is already finer than the eye can follow; only a plainer screen gets the sliding-by-fractions drawing, which costs more in Firefox
+function layer(g, L, off) {   // a repeating hill band: one pattern fill that slides by fractions of a pixel, so it glides instead of stepping (a pattern has no seams, even when the band is see-through)
+  var c = L.c, Pc = c.width / K, o = off % Pc;
+  if (!subpx()) { for (var x0 = px(-(off % L.P)); x0 < W; x0 += L.P) put(g, c, x0, L.y); return; }
+  if (!L.pg || L.pg.g !== g) L.pg = { g: g, p: g.createPattern(c, 'repeat') };
+  g.save(); g.translate(-o, Math.round(L.y * K) / K); g.scale(1 / K, 1 / K); g.fillStyle = L.pg.p; g.fillRect(0, 0, Math.ceil((W + o + 1) * K), c.height); g.restore();
+}
 function chunky(L) {   // cut a long picture into screen-wide pieces: stamping whole small pictures 1:1 is much cheaper in Firefox than copying a window out of a huge one
   var w = Math.round(W * K), n = Math.ceil(L.c.width / w), i, c, cg, out = [];
   for (i = 0; i < n; i++) { c = document.createElement('canvas'); c.width = Math.min(w, L.c.width - i * w); c.height = L.c.height; cg = c.getContext('2d', RF); cg.drawImage(L.c, -i * w, 0); out.push(c); }
@@ -1647,6 +1664,10 @@ function chunkStrip(P, y, h, fn, wc, wa, fa, done) {   // the garden's long pict
       g.restore();
     });
   })(i, j);
+  if (subpx()) for (i = 0; i < n - 1; i++) (function (i) { st.push(function () {   // widen each piece by a few device pixels of its neighbor (see layerJ), one piece per step
+    var ex = Math.ceil(K) + 1, c = L.ch[i], nx = L.ch[i + 1], w = document.createElement('canvas'), wg, m = Math.min(ex, nx.width);
+    w.width = c.width + m; w.height = c.height; wg = w.getContext('2d', RF); wg.drawImage(c, 0, 0); wg.drawImage(nx, 0, 0, m, nx.height, c.width, 0, m, nx.height); w.lw = c.lw; L.ch[i] = w;
+  }); })(i);
   st.push(function () { done(L); });
   return st;
 }
@@ -1657,7 +1678,13 @@ function chunkSteps(get, done) {   // the same cut as chunky(), one screen-wide 
   st.push(function () { L.ch = out; L.c = null; done(L); });
   return st;
 }
-function layerJ(g, L, off) { var o = Math.max(0, Math.min(off || 0, L.P - W)), k = Math.floor(o / W), x = px(-(o - k * W)); put(g, L.ch[k], x, L.y); if (L.ch[k + 1]) put(g, L.ch[k + 1], x + W, L.y); }   // the garden's long journey pictures
+function layerJ(g, L, off) {   // the garden's long journey pictures: screen-wide pieces that slide by fractions of a pixel. Each piece carries a pixel or two of the next one, and is cut off on a whole device pixel, so no seam shows
+  var o = Math.max(0, Math.min(off || 0, L.P - W)), k = Math.floor(o / W), x = -(o - k * W), a = L.ch[k], b = L.ch[k + 1], y = Math.round(L.y * K) / K, q = Math.ceil((x + W) * K - 1e-6) / K, h = a.height / K;
+  if (!subpx()) { put(g, a, px(x), L.y); if (b) put(g, b, px(x) + W, L.y); return; }
+  if (!b) { putX(g, a, x, L.y); return; }
+  g.save(); g.beginPath(); g.rect(-20, y - 2, q + 20, h + 4); g.clip(); putX(g, a, x, L.y); g.restore();
+  g.save(); g.beginPath(); g.rect(q, y - 2, W + 20 - q, h + 4); g.clip(); putX(g, b, x + W, L.y); g.restore();
+}   // the garden's long journey pictures
 function back(g, th, dist) { var s = scenery(th); put(g, s.sky.c, 0, 0); if (th === JT) { layerJ(g, s.far, dist * .27); layerJ(g, s.mid, dist * .56); layerJ(g, s.top, dist * .56); return; } layer(g, s.far, dist * .27); layer(g, s.mid, dist * .56); layer(g, s.top, dist * .56); }
 function ground(g, th, off) { var s = scenery(th), P = GP[th]; if (th === JT) { s.ground.y = GY; layerJ(g, s.ground, off); return; } for (var x = -(off % P); x < W; x += P) putX(g, s.ground.c, x, GY); }
 function edgeRows(o) {   // which pixel rows of a finished tile hold the picture (the first and the last): needed to close the one-pixel gaps that rounding can leave between stacked tiles
@@ -2352,7 +2379,7 @@ return { get tlast() { return TLAST; }, tbmax: TBMAX, fightWarm: fightWarm, boss
 (function () {
 'use strict';
 var PHASE = 'alpha';
-var STAMP = '2026.10.10.1953';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.2117';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 JNFoo. All Rights Reserved.';
 
@@ -2745,7 +2772,7 @@ function refreshPrac() {
   for (i = 1; i <= clearedStages(); i++) (function (n) { add('Stage ' + n + ': ' + ART.names[n - 1], gpsOf(n) + ' gates', function () { startPracticeStage(n); }); })(i);
   add("Chimp's Navy", 'The water level', function () { closePanels(); startPractice(); });
 }
-$('wClose').addEventListener('click', closePanels); $('uClose').addEventListener('click', closePanels);
+$('wClose').addEventListener('click', closePanels); $('uClose').addEventListener('click', closePanels); document.querySelectorAll('.pcl').forEach(function (b) { b.addEventListener('click', closePanels); });
 $('wPlain').addEventListener('click', function () { pickWear(0); }); $('wBow').addEventListener('click', function () { pickWear(1); });
 $('wRain').addEventListener('click', function () { if (rainOk()) { save.unlocks.rainOff = rainOn() ? 1 : 0; persist(); refreshWear(); } });
 $('wCrown').addEventListener('click', function () { if (save.unlocks.crown) { save.unlocks.crownOff = wearsCrown() ? 1 : 0; persist(); refreshWear(); } });
@@ -2779,7 +2806,7 @@ var by, vy, bx = CFG.bananaX, angle, flapAnim, time = 0, grace = 0, deadT = 0, f
 var dist = 0, spawned = 0, lastC = 0, nextX = 0;
 var bgTheme = 0, bgFrom = 0, bgT = 1, washA = 0;   // washA: a white wash over everything, for the move into the water bonus
 var celT = 0;   // the one celebration roll after a stage clear (counts down)
-var rsgT = -1, rsgGo = false;   // Ready, Set, Go after every stage: Fancy floats on his own (rsgT counts up from the stage clear), then control comes back at GO
+var rsgT = -1, rsgGo = false, rsgTap = false, rsgWait = false, rsgK = 1, tapWaitOn = true;   // Ready, Set, Go after every stage: Fancy floats on his own (rsgT counts up from the stage clear), then control comes back at GO
 var cardT = -1, cardStage = 0, cardY = 125, cardGoal = 125, topT = 0;       // cardT below 0 means no stage card is showing
 var titleT = 0, TTL = null, TTLK = 0, tapPic = null, launchT = 0, trackX = 60, trackOn = true, boost = 0, boostT = 99, pendNext = '', nextT = 0, vicT = 0, MG = null, keys = {}, tickW = null, tickSum = 0;
 var runChal = '', runCoins = 0, streak = 0, bestStreak = 0, pops = [], trail = [], trailAcc = 0, wind = [], flashT = 0, zoomK = 1, zoomX = 180, gazeS = 0, lastAfter = 0, scrollDX = 0, curSpeed = 0, sparkT = 0;
@@ -2801,9 +2828,10 @@ function fxAdd(x, y, vx, vy, l, c, sz, st, g) {   // a spark from the pool: dead
 function burst(x, y, n, cols, sp, g) { if (calmOn()) n = Math.ceil(n * 0.5); for (var i = 0; i < n && fx.length < fxMax; i++) { var a = frng() * 6.283, v = sp * (0.3 + frng()); fxAdd(x, y, Math.cos(a) * v, Math.sin(a) * v - sp * 0.3, 0.6 + frng() * 0.5, cols[i % cols.length], 2 + frng() * 3, frng() < 0.45, g); } }
 var CRF = { willReadFrequently: true };   // cached pictures stay in plain memory, never graphics-card textures (see art.js RF)
 var smk = [], smkPics = null;   // the Wafer Cannon's smoke: a few soft puffs that rise and spread out of the barrel's dark mouth
+var smkMz = null, smkEm = 0, smkEa = 0;   // where the barrel's mouth was last frame: fresh puffs ride along with it for a moment, so the smoke trails from the cannon instead of hanging in mid air
 function cannonSmoke(x, y) {
-  var n = calmOn() ? 7 : 12, i;
-  for (i = 0; i < n && smk.length < 24; i++) smk.push({ x: x - 3 + frng() * 5, y: y + (frng() - 0.5) * 7, vx: -(50 + frng() * 110), vy: -(26 + frng() * 56), r0: 6 + frng() * 4, r1: 26 + frng() * 20, l: 1.3 + frng() * 0.9, t: -i * 0.045 });
+  var n = calmOn() ? 7 : 12, i; smkMz = { x: x, y: y }; smkEm = 0.6; smkEa = 0;
+  for (i = 0; i < n && smk.length < 40; i++) smk.push({ x: x - 3 + frng() * 5, y: y + (frng() - 0.5) * 7, vx: -(50 + frng() * 110), vy: -(26 + frng() * 56), r0: 6 + frng() * 4, r1: 26 + frng() * 20, l: 1.3 + frng() * 0.9, t: -i * 0.045 });
 }
 function smkMake(c0, c1) { var c = document.createElement('canvas'), g; c.width = c.height = 64; g = c.getContext('2d', CRF); var gr = g.createRadialGradient(26, 26, 2, 32, 32, 31); gr.addColorStop(0, c0); gr.addColorStop(0.72, c1); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.beginPath(); g.arc(32, 32, 31, 0, 6.2832); g.fill(); return c; }
 function drawSmoke() {
@@ -3001,12 +3029,18 @@ var wasCtrl = true, RES_SECS = 1.2, resT = -1, tapBufT = -9, tapFx = [];   // re
 function resume() { state = 'play'; grace = resT === -1 ? CFG.graceSecs : 0.1; resT = -1; vy = 0; }   // after a countdown the player is ready, so the hover is short
 function beginResume() { if (resT < 0) resT = RES_SECS; }   // a tap on the paused game starts a 3-2-1 first
 function tapRipple(x, y, ign) { if (tapFx.length > 3) tapFx.shift(); tapFx.push({ x: x, y: y, t: 0, ign: ign }); }
-function tapIgnored() { return (state === 'play' && (spinT > 0 || rsgHold() || grace > 0)) || (state === 'paused' && resT >= 0) || (state === 'dead' && deadT < CFG.retryDelay); }
+function tapIgnored() { return (state === 'play' && (spinT > 0 || (rsgHold() && !rsgWait) || grace > 0)) || (state === 'paused' && resT >= 0) || (state === 'dead' && deadT < CFG.retryDelay); }
 function skipLaunch() { return save.stats.runs >= 3 && state === 'launch' && launchT > -CFG.countSecs + 0.35 && launchT < CFG.launchSecs * 0.88; }   // from the 4th run on, a tap skips the loop (not in the first third of a second, so a double tap on Ready cannot skip it)
 function startPracticeStage(n) { pracN = n; closePanels(); ART.warm(themeOf(n)); toReady(); }
 function pracWin() {   // a practiced stage is finished: no card, no reward, just a choice
   state = 'dead'; deadT = CFG.retryDelay - 0.5; pracEnd = 'win'; vy = 0; angle = 0; rsgT = -1; celT = 0; pendNext = ''; nextT = 0; cardT = -1;
   burst(CFG.bananaX + 20, by, 36, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 300, 340);
+}
+function rsgStartTap() {   // a tap during the wait starts Ready, Set, GO; a tap a moment into a card skips the rest of it
+  if (!tapWaitOn || rsgT < 0 || rsgGo || rsgTap || pendNext) return false;
+  if (rsgWait) { rsgTap = true; rsgWait = false; return true; }
+  if (rsgT >= 0.7 && rsgT < CFG.cardSecs) { rsgT = CFG.cardSecs; rsgTap = true; cardT = -1; return true; }
+  return false;
 }
 function onAction() {
   if (panelOpen()) return;
@@ -3014,7 +3048,7 @@ function onAction() {
   else if (state === 'dead') { if (deadT >= CFG.retryDelay) { if (pracN) startPracticeStage(pracN); else toReady(); } }
   else if (state === 'ready') startLaunch();
   else if (state === 'launch') { if (skipLaunch()) { launchT = CFG.launchSecs * 0.88; trail.length = 0; } }
-  else if (state === 'play') { if (tapIgnored()) tapBufT = time; if (spinT <= 0 && !rsgHold()) flap(); }   // a tap that cannot flap yet is remembered for a moment
+  else if (state === 'play') { if (rsgStartTap()) return; if (tapIgnored()) tapBufT = time; if (spinT <= 0 && !rsgHold()) flap(); }   // a tap that cannot flap yet is remembered for a moment
   else if (state === 'paused') { if (resT >= 0) tapBufT = time; else beginResume(); }
   else if (state === 'mini') miniTap();
   else if (state === 'gift') giftTap();
@@ -3024,7 +3058,7 @@ function onAction() {
 var windUsed = false;
 function secondWind() {   // the Second wind upgrade: once per run, a crash restarts the stage you are in, with a fresh Ready, Set, GO
   if (pracN || windUsed || !lvl('wind') || BAL || (FT && FT.ph !== 'wait')) return false;
-  windUsed = true; FT = null; obs = []; spawned = score = gateStart(stage); by = CFG.rsgY; bx = CFG.bananaX; vy = 0; angle = 0; grace = 0; rsgT = CFG.cardSecs; rsgGo = false; cardT = -1; topT = 0; invuln = 0; fallD = 0; hurtT = 0; streak = 0; pendNext = ''; nextT = 0; celT = 0; lastAfter = 0;
+  windUsed = true; FT = null; obs = []; spawned = score = gateStart(stage); by = CFG.rsgY; bx = CFG.bananaX; vy = 0; angle = 0; grace = 0; rsgT = CFG.cardSecs; rsgGo = false; rsgTap = false; cardT = -1; topT = 0; invuln = 0; fallD = 0; hurtT = 0; streak = 0; pendNext = ''; nextT = 0; celT = 0; lastAfter = 0;
   nextX = W + CFG.obW + speedFor(stage) * (rsgGoAt() - rsgT + 0.4); burst(CFG.bananaX, by, 30, ['#7ad8ff', '#ffffff', '#ffd93b'], 260, 260); pop('SECOND WIND!', '#7ad8ff', 28); return true;
 }
 /* ===== Secrets (build 2): hidden rooms open from the second playthrough, the lost-friend hunt from the third ===== */
@@ -3046,13 +3080,16 @@ function flipWant() { return backStage > 0 && stage === backStage && !pracN ? 1 
 function flipSX() { if (!(state === 'play' || state === 'paused' || state === 'dead') || flipV <= 0) return 1; if (flipV >= 1) return -1; var u = flipV * flipV * (3 - 2 * flipV); return Math.cos(Math.PI * u); }
 function mx(x) { var f = flipSX(); return f === 1 ? x : W / 2 + (x - W / 2) * f; }   // where a point of the world is on the screen right now
 var FB = null, FBg = null, FBmain = null;
+var FBff = /Firefox\//.test(navigator.userAgent), FBdir = false, FBforce = '';   // Firefox is slow at many turned-over pictures; every other browser turns the scenery over with one plain transform, with no spare picture to clear and copy each frame
 function flipOff() {   // the scenery of a backward stage is drawn the right way round on a spare picture first and then turned over in one go: many small turned-over pictures were four times slower in Firefox
-  if (flipSX() === 1) return false;
+  var fx = flipSX(); if (fx === 1) return false;
+  if (fx === -1 && (FBforce ? FBforce === 'direct' : !FBff)) { ctx.save(); ctx.translate(W / 2, 0); ctx.scale(-1, 1); ctx.translate(-W / 2, 0); FBdir = true; return true; }
   if (!FB || FB.width !== cv.width || FB.height !== cv.height) { FB = document.createElement('canvas'); FB.width = cv.width; FB.height = cv.height; FBg = FB.getContext('2d'); }
   FBg.setTransform(1, 0, 0, 1, 0, 0); FBg.clearRect(0, 0, FB.width, FB.height); FBg.setTransform(k, 0, 0, k, 0, 0); if (mirOn()) { FBg.translate(0, H); FBg.scale(1, -1); }
   FBmain = ctx; ctx = FBg; return true;
 }
 function flipBlit() {
+  if (FBdir) { FBdir = false; ctx.restore(); return; }
   ctx = FBmain; var f = flipSX(); ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = f === -1 ? false : true; ctx.translate(cv.width / 2, 0); ctx.scale(f, 1); ctx.translate(-cv.width / 2, 0); ctx.drawImage(FB, 0, 0); ctx.restore();
 }
 function flipB() { var f = flipSX(); if (f === 1) return false; ctx.save(); ctx.translate(W / 2, 0); ctx.scale(f, 1); ctx.translate(-W / 2, 0); return true; }
@@ -3140,7 +3177,7 @@ function ftStep(dt, sp) {
   if (F.shake > 0) F.shake -= dt;
   if (F.kick > 0) F.kick = Math.max(0, F.kick - dt * 7);
   if (F.blast) { F.blast.t += dt; if (F.blast.t > 2.1) F.blast = null; }
-  if (F.ph === 'wait') { if (!obs.length) { F.ph = 'intro'; rsgT = 0; rsgGo = false; vy = 0; celT = 0; spinT = 0; lastAfter = 0; } return; }
+  if (F.ph === 'wait') { if (!obs.length) { F.ph = 'intro'; rsgT = 0; rsgGo = false; rsgTap = false; vy = 0; celT = 0; spinT = 0; lastAfter = 0; } return; }
   F.slide = Math.min(1, F.slide + dt);
   if (!calmOn()) {   // little extras: dust trailing the arriving boss, sparks falling from the robot's boots
     if (F.slide < 1 && frng() < 0.5) { p = ftBoss(F); fxAdd(p.x + 50, p.y + 30 + frng() * 40, 40 + frng() * 50, (frng() - 0.5) * 30, 0.5, '#ffffff', 3 + frng() * 3, false, 0); }
@@ -3468,7 +3505,7 @@ function stageUp() {
   if (pendNext !== 'mini' && pendNext !== 'balloons') { bgFrom = bgTheme; bgTheme = themeOf(stage); bgT = bgFrom === bgTheme ? 1 : 0; if (bgTheme === ART.journeyTheme) gardenD0 = dist; }   // before the water bonus the scene stays put (no glimpse of the next stage): it washes out to white into the mini game
   if (stage >= CFG.bowStage && !save.unlocks.bow) { save.unlocks.bow = true; toast('New costume unlocked: a bow tie for Fancy!'); }
   if (pendNext === 'win') { save.stats.wins++; save.stats.friends += CFG.winBonus; nextT = 0.8; if (runChal && !pracN) { var bk = 'b_' + runChal; if (!save.unlocks[bk]) { save.unlocks[bk] = 1; badgeNew = CHAL[chalIdx() - 1][1]; } } }   // the finale gets its own victory screen instead of a stage card
-  else { cardT = 0; cardY = cardGoal = mirY(by) < 335 ? 345 : 125; nextT = pendNext ? CFG.cardSecs + 0.35 : 0; rsgT = 0; rsgGo = false; celT = CFG.celSecs; }   // a little celebration roll, once around
+  else { cardT = 0; cardY = cardGoal = mirY(by) < 335 ? 345 : 125; nextT = pendNext ? CFG.cardSecs + 0.35 : 0; rsgT = 0; rsgGo = false; rsgTap = false; celT = CFG.celSecs; }   // a little celebration roll, once around
   if (pendNext !== 'win' && !pracN) save.cont = { st: stage, tm: Math.round(runSecs) };   // where to carry on if the tab is closed mid-run
   if (pendNext !== 'win' && themeOf(stage + 1) !== themeOf(stage)) ART.warm(themeOf(stage + 1));   // start building the look of the stage after this one right away (it used to wait for the first gate: too late on a slow laptop)
   persist();
@@ -3520,7 +3557,9 @@ function update(dt) {
   time += dt; if (state === 'launch' || state === 'play' || (state === 'mini' && MG && !MG.paused && MG.ph !== 'lose')) runSecs += dt; if (state === 'play' || (state === 'launch' && launchT >= 0) || (state === 'mini' && MG && !MG.paused && MG.ph !== 'lose')) clk += dt; if (flapAnim > 0) flapAnim -= dt; if (punchT > 0) punchT -= dt; if (whooshT > 0) whooshT -= dt; if (invuln > 0) invuln -= dt; if (flashT > 0) flashT -= dt; if (celT > 0) celT = Math.max(0, celT - dt);
   for (var ti = tapFx.length - 1; ti >= 0; ti--) { tapFx[ti].t += dt; if (tapFx[ti].t > 0.4) tapFx.splice(ti, 1); }
   for (var pi = pops.length - 1; pi >= 0; pi--) { pops[pi].t += dt; pops[pi].y -= 26 * dt; if (pops[pi].t > 1.1) pops.splice(pi, 1); }
-  for (var si = smk.length - 1; si >= 0; si--) { var sm = smk[si]; sm.t += dt; if (sm.t > sm.l) { smk.splice(si, 1); continue; } if (sm.t > 0) { sm.x += sm.vx * dt; sm.y += sm.vy * dt; sm.vx -= sm.vx * 1.7 * dt; sm.vy -= (14 + sm.vy * 0.9) * dt; } }
+  var mzx = 0, mzy = 0; if (smkMz) { if (FT && FT.n === 1 && smk.length) { var mzp = ftBoss(FT); mzx = mzp.x - 88 - smkMz.x; mzy = mzp.y + 25 - smkMz.y; smkMz.x += mzx; smkMz.y += mzy; } else smkMz = null; }
+  if (smkEm > 0) { smkEm -= dt; smkEa += dt; if (FT && FT.n === 1 && smkMz) { while (smkEa >= 0.05) { smkEa -= 0.05; if (smk.length < 40) smk.push({ x: smkMz.x - 3 + frng() * 4, y: smkMz.y + (frng() - 0.5) * 5, vx: -(30 + frng() * 60), vy: -(14 + frng() * 30), r0: 5 + frng() * 3, r1: 18 + frng() * 14, l: 0.9 + frng() * 0.6, t: 0 }); } } else smkEm = 0; }   // for a moment after the shot the barrel keeps breathing smoke, so it trails from the muzzle
+  for (var si = smk.length - 1; si >= 0; si--) { var sm = smk[si]; sm.t += dt; if (sm.t > sm.l) { smk.splice(si, 1); continue; } if (sm.t > 0) { var fol = Math.max(0, 1 - sm.t / 1.1); sm.x += sm.vx * dt + mzx * fol; sm.y += sm.vy * dt + mzy * fol; sm.vx -= sm.vx * 1.7 * dt; sm.vy -= (14 + sm.vy * 0.9) * dt; } }
   for (var f = fx.length - 1; f >= 0; f--) { var q = fx[f]; q.t += dt; if (q.t > q.l) { if (fxFree.length < 90) fxFree.push(q); fx[f] = fx[fx.length - 1]; fx.pop(); continue; } q.x += q.vx * dt; q.y += q.vy * dt; q.vy += q.g * dt; }
   if (bgT < 1) { bgT = Math.min(1, bgT + dt / 0.9); if (bgT >= 1) ART.keep([bgTheme]); }
   if (state !== 'launch') zoomK = 1;
@@ -3548,7 +3587,7 @@ function update(dt) {
     if (u >= 1) { state = 'play'; bx = CFG.bananaX; vy = CFG.launchVy; flapAnim = 0.18; boost = CFG.boostV; boostT = 0; grace = 0; punchT = calmOn() ? 0 : CFG.punchSecs; flashT = calmOn() ? 0 : 0.25; whooshT = 0.9; burst(bx + 10, by, 30, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 320, 400); spinT = CFG.spinSecs; }
   } else if (state === 'play') {
     runTime += dt;
-    if (rsgT >= 0) { rsgT += dt; if (rsgT >= rsgGoAt() + 0.55) rsgT = -1; else if (rsgT >= rsgGoAt() && !rsgGo) { rsgGo = true; grace = CFG.graceSecs + 0.15; vy = 0; flapAnim = 0.18; burst(bx + 14, by, 18, ['#7be07b', '#ffd93b', '#ffffff'], 220, 260); } }
+    if (rsgT >= 0) { rsgT += dt; if (tapWaitOn && !rsgTap && !pendNext && rsgT >= CFG.cardSecs && rsgT < rsgGoAt()) { rsgT = CFG.cardSecs; rsgWait = true; rsgK = 0; } else { if (rsgWait) rsgWait = false; } if (rsgT >= rsgGoAt() + 0.55) rsgT = -1; else if (rsgT >= rsgGoAt() && !rsgGo) { rsgGo = true; grace = CFG.graceSecs + 0.15; vy = 0; flapAnim = 0.18; burst(bx + 14, by, 18, ['#7be07b', '#ffd93b', '#ffffff'], 220, 260); } }
     var hov = rsgHold(), ctrl = !hov && spinT <= 0 && grace <= 0;
     if (ctrl && !wasCtrl && time - tapBufT <= 0.12) { vy = CFG.flapV; flapAnim = 0.18; fallD = 0; }   // a tap just before control came back is not lost
     wasCtrl = ctrl;
@@ -3567,7 +3606,8 @@ function update(dt) {
     if (by < 0) { topT += dt; if (topT > CFG.topFreeSecs) vy = Math.max(vy, CFG.topPull); } else topT = Math.max(0, topT - 2 * dt);
     kBy0 = by; by += vy * dt; if (vy > 0 && grace <= 0) fallD += vy * dt; else fallD = 0; if (hurtT > 0) hurtT -= dt;
     angle = clamp(vy / 700, -0.5, 1.1);
-    var sp = (speedFor(stage) + boost) * (VAULT && VAULT.kind === 'gold' ? 1.35 : 1) * (lvl('potassium') ? kStep(dt) : 1); if (boostT < CFG.boostSecs) { boostT += dt; boost = boostT >= CFG.boostSecs ? 0 : CFG.boostV * (0.5 + 0.5 * Math.cos(Math.PI * boostT / CFG.boostSecs)); }   // the blast-off speed eases away slowly and smoothly (no sudden slow-down)
+    if (rsgT < 0 || !rsgWait && rsgK >= 1) rsgK = 1; else if (!rsgWait) rsgK = Math.min(1, rsgK + dt / 0.45);
+    var sp = (speedFor(stage) + boost) * (rsgK >= 1 ? 1 : rsgK * rsgK * (3 - 2 * rsgK)) * (VAULT && VAULT.kind === 'gold' ? 1.35 : 1) * (lvl('potassium') ? kStep(dt) : 1); if (boostT < CFG.boostSecs) { boostT += dt; boost = boostT >= CFG.boostSecs ? 0 : CFG.boostV * (0.5 + 0.5 * Math.cos(Math.PI * boostT / CFG.boostSecs)); }   // the blast-off speed eases away slowly and smoothly (no sudden slow-down)
     dist += sp * dt; nextX -= sp * dt; curSpeed = sp; trailStep(dt, -sp * dt); windStep(dt);
     sparkT -= dt; if (sparkT <= 0) { sparkT = 0.07; fxAdd(bx - 30, by + 4 + (frng() - 0.5) * 12, -40 - frng() * 40, (frng() - 0.5) * 30, 0.45, frng() < 0.5 ? '#ffe27a' : '#ffffff', 1.6 + frng() * 1.6, true, 0); }
     if (trackOn) { trackX -= sp * dt; if (trackX < -520) trackOn = false; }
@@ -3725,7 +3765,7 @@ function updateMini(dt) {
   if (washA > 0) washA = Math.max(0, washA - dt / 0.7);
   var m = MG, i, j, e, q, vS = CFG.mgSpeed, dx, dy, d, mv, rs, o, c, u;
   m.pt += dt; if (m.inv > 0) m.inv -= dt; if (m.wcd > 0) m.wcd -= dt;
-  if (m.ph === 'intro') { m.scroll += vS * dt * 0.6; if (m.pt > MG_INTRO + CFG.rsgBeat * 2) { m.ph = 'play'; m.pt = 0; } return; }   // the title shows first, then Ready, Set, and GO! as play begins
+  if (m.ph === 'intro') { if (tapWaitOn && !m.go && m.pt >= MG_INTRO) { m.pt = MG_INTRO; m.wait = true; m.rk = 0; } else { m.wait = false; m.rk = Math.min(1, (m.rk === undefined ? 1 : m.rk) + dt / 0.45); } m.scroll += vS * dt * 0.6 * (m.rk === undefined ? 1 : m.rk * m.rk * (3 - 2 * m.rk)); if (m.pt > MG_INTRO + CFG.rsgBeat * 2) { m.ph = 'play'; m.pt = 0; } return; }   // the title shows first, then Ready, Set, and GO! as play begins
   if (m.ph === 'win') { m.scroll += vS * dt * 0.4; m.y -= 60 * dt; if (frng() < 0.3) burst(40 + frng() * 280, 100 + frng() * 300, 6, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 160, 220); if (m.pt > 3.2 && !m.practice) finishMini(); return; }
   if (m.ph === 'lose') return;
   m.t += dt; m.scroll += vS * dt; var lt = mgLT(m);
@@ -3783,7 +3823,7 @@ function updateMini(dt) {
   if (lt >= CFG.mgSecs && !m.boss) { m.ph = 'win'; m.pt = 0; if (!m.practice) { save.stats.friends += CFG.friendsPerStage + m.saved + m.bonus; persist(); } burst(W / 2, m.y, 40, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 300, 380); }
 }
 function finishMini() {   // back to the side-scrolling flight: the next stage starts with a calm stretch
-  state = 'play'; obs = []; by = CFG.rsgY; bx = CFG.bananaX; vy = 0; angle = 0; grace = 0; rsgT = CFG.cardSecs; rsgGo = false; boost = 0; boostT = 99; trackOn = false; cardT = -1; topT = 0; MG = null;
+  state = 'play'; obs = []; by = CFG.rsgY; bx = CFG.bananaX; vy = 0; angle = 0; grace = 0; rsgT = CFG.cardSecs; rsgGo = false; rsgTap = false; boost = 0; boostT = 99; trackOn = false; cardT = -1; topT = 0; MG = null;
   bgFrom = bgTheme; bgTheme = themeOf(stage); bgT = bgFrom === bgTheme ? 1 : 0; if (bgTheme === ART.journeyTheme) gardenD0 = dist; washA = 0; nextX = W + CFG.obW + speedFor(stage) * (rsgGoAt() - rsgT + 0.4); fx.length = 0; invuln = 0; lastAfter = 0; trail.length = 0;
 }
 /* practice (bought in the shop, played from the title screen): the same level, nothing earned; when it ends or Fancy is out, a card offers Try again or Back to title */
@@ -3827,7 +3867,7 @@ function startPractice() { ART.mg.warm(); ART.mg.done(); startMini(true); }
 function practiceExit() { pracN = 0; resetWorld(); state = 'title'; titleT = 5; closePanels(); setBar(true); }
 function mgOnBtn(l) { return Math.abs(l[0] - MG_PB[0]) < PBR + 8 && Math.abs(l[1] - MG_PB[1]) < PBR + 8; }
 function mgPause(on) { var m = MG; if (m && (m.ph === 'play' || m.ph === 'intro')) { var was = !!m.paused; m.paused = on === undefined ? !m.paused : on; if (m.paused && !was) runPauses++; } }
-function miniTap() { var m = MG; if (!m || panelOpen()) return; if (m.paused) { m.paused = false; return; } if (m.practice && mgCard(m)) { startMini(true); return; } if (m.ph === 'lose' && m.pt > 0.6) startMini(m.practice); else mgLeap(); }
+function miniTap() { var m = MG; if (!m || panelOpen()) return; if (m.paused) { m.paused = false; return; } if (m.ph === 'intro' && tapWaitOn && !m.go && (m.wait || m.pt >= 0.7)) { m.go = true; m.wait = false; m.pt = Math.max(m.pt, MG_INTRO); return; } if (m.practice && mgCard(m)) { startMini(true); return; } if (m.ph === 'lose' && m.pt > 0.6) startMini(m.practice); else mgLeap(); }
 function mgLogical(e) { var r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; }
 function mgPointerDown(e) {   // a mouse click leaps where the mouse is; a finger keeps its distance from Fancy and then moves him, so a tap never throws him sideways
   var l = mgLogical(e);
@@ -3982,7 +4022,7 @@ function renderMini0() {
   var ry = 540 - clamp(lt / CFG.mgSecs, 0, 1) * 470; ctx.fillStyle = '#ffd93b'; rrect(mhx(350), ry, 10, 540 - ry + 10, 5); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillRect(mhx(350) + 2.4, ry + 4, 2, Math.max(0, 540 - ry - 4));   // the way done so far fills with gold
   ART.coin(ctx, mhx(342), ry, time);
   if (m.ph === 'intro' || m.ph === 'play') { drawPauseBtn(MG_PB, .55); drawClock(MG_PB[0], opt('lefty') ? 26 : 334); }   // the pause button
-  if (m.ph === 'intro') { if (m.pt < MG_INTRO) { outlined('Chimp\'s Navy!', W / 2, 150, 40, '#ffd93b'); outlined('Drag or move the mouse to steer.', W / 2, 196, 17, '#ffffff'); outlined('Tap or click to LEAP subs and barrels.', W / 2, 222, 17, '#ffffff'); outlined('No steering in mid-leap: time it!', W / 2, 248, 17, '#ffd93b'); outlined('Seagulls can\'t be leapt: dodge them!', W / 2, 274, 17, '#ffffff'); outlined('Free the friends in bubbles!', W / 2, 300, 17, '#ffffff'); } else rsgWord(m.pt - MG_INTRO, W / 2, 190); }
+  if (m.ph === 'intro') { if (m.pt < MG_INTRO || m.wait) { outlined('Chimp\'s Navy!', W / 2, 150, 40, '#ffd93b'); outlined('Drag or move the mouse to steer.', W / 2, 196, 17, '#ffffff'); outlined('Tap or click to LEAP subs and barrels.', W / 2, 222, 17, '#ffffff'); outlined('No steering in mid-leap: time it!', W / 2, 248, 17, '#ffd93b'); outlined('Seagulls can\'t be leapt: dodge them!', W / 2, 274, 17, '#ffffff'); outlined('Free the friends in bubbles!', W / 2, 300, 17, '#ffffff'); if (m.wait) tapWord(W / 2, 400); } else rsgWord(m.pt - MG_INTRO, W / 2, 190); }
   else if (m.ph === 'play' && m.pt < 0.6) rsgWord(CFG.rsgBeat * 2 + m.pt, W / 2, 190);
   else if (m.practice && (m.ph === 'win' || m.ph === 'lose')) practiceCard(m);
   else if (m.ph === 'win') {
@@ -4088,7 +4128,7 @@ function balPlan() {
 function startBalloons() {
   state = 'play'; pendNext = ''; nextT = 0; cardT = -1; celT = 0; obs = []; fx.length = 0; trail.length = 0; fl.length = 0; pops.length = 0; shd.length = 0;
   split('Balloons'); BAL = { t: 0, ph: 'play', plan: balPlan(), pi: 0, list: [], popped: 0, total: 0, combo: 0, comboT: 0, coins: 0, pw: [] }; BAL.total = BAL.plan.length;
-  rsgT = 0; rsgGo = false; vy = 0; grace = 0; boost = 0; boostT = 99; trackOn = false; invuln = 0; spinT = 0; by = CFG.rsgY; bx = CFG.bananaX; washA = calmOn() ? 0.4 : 1;
+  rsgT = 0; rsgGo = false; rsgTap = false; vy = 0; grace = 0; boost = 0; boostT = 99; trackOn = false; invuln = 0; spinT = 0; by = CFG.rsgY; bx = CFG.bananaX; washA = calmOn() ? 0.4 : 1;
 }
 function balPop(b) {
   var B = BAL, col = ART.bal.cols[b.ci], n = calmOn() ? 6 : 11, i, a, v, c = b.gold ? 5 : 1;
@@ -4129,7 +4169,7 @@ function balFinish() {
   var B = BAL, perfect = B.popped === B.total, bonus = perfect ? 15 : B.popped >= B.total * 0.7 ? 5 : 0;
   if (bonus) giveCoins(bonus, bx + 20, by);
   BALR = { popped: B.popped, total: B.total, coins: B.coins + bonus, perfect: perfect, bonus: bonus }; runPopsOf += B.total;
-  BAL = null; rsgT = 0; rsgGo = false; celT = CFG.celSecs; vy = 0; grace = 0; invuln = 0; lastAfter = 0;
+  BAL = null; rsgT = 0; rsgGo = false; rsgTap = false; celT = CFG.celSecs; vy = 0; grace = 0; invuln = 0; lastAfter = 0;
   bgFrom = bgTheme; bgTheme = themeOf(stage); bgT = bgFrom === bgTheme ? 1 : 0; if (bgTheme === ART.journeyTheme) gardenD0 = dist;
   nextX = W + CFG.obW + speedFor(stage) * (rsgGoAt() + 0.4);   // the first gate of the Silverware Drawer arrives well after GO
   burst(W / 2, 220, 40, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 300, 340);
@@ -4484,7 +4524,8 @@ function drawResume() {   // the 3 - 2 - 1 after a pause
   var seg = RES_SECS / 3, n = Math.ceil(resT / seg), f = (resT - (n - 1) * seg) / seg, cols = ['#7be07b', '#ffd93b', '#ff6b81'];
   ctx.globalAlpha = clamp(1 - (1 - f) * 0.2, 0.6, 1); outlined(String(n), W / 2, 270, 120 * (1 + 0.4 * (1 - f) * (1 - f)), cols[n - 1] || '#fff', 'center', 180); ctx.globalAlpha = 1;
 }
-function drawRSG() { if (state === 'play' && rsgT >= 0) rsgWord(rsgT - CFG.cardSecs, W / 2, 190); }
+function drawRSG() { if (state === 'play' && rsgT >= 0) { if (rsgWait) tapWord(W / 2, 190); else rsgWord(rsgT - CFG.cardSecs, W / 2, 190); } }
+function tapWord(x, y) { var p = 1 + 0.06 * Math.sin(time * 5); outlined('Tap to start!', x, y, 44 * p, '#ffd93b', 'center', 44); }
 function drawWind() {
   if ((state !== 'play' && state !== 'launch') || !wind.length) return;
   var i, w, k2 = clamp(curSpeed / 220, 0.4, 3), a = state === 'launch' ? clamp(0.18 + curSpeed / 1400, 0, 0.5) : clamp(0.16 + boost / 700, 0, 0.5);
@@ -4800,7 +4841,7 @@ function padB(g, n) { return !!(g.buttons[n] && g.buttons[n].pressed); }
 function padPanel() { var a = [pWin, pHelp, pSave, pWear, pUp, pSet, pPrac, pMuse, pChal], i; for (i = 0; i < a.length; i++) if (!a[i].hidden) return a[i]; return null; }
 function padCands(root) {   // the buttons a controller can reach right now: the open panel's, or the title screen's own buttons
   var L = (root === stageEl ? stageEl : root).querySelectorAll('button'), o = [], i, b;
-  for (i = 0; i < L.length; i++) { b = L[i]; if (b.disabled || !b.getClientRects().length) continue; if (root === stageEl && !bar.contains(b) && b.id !== 'bCont') continue; o.push(b); }
+  for (i = 0; i < L.length; i++) { b = L[i]; if (b.disabled || b.classList.contains('pcl') || !b.getClientRects().length) continue; if (root === stageEl && !bar.contains(b) && b.id !== 'bCont') continue; o.push(b); }
   return o;
 }
 function padFocus(el) { var o = document.querySelector('.pf'); if (o) o.classList.remove('pf'); el.classList.add('pf'); try { el.focus(); } catch (e) { } }
