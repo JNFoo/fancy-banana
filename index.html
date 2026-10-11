@@ -787,6 +787,11 @@ function hand(g, x, y, open, rot) {
 }
 function boss(g, n, cx, cy, pose) {   // pose (optional): the gorilla's arm angles r, l; the Prince's scepter tilt s, flash f and free hand (tx, ty, open)
   var q = pose || {};
+  if (n === 4 && q.tx !== undefined && Math.abs(q.tx - 46) + Math.abs(q.ty - 34) > 2) {   // the throwing arm comes out from behind his cape and over his head: a stretchy cartoon arm drawn behind the body
+    var ax = cx + 30, ay = cy + 10, hx = cx + q.tx, hy = cy + q.ty, qx = cx + 58, qy = Math.min(ay, hy) - 22;
+    g.save(); g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath(); g.moveTo(ax, ay); g.quadraticCurveTo(qx, qy, hx, hy);
+    g.strokeStyle = OUTK; g.lineWidth = 16; g.stroke(); g.strokeStyle = '#c28652'; g.lineWidth = 11; g.stroke(); g.strokeStyle = 'rgba(255,225,185,.55)'; g.lineWidth = 3.2; g.save(); g.translate(-1.5, -2); g.stroke(); g.restore(); g.restore();
+  }
   put(g, bossPic(n).c, cx - 110, cy - 124);
   if (n === 3) { bossTurn(g, 3, 'l', cx + 30, cy + 10, q.l || 0); bossTurn(g, 3, 'r', cx - 33, cy + 8, q.r || 0); put(g, bossPart(3, 'head').c, cx - 110, cy - 124); }
   else if (n === 4) {
@@ -828,7 +833,7 @@ var ARN = null, ARTY = [372, 432, 494];   // where each tier's log sits (the spe
 var ARCOL = [   // four fur colors: dark chimp, light chimp, black gorilla, silverback
   { gor: 0, f: ['#c9935f', '#8c5b38', '#4a2c1a'], k: ['#f6d0a8', '#d9a578'] }, { gor: 0, f: ['#e8bc84', '#b9824c', '#6a4020'], k: ['#fbe0c0', '#e0b088'] },
   { gor: 1, f: ['#7a6a60', '#3c302c', '#15100e'], k: ['#a89888', '#5a4a40'] }, { gor: 1, sv: 1, f: ['#aaaab8', '#5e5e6c', '#26262e'], k: ['#b8a898', '#6a5a50'] }];
-function palm(g, x, yb, h, lean, s) {   // a glossy toy palm: a ringed, curved trunk, big drooping fronds and a bunch of coconuts
+function palmToy(g, x, yb, h, lean, s) {   // a glossy toy palm: a ringed, curved trunk, big drooping fronds and a bunch of coconuts
   var O = OUTK, cx = x + lean, cy = yb - h, N = 12, L = [], R = [], i, t, qx, qy, tx, ty, d, w, w0 = 9 * s, w1 = 5.4 * s, c1x = x + lean * .1, c1y = yb - h * .55;
   for (i = 0; i <= N; i++) {
     t = i / N; qx = (1 - t) * (1 - t) * x + 2 * (1 - t) * t * c1x + t * t * cx; qy = (1 - t) * (1 - t) * yb + 2 * (1 - t) * t * c1y + t * t * cy;
@@ -893,9 +898,9 @@ function arenaTasks() {   // the arena is built a piece per step in the backgrou
   });
   add(function () {
     var g = A.back.g, y, k, x, rx, t;
-    [[92, 386, 190, -10, .85], [172, 380, 150, 6, .7], [255, 382, 170, -8, .78]].forEach(function (p) { palm(g, p[0], p[1], p[2], p[3], p[4]); });
+    [[92, 386, 190, -10, .85], [172, 380, 150, 6, .7], [255, 382, 170, -8, .78]].forEach(function (p) { palmToy(g, p[0], p[1], p[2], p[3], p[4]); });
     g.fillStyle = 'rgba(210,236,214,.16)'; g.fillRect(0, 100, W, GY - 100);
-    [[22, 392, 230, 18, 1.05], [330, 390, 235, -22, 1.05]].forEach(function (p) { palm(g, p[0], p[1], p[2], p[3], p[4]); });
+    [[22, 392, 230, 18, 1.05], [330, 390, 235, -22, 1.05]].forEach(function (p) { palmToy(g, p[0], p[1], p[2], p[3], p[4]); });
     for (t = 0; t < 3; t++) {   // the terraces: earth walls with stones and a grass lip
       y = ARTY[t]; var y2 = t < 2 ? ARTY[t + 1] : GY;
       g.fillStyle = lg(g, 0, y, 0, y2, [[0, '#a8744a'], [1, '#6e4528']]); g.fillRect(0, y, W, y2 - y);
@@ -917,27 +922,35 @@ function arenaTasks() {   // the arena is built a piece per step in the backgrou
     });
   })(i);
   add(function () {   // the foreground palms at the two edges
-    var m = A.front = mk(W, GY), g = m.g;
-    palm(g, -10, GY + 10, 380, 52, 1.7); palm(g, 372, GY + 10, 400, -50, 1.8);
+    var m = mk(W, GY, K, true), g = m.g, d, i, mid = true;
+    palmToy(g, -10, GY + 10, 380, 52, 1.7); palmToy(g, 372, GY + 10, 400, -50, 1.8);
+    try { d = g.getImageData(Math.round(140 * K), 0, Math.round(80 * K), m.c.height).data; for (i = 3; i < d.length; i += 4) if (d[i]) { mid = false; break; } } catch (e) { mid = false; }   // only the two edge palms are drawn: when the middle is empty keep just two strips (a full-screen blend every frame for two narrow trees was wasteful)
+    if (mid) { var L = mk(140, GY), R = mk(140, GY); L.g.drawImage(m.c, 0, 0, Math.round(140 * K), m.c.height, 0, 0, 140, GY); R.g.drawImage(m.c, m.c.width - Math.round(140 * K), 0, Math.round(140 * K), m.c.height, 0, 0, 140, GY); A.fl = L; A.fr = R; } else A.front = m;
   });
   ARCOL.forEach(function (c, ci) { for (var mood = 0; mood < 4; mood++) (function (ci, mood) { add(function () { [.74, .88, 1].forEach(function (sc, t) { var p = A.sp[ci + '|' + mood + '|' + t] = mk(86 * sc, 90 * sc); p.g.scale(sc, sc); p.g.translate(43, 76); specDraw(p.g, ARCOL[ci], mood); p.g.globalCompositeOperation = 'source-atop'; p.g.fillStyle = 'rgba(205,236,214,.12)'; p.g.fillRect(-90, -90, 260, 260); }); }); })(ci, mood); });
+  add(function () { var m = mk(W, GY); arenaLive(m.g, { m: 0, p: 0, t: 9, time: 0 }); A.bake = m; });   // the still, watching crowd with the whole arena in one picture
 }
 var ARS = null;   // the spectators: tier, x, color
 function arenaDraw(g, cr) {   // cr: { m: mood now, p: the mood before, t: seconds since it changed, time }
-  var A = ARN, t, i, n, s, md, dl, y, p, bob, tm = cr.time;
+  var A = ARN;
   if (!A || A.ok < A.n) return false;
+  if (A.bake && cr.m === 0 && cr.t > 0.7) { put(g, A.bake.c, 0, 0); return true; }   // a crowd that is just watching is still: the whole arena is one picture
+  return arenaLive(g, cr);
+}
+function arenaLive(g, cr) {
+  var A = ARN, t, i, n, s, md, dl, y, p, bob, tm = cr.time;
   if (!ARS) { ARS = []; var r = rnd(77); [[10, 40, 14], [8, 44, 34], [6, 62, 22]].forEach(function (tr, ti) { for (var k = 0; k < tr[0]; k++) ARS.push({ t: ti, x: tr[2] + k * tr[1] + (r() - .5) * 8, c: Math.floor(r() * 4), d: Math.floor(r() * 11) * .045, j: r() * 6.28 }); }); }
   put(g, A.back.c, 0, 0);
   for (t = 0; t < 3; t++) {
     for (i = 0; i < ARS.length; i++) {
       s = ARS[i]; if (s.t !== t) continue;
       md = cr.t >= s.d ? cr.m : cr.p; p = A.sp[s.c + '|' + md + '|' + t]; y = ARTY[t] + 1;
-      bob = md === 1 ? -Math.abs(Math.sin(tm * 8.5 + s.j)) * (5 + t * 1.6) : md === 0 ? Math.sin(tm * 2.3 + s.j) * .8 : md === 2 ? 2 + Math.sin(tm * 1.4 + s.j) * .6 : 2 + Math.sin(tm * 17 + s.j) * .8;
+      bob = md === 1 ? -Math.abs(Math.sin(tm * 8.5 + s.j)) * (5 + t * 1.6) : md === 0 ? 0 : md === 2 ? 2 + Math.sin(tm * 1.4 + s.j) * .6 : 2 + Math.sin(tm * 17 + s.j) * .8;
       putS(g, p.c, s.x - 43 * [.74, .88, 1][t], y + bob - 76 * [.74, .88, 1][t]);
     }
     g.drawImage(A.logs[t].c, -10, ARTY[t] - 14, A.logs[t].c.width / K, A.logs[t].c.height / K);
   }
-  put(g, A.front.c, 0, 0);
+  if (A.front) put(g, A.front.c, 0, 0); else { put(g, A.fl.c, 0, 0); put(g, A.fr.c, W - 140, 0); }
   return true;
 }
 function fightWarm(n) { TASKQ.push(function () { bossPic(n); }); TASKQ.push(function () { fxPic('coco'); }); TASKQ.push(function () { fxPic('fist'); }); TASKQ.push(function () { fxPic('lime'); }); TASKQ.push(function () { chimpPic([.62, .72, .46, 1.12][n - 1], 2); });  if (n === 3) { TASKQ.push(function () { bossPart(3, 'head'); bossPart(3, 'r'); bossPart(3, 'l'); }); arenaTasks(); } if (n === 4) TASKQ.push(function () { bossPart(4, 'sc'); handPic(0); handPic(1); }); }
@@ -1442,7 +1455,7 @@ var JT = 4, JD = 2600, JGW = JD + W + 8, JFW = Math.ceil(JD * .27) + W + 8, JMW 
 function sstep(t) { t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t); }
 function pj(x, P) { return Math.max(0, Math.min(1, (x - 180) / (P - W))); }   // how far into the journey a spot on a strip is, 0 (the beach) to 1 (the jungle)
 function leafShape(g, L, c1, c2) { g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(L * .5, -L * .34, L, L * .22); g.quadraticCurveTo(L * .55, L * .02, 0, 0); fs(g, c1, c2, 1.2); }
-function palm(g, x, yb, h, lean, s) {
+function palmGardenOld(g, x, yb, h, lean, s) {
   var tx = x + lean, ty = yb - h, i, a, t, L = 46 * s;
   g.beginPath(); g.moveTo(x, yb); g.quadraticCurveTo(x + lean * .1, yb - h * .55, tx, ty); g.strokeStyle = '#6a4318'; g.lineWidth = 9 * s; g.stroke(); g.strokeStyle = '#b98649'; g.lineWidth = 6 * s; g.stroke();
   g.strokeStyle = 'rgba(90,55,20,.55)'; g.lineWidth = 1.2; for (i = 1; i < 9; i++) { t = i / 9; var px = x + 2 * (1 - t) * t * lean * .1 + t * t * lean, py = yb - 2 * (1 - t) * t * h * .55 - t * t * h; g.beginPath(); g.moveTo(px - 3.2 * s, py); g.lineTo(px + 3.2 * s, py - 1.2); g.stroke(); }
@@ -1780,7 +1793,11 @@ function scenery(th) {   // just the sky, hills and ground: enough to draw the t
   while (p.i < p.sc) { if (p.st[p.i]() !== true) p.i++; }
   return p.s;
 }
-function warm(th) { if (!SET[th] && QUEUE.indexOf(th) < 0) { planFor(th); QUEUE.push(th); } }
+function warm(th, front) {   // front: this stage is needed next (the retry after a death): it jumps the queue and the plans of other stages wait (their finished steps are kept)
+  if (SET[th]) return; var i = QUEUE.indexOf(th);
+  if (front) { planFor(th); QUEUE = [th]; return; }
+  if (i < 0) { planFor(th); QUEUE.push(th); }
+}
 
 function pump(ms, min) {   // run queued build steps for about `ms` milliseconds, and at least `min` steps (default 1); returns true while work is left
   var t0 = performance.now(), th, p, c = 0, mn = min || 1, s0, r; TWAIT = ms < 1000; TBUD = TBMAX; TLAST = 0;
@@ -2293,7 +2310,7 @@ function mgglints(g, off, t, p) {   // sun sparkles twinkling on the water
 }
 function mgwater(g, off) { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } var y = ((off % 320) + 320) % 320 - 320; for (; y < 640; y += 320) put(g, MGW.c, 0, y); }
 
-function init(k) { K = k; MGCA = null; MGCP = 0; JTL = null; CRP = null; CHP = {}; BALP = {}; WAFP = null; PARTY = null; BALW = false; SET = {}; PLAN = {}; QUEUE = []; MGQ = []; MGSH = null; TASKQ = []; MGC = {}; MGW = null; COIN = null; initBanana(); coinFrames(); [[.78, 0], [.42, 1], [.56, 2], [1.15, 2]].forEach(function (c) { TASKQ.push(function () { chimpPic(c[0], c[1]); }); }); Object.keys(TEXF).forEach(function (k) { TASKQ.push(function () { tex3(k); }); }); }   // the chimp pictures for the Oops and stage cards are built early, a few ms per frame
+function init(k) { K = k; BOSSP = {}; FXP = {}; HNDP = {}; ARN = null; ARS = null; MGCA = null; MGCP = 0; JTL = null; CRP = null; CHP = {}; BALP = {}; WAFP = null; PARTY = null; BALW = false; SET = {}; PLAN = {}; QUEUE = []; MGQ = []; MGSH = null; TASKQ = []; MGC = {}; MGW = null; COIN = null; initBanana(); coinFrames(); [[.78, 0], [.42, 1], [.56, 2], [1.15, 2]].forEach(function (c) { TASKQ.push(function () { chimpPic(c[0], c[1]); }); }); Object.keys(TEXF).forEach(function (k) { TASKQ.push(function () { tex3(k); }); }); }   // the chimp pictures for the Oops and stage cards are built early, a few ms per frame
 function keep(list) { for (var key in SET) if (list.indexOf(+key) < 0) delete SET[key]; }
 
 /* ---------- the launch track: a huge loop-de-loop, drawn live as vectors (so it is big and sharp, and costs no memory) ----------
@@ -2377,8 +2394,16 @@ function neonTube(g) {   // strokes the current path as a neon tube
 }
 function tkBolt(g, x, y) { circ(g, x, y, 2.4); fs(g, '#cfd6e6', '#2b2140', 1); g.fillStyle = '#fff'; g.fillRect(x - 1.2, y - 1.4, 1.4, 1.2); }
 function tkPath(g, x, cx, ty) { g.beginPath(); g.moveTo(x - 400, ty); g.lineTo(cx + 70, ty); g.quadraticCurveTo(cx + 140, ty, cx + 200, ty - 85); }
-function track(g, x, t, p, th) {
-  var P = TKP[th || 0] || TKP[0], cx = x + TK.cx, cy = TK.cy, r = TK.r, ty = cy + r, i, a, q, lc = [P[7], P[8], P[9]], ph = Math.floor(t * 16);
+var TKC = null;   // while the launcher just waits ('Tap to launch!') its solid parts never change: they are drawn once into one picture, and only the sparks and the twinkle are drawn live
+function track(g, x, t, p, th, still) {
+  if (still) {
+    if (!TKC || TKC.x !== x || TKC.th !== th || TKC.K !== K) { var m = mk(W, GY + 10); trackUnder(m.g, x, 0, 0, th); TKC = { m: m, x: x, th: th, K: K }; }
+    put(g, TKC.m.c, 0, 0);
+  } else { TKC = null; trackUnder(g, x, t, p, th); }
+  trackLive(g, x, t, th);
+}
+function trackUnder(g, x, t, p, th) {
+  var P = TKP[th || 0] || TKP[0], cx = x + TK.cx, cy = TK.cy, r = TK.r, ty = cy + r, i, a, q;
   [-180, -60, 60, 180].forEach(function (d) {                                                                                   // round striped pillars with flanges and bolts
     var px0 = cx + d - 11; if (px0 > W + 30 || px0 < -50) return;
     g.fillStyle = 'rgba(30,20,60,.22)'; g.beginPath(); g.ellipse(px0 + 11, GY + 4, 24, 6, 0, 0, PI2); g.fill();                  // contact shadow
@@ -2397,9 +2422,12 @@ function track(g, x, t, p, th) {
   for (i = 0; i < 10; i++) { g.fillStyle = i % 2 ? '#fff' : '#2b2140'; g.fillRect(cx + 30 + i * 6, ty - 15, 6, 15); g.fillStyle = i % 2 ? '#2b2140' : '#fff'; g.fillRect(cx + 30 + i * 6, ty, 6, 15); }   // checkered start
   g.strokeStyle = '#2b2140'; g.lineWidth = 1.6; g.strokeRect(cx + 30, ty - 15, 60, 30);
   q = g.createLinearGradient(0, ty - 15, 0, ty + 15); q.addColorStop(0, 'rgba(255,255,255,.35)'); q.addColorStop(.5, 'rgba(255,255,255,0)'); q.addColorStop(1, 'rgba(20,10,40,.3)'); g.fillStyle = q; g.fillRect(cx + 30, ty - 15, 60, 30);
-  var ra = r + 24, xa = cx + 36, xb = Math.max(-20, cx - 270), ty2 = ty - 26, k, u, sx0, sy0, ft = Math.floor(t * 22), sz = 40;
+  var ra = r + 24, xa = cx + 36, xb = Math.max(-20, cx - 270), ty2 = ty - 26;
   g.save(); g.lineCap = 'butt'; g.beginPath(); g.arc(cx, cy, ra, 0, PI2); neonTube(g); g.restore();   // a neon light tube: a soft glow, a bright colored tube and a white-hot line down its middle
   g.save(); g.beginPath(); g.moveTo(xb, ty2); g.lineTo(xa, ty2); g.lineCap = 'round'; neonTube(g); g.restore();
+}
+function trackLive(g, x, t, th) {
+  var P = TKP[th || 0] || TKP[0], cx = x + TK.cx, cy = TK.cy, r = TK.r, ty = cy + r, i, a, q, ra = r + 24, xa = cx + 36, xb = Math.max(-20, cx - 270), ty2 = ty - 26, k, u, sx0, sy0, sz = 40;
   var RS = [.31, .47, .38, .55, .26], US = [.43, .66, .5, .74, .35], ph1 = [0, .37, .61, .12, .83];   // every spark has its own speed, and they speed up and slow down
   for (k = 0; k < 5; k++) {   // magnesium sparks race round the ring, and then others run along the run-up from the front (right) to the back (left)
     var zs = sz * (.72 + .5 * tkHash(k * 3.1 + 1)) * (1 + .55 * Math.pow(Math.max(0, Math.sin(t * (1.7 + k * .6) + k * 2.3)), 4)), fk = Math.floor(t * (15 + k * 4.5)) + k * 3, jx = (tkHash(Math.floor(t * 19) + k * 7) - .5) * 4, jy = (tkHash(Math.floor(t * 23) + k * 5) - .5) * 4;
@@ -2547,8 +2575,8 @@ return { get tlast() { return TLAST; }, tbmax: TBMAX, arena: { draw: arenaDraw, 
 
 (function () {
 'use strict';
-var PHASE = 'alpha';
-var STAMP = '2026.10.10.2158';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var PHASE = 'beta';
+var STAMP = '2026.10.10.2320';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 JNFoo. All Rights Reserved.';
 
@@ -2980,7 +3008,7 @@ var rsgT = -1, rsgGo = false, rsgTap = false, rsgWait = false, rsgK = 1, tapWait
 var cardT = -1, cardStage = 0, cardY = 125, cardGoal = 125, topT = 0;       // cardT below 0 means no stage card is showing
 var titleT = 0, TTL = null, TTLK = 0, tapPic = null, launchT = 0, trackX = 60, trackOn = true, boost = 0, boostT = 99, pendNext = '', nextT = 0, vicT = 0, MG = null, keys = {}, tickW = null, tickSum = 0;
 var runChal = '', runCoins = 0, streak = 0, bestStreak = 0, pops = [], trail = [], trailAcc = 0, wind = [], flashT = 0, zoomK = 1, zoomX = 180, gazeS = 0, lastAfter = 0, scrollDX = 0, curSpeed = 0, sparkT = 0;
-var fx = [], fxFree = [], fxMax = 70, frng = mulberry32(12345), punchT = 0, whooshT = 0, shield = 0, invuln = 0, spinT = 0, gardenD0 = 0;   // sparks and confetti, camera punch, the WHOOSH word, bonk shield
+var fx = [], fxFree = [], fxMax = 70, frng = mulberry32(12345), punchT = 0, whooshT = 0, shield = 0, bngT = 0, invuln = 0, spinT = 0, gardenD0 = 0;   // sparks and confetti, camera punch, the WHOOSH word, bonk shield
 
 function longOn() { return save.stats.wins >= CFG.longAfter; }   // from the fifth win on, the stages after the water level are 15 gates long
 function gpsOf(st) { return st > ART.order.indexOf(CFG.miniAfter) + 1 && longOn() ? CFG.gatesLong : CFG.gatesPerStage; }
@@ -3049,7 +3077,16 @@ function gazeTarget() {   // Fancy looks toward the middle of the next gap
   for (var i = 0; i < obs.length; i++) if (!obs[i].passed) return clamp(((obs[i].gt + obs[i].gb) / 2 - by) / 80, -1, 1);
   return 0;
 }
-function pop(txt, col, sz) { pops.push({ txt: txt, col: col, sz: sz || 22, t: 0, x: clamp(mx(bx) + (flipSX() < 0 ? -34 : 34), 70, W - 70), y: mirY(by) - 40 }); if (pops.length > 6) pops.shift(); }
+function pop(txt, col, sz) {   // a word that floats up from Fancy: a new one never lands on top of one still readable, it stacks above it (or below when there is no room at the top)
+  sz = sz || 22; var w = txt.length * sz * 0.56, x = clamp(mx(bx) + (flipSX() < 0 ? -34 : 34), Math.max(70, w / 2 + 8), Math.min(W - 70, W - w / 2 - 8)), y0 = mirY(by) - 40, y = y0, dir = -1, i, q, n = 0, hit, yy, y2 = 0;
+  do {
+    hit = false;
+    for (i = 0; i < pops.length; i++) { q = pops[i]; if (q.t < 0.95 && Math.abs(q.x - x) < (w + q.w) / 2 + 4 && Math.abs(q.y - y) < (sz + q.sz) * 0.62) { yy = dir < 0 ? q.y - (sz + q.sz) * 0.62 - 1 : q.y + (sz + q.sz) * 0.62 + 1; if (!hit || (dir < 0 ? yy < y2 : yy > y2)) y2 = yy; hit = true; } }
+    if (hit) y = y2;
+    if (hit && dir < 0 && y < 130) { dir = 1; y = y0; }
+  } while (hit && ++n < 8);
+  pops.push({ txt: txt, col: col, sz: sz, w: w, t: 0, x: x, y: clamp(y, 100, GROUND_Y - 30) }); if (pops.length > 6) pops.shift();
+}
 function giveCoins(n, x, y) { runCoins += n; if (!pracN) save.stats.coins += n; burst(x, y, 8 + n * 3, ['#ffd93b', '#fff2a0', '#ffffff'], 150, 140); }
 function clearance(o) {   // how far Fancy is from touching this obstacle (px between his circle and the nearest hit box)
   var m = 1e9, i, r, nx, ny, d;
@@ -3071,15 +3108,15 @@ function rateGate(o) {   // called as Fancy clears a gate: perfect (through the 
 var contN = 0;
 function continueRun() { var n = save.cont.st; if (!(n > 1) || state !== 'title') return; contN = n; closePanels(); ART.warm(themeOf(n)); toReady(); toast('Carrying on from stage ' + n + '. Tap to launch!', 3500); }
 function resetWorld() {
-  var ci = pracN ? 0 : chalIdx(); runChal = ci ? CHAL[ci - 1][0] : ''; nightA = 0; FT = null; runFight = !pracN && fightOn() ? fightNext() : 0; if (runFight) { ART.fightWarm(runFight); ART.mg.sprite('wafer'); }
-  kReset(); ftStill = 0; crowd.m = crowd.p = 0; crowd.t = 9; windUsed = false; resT = -1; wasCtrl = true; tapFx.length = 0; obs = []; score = 0; stage = 1; runTime = 0; runFlaps = 0; spawned = 0; dist = 0; BAL = null; BALR = null; fl.length = 0; shd.length = 0; if (save.unlocks.balloons) ART.bal.warm();
+  var ci = pracN ? 0 : chalIdx(); runChal = ci ? CHAL[ci - 1][0] : ''; nightA = 0; FT = null; runFight = !pracN && fightOn() ? fightNext() : 0; fWarmed = 0;
+  kReset(); ftStill = 0; crowd.m = crowd.p = 0; crowd.t = 9; windUsed = false; resT = -1; wasCtrl = true; tapFx.length = 0; obs = []; score = 0; stage = 1; runTime = 0; runFlaps = 0; spawned = 0; dist = 0; BAL = null; BALR = null; fl.length = 0; shd.length = 0; 
   clk = 0; clkSp = []; runSecs = runPauses = runHurts = runPops = runPopsOf = 0; runFriends0 = save.stats.friends; VS = null;
   lastC = GROUND_Y * 0.45; by = CFG.launchY; vy = 0; bx = CFG.bananaX; angle = 0; flapAnim = 0; grace = 0; fallD = 0; hurtT = 0;
   if (pracN) { stage = pracN; spawned = score = gateStart(pracN); }
   if (contN > 1 && !pracN) { stage = contN; spawned = score = gateStart(contN); contN = 0; }   // Continue: carry on from the stage the closed tab had reached
   pracEnd = ''; bgTheme = bgFrom = themeOf(stage); bgT = 1; newBest = false; runStartBest = bestOf();
-  cardT = -1; topT = 0; pendNext = ''; nextT = 0; washA = 0; MG = null; rsgT = -1; celT = 0; launchT = 0; trackX = CFG.bananaX - LP.x0; trackOn = true; boost = 0; boostT = 99; fx.length = 0; smk.length = 0; punchT = whooshT = invuln = spinT = gardenD0 = 0; shield = lvl('shield');
-  ART.keep([bgTheme]);
+  cardT = -1; topT = 0; pendNext = ''; nextT = 0; washA = 0; MG = null; rsgT = -1; celT = 0; launchT = 0; trackX = CFG.bananaX - LP.x0; trackOn = true; boost = 0; boostT = 99; fx.length = 0; smk.length = 0; punchT = whooshT = invuln = spinT = gardenD0 = 0; shield = lvl('shield'); bngT = 0;
+  ART.keep([bgTheme, themeOf(stage + 1)]);
   runCoins = 0; streak = 0; bestStreak = 0; goldNext = CFG.goldStreak; VAULT = null; hugT = 0; hugKind = ''; pops.length = 0; trail.length = 0; flashT = 0; lastAfter = 0; scrollDX = 0; curSpeed = 0;
   spawnOb(W + CFG.firstGate);   // the first obstacle waits far out: the blast off flies faster than normal for a moment
 }
@@ -3119,7 +3156,8 @@ function spawnOb(x) {
 }
 
 function bd(th) { return th === ART.journeyTheme ? Math.max(0, dist - gardenD0) : dist; }   // the garden's backdrop is one long journey from the beach to the jungle, so it counts from where that stage began
-function boing(v) { runHurts++; invuln = 1.3; hurtT = 0.9; fallD = 0; vy = v; flapAnim = 0.18; burst(CFG.bananaX, by, 28, ['#8ae28a', '#ffffff', '#ffd93b'], 240, 200); pop('BOING!', '#7be07b', 26); }
+function boingV(mid) { var d = mid - by; return d < 0 ? -Math.min(560, Math.sqrt(2 * CFG.gravity * -d) + 40) : -120; }   // the free bounce springs Fancy just far enough to reach the middle of the gap (a hit from the top pillar used to fire him down at 520 px/s, through the gap and into the floor)
+function boing(v) { bngT = 1; runHurts++; invuln = 1.3; hurtT = 0.9; fallD = 0; vy = v; flapAnim = 0.18; burst(CFG.bananaX, by, 28, ['#8ae28a', '#ffffff', '#ffd93b'], 240, 200); pop('BOING!', '#7be07b', 26); }
 function flap() { vy = CFG.flapV; flapAnim = 0.18; runFlaps++; fallD = 0; }
 
 /* ===== Potassium Power! (upgrade). Hold Space or the mouse while 3+ gates line up (their openings within 40 px of each other): Fancy charges up, glides straight through
@@ -3191,6 +3229,8 @@ function drawKHint() {
   if (kHint < 0.05) return;
   ctx.globalAlpha = Math.min(1, kHint); outlined('Hold: Potassium Power!', W / 2, GROUND_Y - 26 + Math.sin(time * 6) * 2, 15, '#ffe27a'); ctx.globalAlpha = 1;
 }
+var fWarmed = 0;
+function warmFight() { if (!runFight || fWarmed === runFight) return; fWarmed = runFight; ART.fightWarm(runFight); ART.mg.sprite('wafer'); }   // the boss's pictures (and the gorilla's arena) are only built once the player reaches the last stage: most runs end long before
 function toReady() { resetWorld(); backStage = pracN ? 0 : 2 + Math.floor(Math.random() * 3); flipV = flipWant(); state = 'ready'; setBar(false); if (runChal === 'storm') ART.mg.sprite('wafer'); }
 function rsgGoAt() { return CFG.cardSecs + CFG.rsgBeat * 2; }   // seconds after the stage clear when control comes back
 function rsgHold() { return (rsgT >= 0 && rsgT < rsgGoAt()) || !!(FT && FT.hold > 0); }
@@ -3250,9 +3290,10 @@ function flipWant() { return backStage > 0 && stage === backStage && !pracN ? 1 
 function flipSX() { if (!(state === 'play' || state === 'paused' || state === 'dead') || flipV <= 0) return 1; if (flipV >= 1) return -1; var u = flipV * flipV * (3 - 2 * flipV); return Math.cos(Math.PI * u); }
 function mx(x) { var f = flipSX(); return f === 1 ? x : W / 2 + (x - W / 2) * f; }   // where a point of the world is on the screen right now
 var FB = null, FBg = null, FBmain = null;
-var FBff = /Firefox\//.test(navigator.userAgent), FBdir = false, FBforce = '';   // Firefox is slow at many turned-over pictures; every other browser turns the scenery over with one plain transform, with no spare picture to clear and copy each frame
+var FBff = /Firefox\//.test(navigator.userAgent), FBdir = false, FBforce = '', cssF = false;   // cssF: Firefox turns a settled backward level over with a CSS flip of the whole canvas (free), so it costs no more than a forward level; the words and counters are drawn turned round to come out right
+function hudM(open) { if (!cssF) return; if (open) { ctx.save(); ctx.translate(W, 0); ctx.scale(-1, 1); } else ctx.restore(); }   // Firefox is slow at many turned-over pictures; every other browser turns the scenery over with one plain transform, with no spare picture to clear and copy each frame
 function flipOff() {   // the scenery of a backward stage is drawn the right way round on a spare picture first and then turned over in one go: many small turned-over pictures were four times slower in Firefox
-  var fx = flipSX(); if (fx === 1) return false;
+  var fx = flipSX(); if (fx === 1 || cssF) return false;
   if (fx === -1 && (FBforce ? FBforce === 'direct' : !FBff)) { ctx.save(); ctx.translate(W / 2, 0); ctx.scale(-1, 1); ctx.translate(-W / 2, 0); FBdir = true; return true; }
   if (!FB || FB.width !== cv.width || FB.height !== cv.height) { FB = document.createElement('canvas'); FB.width = cv.width; FB.height = cv.height; FBg = FB.getContext('2d'); }
   FBg.setTransform(1, 0, 0, 1, 0, 0); FBg.clearRect(0, 0, FB.width, FB.height); FBg.setTransform(k, 0, 0, k, 0, 0); if (mirOn()) { FBg.translate(0, H); FBg.scale(1, -1); }
@@ -3262,7 +3303,7 @@ function flipBlit() {
   if (FBdir) { FBdir = false; ctx.restore(); return; }
   ctx = FBmain; var f = flipSX(); ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = f === -1 ? false : true; ctx.translate(cv.width / 2, 0); ctx.scale(f, 1); ctx.translate(-cv.width / 2, 0); ctx.drawImage(FB, 0, 0); ctx.restore();
 }
-function flipB() { var f = flipSX(); if (f === 1) return false; ctx.save(); ctx.translate(W / 2, 0); ctx.scale(f, 1); ctx.translate(-W / 2, 0); return true; }
+function flipB() { var f = flipSX(); if (f === 1 || cssF) return false; ctx.save(); ctx.translate(W / 2, 0); ctx.scale(f, 1); ctx.translate(-W / 2, 0); return true; }
 /* ===== Prince Chimp fights (build 4): in the last stage the final two gates give way to a boss. Three rounds of 12 seconds; a hit repeats only that round. ===== */
 var FIGHTS = [['Wafer Cannon', 'Prince Chimp rolls in with a wafer cannon!', 'Dodge the wafers.'], ['Mecha-Chimp', 'Prince Chimp is inside a giant robot!', 'Dodge the lasers and rocket fists.'], ['Gorilla Guard', 'Prince Chimp brought his gorilla!', 'Dodge coconuts. Hop the shockwaves.'], ['Crown Duel', 'Prince Chimp wants his crown back!', 'Everything at once!']];
 var FT = null, runFight = 0, fightNew = '', FT_ROUND = 12, FT_BX = 280;
@@ -3271,21 +3312,22 @@ function fightNext() { if (!secretsOn()) return 0; for (var n = 1; n <= 4; n++) 
 function fightOn() { return !!save.unlocks.pcf && fightNext() > 0; }
 function wearsCrown() { var u = save.unlocks; return !!u.crown && !u.crownOff; }
 function fightDue() { var gs = stageOfGate(spawned); return themeOf(gs) === CFG.finalTheme && spawned === gateStart(gs + 1) - 2; }
-function ftNew() { return { n: runFight, ph: 'wait', r: 0, rt: 0, t: 0, hold: 0, nx: 0, list: [], hits: 0, cc: 0, h0: 0, c0: 0, blast: null, lm: 2 * lvl('limes'), lt: 0, limes: [], zaps: 0, by: runFight === 3 ? GROUND_Y - 92 : 300, pc: 0, slide: 0, shake: 0, hop: 0, kick: 0, rc: 9, rw: 9, rf: 9, hp: null, pose: null }; }
+function ftNew() { return { n: runFight, ph: 'wait', r: 0, rt: 0, t: 0, hold: 0, nx: 0, list: [], hits: 0, cc: 0, h0: 0, c0: 0, blast: null, lm: 2 * lvl('limes'), lt: 0, limes: [], zaps: 0, by: runFight === 3 ? GROUND_Y - 92 : 300, pc: 0, slide: 0, shake: 0, hop: 0, kick: 0, rc: 9, rw: 9, rf: 9, rcl: 9, rerun: runFight === 4 && pcBeaten(4), hp: null, pose: null }; }
 /* Where each boss lets its attacks out, relative to its center: the cannon barrel, the robot's arm and chest lamp, the gorilla's raised fist and feet, the Prince's scepter orb and hand. Nothing ever appears in mid air: an attack starts here, and the boss first lines itself up with where the attack will fly. */
-var FT_MZ = { 1: { waf: [-62, 25] }, 2: { fist: [-52, 30], lane: [-22, 28] }, 3: { coco: [-62, -41], wave: [-30, 90] }, 4: { waf: [-50, -36], lane: [-50, -36], coco: [-62, 2] } };
+var FT_MZ = { 1: { waf: [-62, 25] }, 2: { fist: [-52, 30], lane: [-22, 28] }, 3: { coco: [-62, -41], wave: [-30, 90] }, 4: { waf: [-50, -36], lane: [-50, -36], coco: [-20, -99], cook: [0, 0] } };
 var FT_BMIN = 150, FT_BMAX = GROUND_Y - 95;
 function ftBoss(F) { return { x: FT_BX + (1 - ss(F.slide)) * 160 + F.kick * 5, y: F.by + (calmOn() || F.n === 3 ? 0 : Math.sin(time * 1.6) * 6) - F.hop }; }
 function ftMk(F, k, o) { var m = FT_MZ[F.n][k]; o.k = k; o.ox = m[0]; o.oy = m[1]; o.live = false; o.d0 = o.d; F.list.push(o); }
 function ftWaf(F, y, d, K, fist) { var k = fist ? 'fist' : 'waf', m = FT_MZ[F.n][k]; ftMk(F, k, { y: clamp(y, FT_BMIN + m[1], FT_BMAX + m[1]), vx: -((fist ? 300 : 262) + 18 * F.r) * K, r: fist ? 15 : 13, d: d }); }
 function ftLane(F, y, d) { var m = FT_MZ[F.n].lane; ftMk(F, 'lane', { y: clamp(y, FT_BMIN + m[1], FT_BMAX + m[1]), d: d, act: 0.5 }); }
 function ftCoco(F, ty, T, d, K) { ftMk(F, 'coco', { ty: ty, T2: T / K, g: 560, r: 15, d: d, x: 0, y: 0, vx: 0, vy: 0 }); }
+function ftCookie(F, ty, T, d, K, x0) { ftMk(F, 'cook', { ty: ty, T2: T / K, g: 520, r: 14, d: d, x0: x0, x: x0, y: -26, vx: 0, vy: 0, first: !F.list.some(function (q) { return q.k === 'cook'; }) }); }   // a vanilla cookie that falls in from above the top edge and crosses Fancy's column at height ty
 function ftWave(F, d, K) { ftMk(F, 'wave', { vx: -(236 + 14 * F.r) * K, d: d, x: 0 }); }
 function ftAim(a, p) {   // a coconut is held in the thrower's hand until it is let go: its flight is worked out from the hand
   var x0 = p.x + a.ox, y0 = p.y + a.oy; a.x = x0; a.y = y0; a.vx = -(x0 - bx) / a.T2; a.vy = (a.ty - y0 - 0.5 * a.g * a.T2 * a.T2) / a.T2;
 }
 function ftPattern(F, K) {   // push one volley and say how long until the next
-  var k = F.n === 4 ? 1 + (F.pc++ + (F.r > 0 && rng() < 0.35 ? 1 : 0)) % 3 : F.n, r = F.r, duel = F.n === 4, y = clamp(by + vy * 0.2, 130, GROUND_Y - 80), d = 0.3 / K, i, s, hole, y2;
+  var k = F.n === 4 ? 1 + (F.pc++ + (F.r > 0 && rng() < 0.35 ? 1 : 0)) % (F.rerun ? 4 : 3) : F.n, r = F.r, duel = F.n === 4, y = clamp(by + vy * 0.2, 130, GROUND_Y - 80), d = 0.3 / K, i, s, hole, y2;
   if (k === 1) {   // wafers: one shot, then three one after another, then a sweeping barrage with a hole in it
     if (r === 0) { ftWaf(F, y + (rng() - 0.5) * 40, d, K); return 1.7 / K; }
     if (r === 1) { ftWaf(F, y - 80, d, K); ftWaf(F, y, d + 0.55, K); ftWaf(F, y + 80, d + 1.1, K); return 2.9 / K; }
@@ -3297,6 +3339,12 @@ function ftPattern(F, K) {   // push one volley and say how long until the next
     if (r === 1) { ftLane(F, y, d + 0.5); ftLane(F, y2, d + 2.1); if (!duel) ftWaf(F, y, d + 3.0, K, true); return 3.9 / K; }
     if (duel) { ftLane(F, y, d + 0.5); ftLane(F, y2, d + 1.9); ftLane(F, y + 20, d + 3.3); return 4.6 / K; }
     ftWaf(F, y, d, K, true); ftWaf(F, y + (rng() < 0.5 ? -110 : 110), d + 0.6, K, true); ftLane(F, y + (rng() < 0.5 ? -150 : 150), d + 1.5); return 3.2 / K;
+  }
+  if (k === 4) {   // the Prince claps and vanilla cookies drop from above (only in reruns of the Crown Duel): one, then two a moment apart, then two almost together
+    var cx0 = bx + 150 + rng() * 70;
+    if (r === 0) { ftCookie(F, y, 1.15, 1.0 / K, K, cx0); return 2.8 / K; }
+    if (r === 1) { ftCookie(F, y - 60, 1.15, 1.0 / K, K, cx0); ftCookie(F, y + 90, 1.05, 1.6 / K, K, cx0 + 60); return 3.6 / K; }
+    ftCookie(F, y - 90, 1.2, 1.0 / K, K, cx0); ftCookie(F, y + 70, 1.0, 1.35 / K, K, cx0 + 80); ftCookie(F, y, 1.1, 2.3 / K, K, cx0 + 20); return 4.0 / K;
   }
   if (r === 0) { ftCoco(F, y, 0.85, 0.8 / K, K); return 1.9 / K; }   // coconuts thrown from a raised fist, and shockwaves from a stomp
   if (r === 1) { if (duel) { ftCoco(F, y, 0.85, 0.8 / K, K); ftCoco(F, y - 90, 1.0, 1.7 / K, K); return 3.1 / K; } ftWave(F, 0.9 / K, K); ftCoco(F, y, 0.85, 1.0 / K, K); return 2.7 / K; }
@@ -3357,7 +3405,7 @@ function ftStep(dt, sp) {
   if (F.slide >= 1 && !F.landed) { F.landed = 1; p = ftBoss(F); burst(p.x, GROUND_Y - 8, 14, ['#e8d0a0', '#ffffff'], 170, 60); if (!calmOn()) punchT = CFG.punchSecs * 0.35; }   // the boss arrives with a thump
   if (F.hold > 0 && F.ph !== 'won') { F.hold -= dt; if (F.hold <= 0) { F.hold = 0; F.ph = 'round'; F.rt = 0; F.nx = 0.5; F.h0 = F.hits; F.c0 = F.cc; grace = 0.25; vy = 0; flapAnim = 0.18; pop('Go!', '#7be07b', 28); } }
   if (F.ph === 'intro') { if (!rsgHold()) { F.ph = 'round'; F.rt = 0; F.nx = 0.5; F.h0 = F.hits; F.c0 = F.cc; } }
-  F.hop = 0; F.rc += dt; F.rw += dt; F.rf += dt;   // seconds since the last throw, stomp and scepter shot (the arms follow through)
+  F.hop = 0; F.rc += dt; F.rw += dt; F.rf += dt; F.rcl += dt;   // seconds since the last throw, stomp and scepter shot (the arms follow through)
   for (i = 0; i < F.list.length; i++) {   // the boss slides to the height of its next shot, and hops before a stomp
     a = F.list[i];
     if (a.k === 'wave' && !a.live && a.d > 0) F.hop = Math.max(F.hop, 16 * Math.sin(Math.PI * Math.min(1, 1 - a.d / a.d0)));
@@ -3381,15 +3429,15 @@ function ftStep(dt, sp) {
       if (a.k === 'coco') ftAim(a, p);
       if (a.d > 0) continue;
       a.d = 0;
-      if (a.k !== 'coco' && a.k !== 'wave' && Math.abs(F.by - (a.y - a.oy)) > 5) continue;   // wait until the boss has lined up
-      a.live = true; if (a.k === 'coco') F.rc = 0; else if (a.k === 'wave') F.rw = 0; else if (F.n === 4 && (a.k === 'waf' || a.k === 'lane')) F.rf = 0;
+      if (a.k !== 'coco' && a.k !== 'wave' && a.k !== 'cook' && Math.abs(F.by - (a.y - a.oy)) > 5) continue;   // wait until the boss has lined up
+      a.live = true; if (a.k === 'cook') { a.x = a.x0; a.y = -26; a.vx = -(a.x0 - bx) / a.T2; a.vy = (a.ty + 26 - 0.5 * a.g * a.T2 * a.T2) / a.T2; F.rcl = 0; p = ftBoss(F); burst(p.x - 44, p.y + 22, 12, ['#ffffff', '#ffd93b', '#ffe9b0'], 170, 30); if (!calmOn()) punchT = CFG.punchSecs * 0.15; } else if (a.k === 'coco') F.rc = 0; else if (a.k === 'wave') F.rw = 0; else if (F.n === 4 && (a.k === 'waf' || a.k === 'lane')) F.rf = 0;
       if (a.k === 'waf' || a.k === 'fist') { a.x = p.x + a.ox; a.y = p.y + a.oy; F.kick = 1; burst(a.x - 24, a.y, 7, ['#ffffff', '#fff2a0', '#ffb347'], 150, 10); if (F.n === 1 && a.k === 'waf') cannonSmoke(p.x - 88, p.y + 25); }   // fired: a puff at the barrel and a little recoil (the first boss also blows a plume of smoke out of its dark muzzle)
       else if (a.k === 'lane') a.y = p.y + a.oy;
       else if (a.k === 'wave') { a.x = p.x + a.ox; burst(a.x, GROUND_Y - 6, 10, ['#e8d0a0', '#ffffff'], 160, 40); if (!calmOn()) punchT = CFG.punchSecs * 0.2; }
     }
     if (a.k === 'lane') { a.act -= dt; if (invuln <= 0) { dy = Math.abs(by - a.y); a.near = Math.min(a.near === undefined ? 99 : a.near, dy); if (dy < 30 && ftHit()) break; } if (a.act <= 0) { if (a.near >= 30 && a.near < 44 + 3 * lvl('dare')) ftCC(F, a); F.list.splice(i, 1); } continue; }
     a.px = a.x; a.x += a.vx * dt;
-    if (a.k === 'coco') { a.y += a.vy * dt; a.vy += a.g * dt; if (a.y > GROUND_Y - 10) { burst(a.x, GROUND_Y - 6, 8, ['#a8744c', '#e8d0a0'], 120, 100); F.list.splice(i, 1); continue; } }
+    if (a.k === 'coco' || a.k === 'cook') { a.y += a.vy * dt; a.vy += a.g * dt; if (a.y > GROUND_Y - 10) { burst(a.x, GROUND_Y - 6, 8, ['#a8744c', '#e8d0a0'], 120, 100); F.list.splice(i, 1); continue; } }
     if (a.x < -50) { F.list.splice(i, 1); continue; }
     if (invuln > 0) continue;
     if (a.k === 'wave') {
@@ -3483,11 +3531,14 @@ function ftPose(F) {   // how the gorilla's arms and the Prince's hands and scep
     q = { r: r, l: (s > 0 ? -2.6 * s : -0.1 * s) - 0.22 * w };
     F.hp = [-33 + -29 * Math.cos(r) + 49 * Math.sin(r), 8 + -29 * Math.sin(r) - 49 * Math.cos(r)];
   } else if (n === 4) {
-    u = ftU(F, 'coco', 0.5); var idle = [46, 34], back = [54, -22], rel = [-62, 16], fol = [-88, 38], hp;
-    if (u >= 0) hp = u < 0.62 ? lerp(idle, back, ss(u / 0.62)) : lerp(back, rel, ss((u - 0.62) / 0.38));
-    else if (F.rc < 0.35) hp = lerp(rel, fol, ss(F.rc / 0.35)); else if (F.rc < 0.9) hp = lerp(fol, idle, ss((F.rc - 0.35) / 0.55)); else hp = idle;
+    u = ftU(F, 'coco', 0.5); var idle = [46, 34, 0], back = [64, -46, 0.55], rel = [-20, -84, -1.15], fol = [-62, -34, -1.9], hp, lerp3 = function (a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; };   // an overhand throw: the hand rises up behind his shoulder, whips over his head (fingers leading, thumb down) and follows through; the arm stays behind his head
+    if (u >= 0) hp = u < 0.62 ? lerp3(idle, back, ss(u / 0.62)) : lerp3(back, rel, ss((u - 0.62) / 0.38));
+    else if (F.rc < 0.35) hp = lerp3(rel, fol, ss(F.rc / 0.35)); else if (F.rc < 0.9) hp = lerp3(fol, idle, ss((F.rc - 0.35) / 0.55)); else hp = idle;
+    var cu = ftU(F, 'cook', 0.7);   // the clap: the free hand rises, then sweeps across to meet the hand that holds the scepter
+    if (u < 0 && cu >= 0) hp = cu < 0.6 ? lerp3(idle, [66, -16, 0.5], ss(cu / 0.6)) : lerp3([66, -16, 0.5], [-48, 22, -0.4], ss((cu - 0.6) / 0.4));
+    else if (u < 0 && F.rcl < 0.9) hp = F.rcl < 0.25 ? [-48, 22, -0.4] : lerp3([-48, 22, -0.4], idle, ss((F.rcl - 0.25) / 0.65));
     var su = ftU(F, 'waf,lane', 0.5), sw = ftThrowW(su, F.rf);
-    q = { tx: hp[0], ty: hp[1], open: u >= 0 || F.rc < 0.25, s: sw * 0.3, f: su >= 0 ? ss(su) : Math.max(0, 1 - F.rf / 0.3) };
+    q = { tx: hp[0], ty: hp[1], tr: hp[2], open: u >= 0 || F.rc < 0.25 || cu >= 0 || F.rcl < 0.9, s: sw * 0.3 + (F.rcl < 0.2 ? 0.14 * Math.sin(Math.PI * F.rcl / 0.2) : 0), f: su >= 0 ? ss(su) : Math.max(0, 1 - F.rf / 0.3) };
     F.hp = [hp[0], hp[1] - 15];
   }
   F.pose = q; return q;
@@ -3502,6 +3553,7 @@ function drawFight() {
       else { drawBeam(mx, my, a.y, cl); }
     }
     else if (!a.live && (a.k === 'waf' || a.k === 'fist')) { ex = a.k === 'waf' && F.n === 1 ? mx - 34 : mx - 12; ctx.globalAlpha = 0.25 + 0.3 * f; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.setLineDash([8, 10]); ctx.beginPath(); ctx.moveTo(ex, a.y); ctx.lineTo(0, a.y); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = '#fff2a0'; ctx.beginPath(); ctx.arc(ex, my, 4 + 8 * f, 0, 7); ctx.fill(); ctx.globalAlpha = 1; }   // the dotted line shows the shot; the muzzle glows
+    else if (a.k === 'cook' && !a.live) { al = cl ? 0.7 : 0.5 + 0.4 * Math.abs(Math.sin(time * 12)); ctx.globalAlpha = al * 0.7; ctx.save(); ctx.translate(a.x0, 156); ART.mg.draw(ctx, 'wafer', 0, 0, undefined, 1); ctx.restore(); ctx.globalAlpha = al; outlined('!', a.x0, 132, 30, '#ffd93b'); ctx.globalAlpha = 1; }   // a cookie is about to fall in from up here
     else if (a.k === 'wave' && !a.live) { ctx.globalAlpha = 0.5 + 0.4 * f; outlined('!', W - 26, GROUND_Y - 30, 30, '#ffd93b'); ctx.fillStyle = '#e8d0a0'; for (g = 0; g < 4; g++) { ctx.beginPath(); ctx.arc(mx - g * 16 + Math.sin(time * 20 + g) * 2, GROUND_Y - 6 - f * 8, 6 + g, 0, 7); ctx.fill(); } ctx.globalAlpha = 1; }
   }
   for (i = 0; i < F.list.length; i++) {   // a wafer or fist that has just left its barrel or arm is still inside it: drawn behind the boss
@@ -3528,6 +3580,7 @@ function drawFight() {
     if (a.k === 'waf') { if (a.x < p.x + a.ox - 46) ART.mg.draw(ctx, 'wafer', a.x, a.y, undefined, 1); }
     else if (a.k === 'fist') { fl = cl ? 0 : Math.sin(time * 40) * 5; ctx.fillStyle = 'rgba(200,205,225,0.4)'; for (g = 0; g < 3; g++) { ctx.beginPath(); ctx.arc(a.x + 54 + g * 17, a.y + Math.sin(time * 9 + g * 2) * 3, 6 + g * 2, 0, 7); ctx.fill(); }
       ctx.fillStyle = 'rgba(255,140,50,0.85)'; ctx.beginPath(); ctx.moveTo(a.x + 12, a.y - 9); ctx.quadraticCurveTo(a.x + 30, a.y - 6, a.x + 50 + fl, a.y); ctx.quadraticCurveTo(a.x + 30, a.y + 6, a.x + 12, a.y + 9); ctx.fill(); ctx.fillStyle = '#ffe27a'; ctx.beginPath(); ctx.moveTo(a.x + 12, a.y - 5); ctx.quadraticCurveTo(a.x + 24, a.y - 3, a.x + 36 + fl * .6, a.y); ctx.quadraticCurveTo(a.x + 24, a.y + 3, a.x + 12, a.y + 5); ctx.fill(); if (a.x < p.x + a.ox - 46) ART.fxs(ctx, 'fist', a.x, a.y, 0); }
+    else if (a.k === 'cook') { ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(cl ? 0 : time * 7); ART.mg.draw(ctx, 'wafer', 0, 0, undefined, 1); ctx.restore(); }
     else if (a.k === 'coco') { ART.fxs(ctx, 'coco', a.x, a.y, time * 8); if (a.tg) { ctx.lineWidth = 2.4; ctx.strokeStyle = '#9be84a'; ctx.globalAlpha = 0.6 + 0.4 * Math.sin(time * 24); ctx.beginPath(); ctx.arc(a.x, a.y, a.r + 5, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; } }
     else if (a.k === 'wave') { ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(a.x - 22, GROUND_Y); ctx.quadraticCurveTo(a.x - 6, GROUND_Y - 62, a.x + 8, GROUND_Y - 46); ctx.quadraticCurveTo(a.x + 16, GROUND_Y - 20, a.x + 24, GROUND_Y); ctx.closePath(); fl = ctx.createLinearGradient(0, GROUND_Y - 62, 0, GROUND_Y); fl.addColorStop(0, '#fff8d0'); fl.addColorStop(0.6, '#ffd95a'); fl.addColorStop(1, '#f0a830'); ctx.fillStyle = fl; ctx.fill(); ctx.stroke();
       ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.beginPath(); ctx.moveTo(a.x - 12, GROUND_Y - 30); ctx.quadraticCurveTo(a.x - 4, GROUND_Y - 54, a.x + 4, GROUND_Y - 44); ctx.stroke();
@@ -3694,7 +3747,7 @@ function die() {
   
   if (pracN) { pracEnd = 'lose'; newBest = false; } else recordRun(); 
   setTimeout(persist, 400); setTimeout(function () { if (state === 'dead' && !pracN) { setBar(true); saveHint(); } }, 140);   // storage writes and a DOM change are slow on phones: never on the frame of the hit
-   ART.warm(themeOf(1));   // build the first stage's pictures while the Oops card shows, so the next try starts instantly
+   ART.warm(themeOf(1), true);   // build the first stage's pictures while the Oops card shows, so the next try starts instantly
   
 }
 var pumpCr = 0;
@@ -3714,7 +3767,7 @@ function fmtClk(t) { var m = Math.floor(t / 60), s = t - m * 60; return m + ':' 
 function drawClock(cx, ax) {   // the run timer under the pause button, with the last few split times under it
   var lh = opt('lefty'), n = Math.min(4, clkSp.length), i;
   outlinedC(fmtClk(clk), cx, 29 + PBR + 14, 16, '#ffffff');
-  for (i = 0; i < n; i++) { var e = clkSp[clkSp.length - n + i]; outlinedC(e[0] + ' ' + fmtClk(e[1]), ax !== undefined ? ax : lh ? 8 : W - 8, 29 + PBR + 33 + i * 15, 12.5, '#ffe9a0', lh ? 'left' : 'right'); }
+  for (i = 0; i < n; i++) { var e = clkSp[clkSp.length - n + i]; outlined(e[0] + ' ' + fmtClk(e[1]), ax !== undefined ? ax : lh ? 8 : W - 8, 29 + PBR + 33 + i * 15, 12.5, '#ffe9a0', lh ? 'left' : 'right'); }   // a finished split never changes: one picture per line
 }
 function stageUp() {
   var done = themeOf(stage); cardStage = stage; split('S' + stage); stage++; save.stats.friends += CFG.friendsPerStage;
@@ -3771,7 +3824,7 @@ function hits(o) {
 function update(dt) {
   if (shd.length) shardStep(dt);
   nightA = clamp(nightA + (nightLive() ? 1 : -1) * dt * 2.5, 0, 1);
-  if (state === 'play' || state === 'dead') { var fw = flipWant(); if (flipV !== fw) flipV = calmOn() ? fw : fw > flipV ? Math.min(1, flipV + dt / 0.9) : Math.max(0, flipV - dt / 0.9); }   // the flip takes under a second (at once in Calm mode)
+  if (state === 'play' || state === 'dead') { var fw = flipWant(); if (flipV !== fw && !((pendNext === 'mini' || pendNext === 'balloons' || pendNext === 'win') && !calmOn())) flipV = calmOn() ? fw : fw > flipV ? Math.min(1, flipV + dt / 0.9) : Math.max(0, flipV - dt / 0.9); }   // the flip takes under a second (at once in Calm mode)
   time += dt; if (state === 'launch' || state === 'play' || (state === 'mini' && MG && !MG.paused && MG.ph !== 'lose')) runSecs += dt; if (state === 'play' || (state === 'launch' && launchT >= 0) || (state === 'mini' && MG && !MG.paused && MG.ph !== 'lose')) clk += dt; if (flapAnim > 0) flapAnim -= dt; if (punchT > 0) punchT -= dt; if (whooshT > 0) whooshT -= dt; if (invuln > 0) invuln -= dt; if (flashT > 0) flashT -= dt; if (celT > 0) celT = Math.max(0, celT - dt);
   for (var ti = tapFx.length - 1; ti >= 0; ti--) { tapFx[ti].t += dt; if (tapFx[ti].t > 0.4) tapFx.splice(ti, 1); }
   for (var pi = pops.length - 1; pi >= 0; pi--) { pops[pi].t += dt; pops[pi].y -= 26 * dt; if (pops[pi].t > 1.1) pops.splice(pi, 1); }
@@ -3822,7 +3875,7 @@ function update(dt) {
     } else if (grace > 0) { grace -= dt; vy = 0; } else { vy = Math.min(CFG.maxFall, vy + CFG.gravity * (1 - 0.06 * lvl('gentle')) * dt); }
     // soft ceiling: Fancy may pop off the top of the screen for a moment, then is pulled back down (obstacles up there still hurt)
     if (by < 0) { topT += dt; if (topT > CFG.topFreeSecs) vy = Math.max(vy, CFG.topPull); } else topT = Math.max(0, topT - 2 * dt);
-    kBy0 = by; by += vy * dt; if (vy > 0 && grace <= 0) fallD += vy * dt; else fallD = 0; if (hurtT > 0) hurtT -= dt;
+    kBy0 = by; by += vy * dt; if (vy > 0 && grace <= 0) fallD += vy * dt; else fallD = 0; if (hurtT > 0) hurtT -= dt; if (bngT > 0) bngT -= dt;
     angle = clamp(vy / 700, -0.5, 1.1);
     if (rsgT < 0 || !rsgWait && rsgK >= 1) rsgK = 1; else if (!rsgWait) rsgK = Math.min(1, rsgK + dt / 0.45);
     var sp = (speedFor(stage) + boost) * (rsgK >= 1 ? 1 : rsgK * rsgK * (3 - 2 * rsgK)) * (VAULT && VAULT.kind === 'gold' ? 1.35 : 1) * (lvl('potassium') ? kStep(dt) : 1); if (boostT < CFG.boostSecs) { boostT += dt; boost = boostT >= CFG.boostSecs ? 0 : CFG.boostV * (0.5 + 0.5 * Math.cos(Math.PI * boostT / CFG.boostSecs)); }   // the blast-off speed eases away slowly and smoothly (no sudden slow-down)
@@ -3835,11 +3888,11 @@ function update(dt) {
     for (var i = 0; i < obs.length; i++) { obs[i].x -= sp * dt; if (obs[i].mv) obMove(obs[i], dt); }
     if (FT) ftStep(dt, sp); if (BAL) { if (washA > 0) washA = Math.max(0, washA - dt / 0.7); updateBalloons(dt, sp); } if (flagsOn()) flagStep(dt, sp);
     if (BALR && (rsgT < 0 || rsgT >= CFG.cardSecs)) BALR = null;
-    if (by + CFG.bananaR > GROUND_Y - 2) { by = GROUND_Y - CFG.bananaR; if (FT && FT.ph !== 'wait') { vy = -420; ftHit(); } else if (VAULT) { vy = VAULT.kind === 'drawer' ? -600 : -330; VAULT.bz = 1; burst(CFG.bananaX, by + 8, 8, ['#ffffff', '#ffd93b'], 120, 140); } else if (shield > 0) { shield--; boing(-CFG.bounceVy); } else { die(); return; } }
+    if (by + CFG.bananaR > GROUND_Y - 2) { by = GROUND_Y - CFG.bananaR; if (FT && FT.ph !== 'wait') { vy = -420; ftHit(); } else if (VAULT) { vy = VAULT.kind === 'drawer' ? -600 : -330; VAULT.bz = 1; burst(CFG.bananaX, by + 8, 8, ['#ffffff', '#ffd93b'], 120, 140); } else if (shield > 0) { shield--; boing(-CFG.bounceVy); } else if (bngT > 0) { bngT = 0; vy = -420; hurtT = 0.4; } else { die(); return; } }
     var bonk = null;
     for (i = 0; i < obs.length && !bonk; i++) { var o = obs[i]; if (((o.x < CFG.bananaX + CFG.bananaR && o.x + CFG.obW > CFG.bananaX - CFG.bananaR) || (o.waf && Math.abs(o.x + o.waf.dx - CFG.bananaX) < 44)) && hits(o)) bonk = o; }
     if (bonk && invuln <= 0) {
-      if (shield > 0) { shield--; boing(clamp((bonk.gt + bonk.gb) / 2 - by, -100, 100) * 5.2); }   // boing: Fancy springs toward the middle of the gap and flies on
+      if (shield > 0) { shield--; boing(boingV((bonk.gt + bonk.gb) / 2)); }   // boing: Fancy springs toward the middle of the gap and flies on
       else { die(); return; }
     }
     var warp = false;
@@ -3857,14 +3910,14 @@ function update(dt) {
         o.passed = true; score++; rateGate(o); if (o.gold && !VAULT) warp = true;
         if (score === gateStart(stage + 1)) { if (pracN) pracWin(); else stageUp(); }
         if (!pracN && runStartBest > 0 && score === runStartBest + 1) { pop('NEW BEST!', '#ffd93b', 26); burst(CFG.bananaX + 30, by, 22, ['#ffd93b', '#ffffff', '#ff6b81'], 240, 240); }   // past the old record
-        if (score - gateStart(stage) === 1) { if (themeOf(stage) === CFG.miniAfter) ART.mg.warm(); else if (themeOf(stage + 1) !== bgTheme) ART.warm(themeOf(stage + 1)); }   // build the next stage's pictures early (right after the first gate, in small steps), in a calm moment
+        if (score - gateStart(stage) === 1) { if (themeOf(stage) === CFG.finalTheme) warmFight(); if (themeOf(stage) === CFG.balAfter && save.unlocks.balloons && !pracN) ART.bal.warm(); if (themeOf(stage) === CFG.miniAfter) ART.mg.warm(); else if (themeOf(stage + 1) !== bgTheme) ART.warm(themeOf(stage + 1)); }   // build the next stage's pictures early (right after the first gate, in small steps), in a calm moment
         if (score - gateStart(stage) === 3) cardWarm();   // and the words for the stage card, one picture per frame, so the card does not land on one frame
       }
     }
     while (obs.length && obs[0].x + CFG.obW < -10) obs.shift();
     if (warp) startVault('gold');
     if (VAULT) vaultStep(dt, sp); else if (!rsgHold()) hugStep(dt);
-    while (nextX < W + CFG.obW + kLook() && !pendNext && !BAL && !VAULT && !FT) { if (runFight && fightDue()) { FT = ftNew(); split('Boss'); break; } spawnOb(nextX); }
+    while (nextX < W + CFG.obW + kLook() && !pendNext && !BAL && !VAULT && !FT) { if (runFight && fightDue()) { warmFight(); FT = ftNew(); split('Boss'); break; } spawnOb(nextX); }
     if ((pendNext === 'mini' || pendNext === 'balloons') && nextT > 0) washA = clamp(1 - nextT / 0.55, 0, 1) * (calmOn() ? 0.4 : 1);
     if (nextT > 0) { nextT -= dt; if (nextT <= 0) { if (pendNext === 'mini') startMini(); else if (pendNext === 'balloons') startBalloons(); else if (pendNext === 'win') startVictory(); } }
   } else if (state === 'paused') {
@@ -3894,7 +3947,7 @@ var MG_PB = [318, 30];   // where the pause button sits
 var MG_INTRO = 2.6;   // seconds the title and instructions show before Ready, Set, Go
 var mgDn = null;      // where the finger went down, relative to Fancy: a tap only leaps, a drag steers
 function startMini(practice) {
-  if (!practice) split('Water'); CFG.mgSpeed = MG_V0 * relaxK() * plusK(); var h = CFG.mgHearts + lvl('heart'); state = 'mini'; setBar(false); cardT = -1; pendNext = ''; nextT = 0; rsgT = -1; celT = 0; fx.length = 0; ART.warm(themeOf(stage));
+  flipV = 0; if (!practice) split('Water'); CFG.mgSpeed = MG_V0 * relaxK() * plusK(); var h = CFG.mgHearts + lvl('heart'); state = 'mini'; setBar(false); cardT = -1; pendNext = ''; nextT = 0; rsgT = -1; celT = 0; fx.length = 0; ART.warm(themeOf(stage));
   MG = { ph: 'intro', pt: 0, t: 0, scroll: 0, x: W / 2, y: CFG.mgY0, tx: W / 2, ty: CFG.mgY0, leap: -1, buf: 0, hearts: h, maxH: h, inv: 0, ents: [], plan: null, pi: 0, saved: 0, leaps: 0, slow: 0, practice: !!practice, wcd: 1.4, wc: 0, bonus: 0, wsh: lvl('wshield'), pl: 0, lh: h, lid: 0, lw: 0, lb: 0, pay: null, off: 0, boss: null, bossDone: false, cove: 70 + rng() * 220, coveHit: false, life: [], lifeAt: 0 };
   MG.plan = mgPlan();
 }
@@ -4095,12 +4148,15 @@ function mgPointerDown(e) {   // a mouse click leaps where the mouse is; a finge
   if (MG && MG.practice && (MG.paused || mgCard(MG))) { if (mgIn(l, MG_BT)) { practiceExit(); return; } if (!MG.paused && mgIn(l, MG_BA)) { startMini(true); return; } if (!MG.paused) return; }   // practice: the card's two buttons
   if (MG && MG.paused) { MG.paused = false; return; }   // a tap anywhere carries on
   if (MG && mgOnBtn(l)) { mgPause(true); return; }
-  mgDn = { ox: MG ? MG.x - l[0] : 0, oy: MG ? MG.y - l[1] : 0 };
-  if (e.pointerType === 'mouse') mgPoint(e); miniTap();
+  mgDn = { ox: MG ? MG.x - l[0] : 0, oy: MG ? MG.y - l[1] : 0, x0: l[0], y0: l[1], t0: performance.now(), moved: false, tap: false };
+  if (e.pointerType === 'mouse') { mgPoint(e); miniTap(); return; }
+  if (MG && MG.ph === 'play' && !MG.paused) { mgDn.tap = true; return; }   // a finger: a tap leaps when it lifts, a drag only steers (a leap the moment a finger touched down made every drag a leap)
+  miniTap();
 }
 function mgPoint(e) {
   if (state !== 'mini' || !MG) return;
   var l = mgLogical(e); if (MG.paused || mgOnBtn(l)) return;   // reaching for the pause button does not steer him
+  if (mgDn && !mgDn.moved && (l[0] - mgDn.x0) * (l[0] - mgDn.x0) + (l[1] - mgDn.y0) * (l[1] - mgDn.y0) > 64) mgDn.moved = true;
   var ox = e.pointerType === 'mouse' || !mgDn ? 0 : mgDn.ox, oy = e.pointerType === 'mouse' || !mgDn ? 0 : mgDn.oy;
   MG.tx = clamp(l[0] + ox, 24, W - 24); MG.ty = clamp(l[1] + oy, CFG.mgYmin, CFG.mgYmax);
 }
@@ -4269,6 +4325,7 @@ function recordRun() {
 
 /* ===== The finale: Prince Chimp is beaten. The player chooses to keep their upgrades and banana credits, or start fresh. Either way the game is exactly as hard as before. ===== */
 function startVictory() {
+  flipV = 0;
   var s = save.stats, secs = Math.max(1, Math.round(runSecs)), pz = runPauses;
   if (fightNew) { toast(fightNew, 6000); fightNew = ''; }
   if (badgeNew) { toast('Challenge badge earned: ' + badgeNew + '! New scarf and mask colors are in Costume.', 7000); badgeNew = ''; }
@@ -4347,6 +4404,7 @@ function balPlan() {
   p.sort(function (a, b) { return a.t - b.t; }); return p;
 }
 function startBalloons() {
+  flipV = 0; ART.bal.warm();
   state = 'play'; pendNext = ''; nextT = 0; cardT = -1; celT = 0; obs = []; fx.length = 0; trail.length = 0; fl.length = 0; pops.length = 0; shd.length = 0;
   split('Balloons'); BAL = { t: 0, ph: 'play', plan: balPlan(), pi: 0, list: [], popped: 0, total: 0, combo: 0, comboT: 0, coins: 0, pw: [] }; BAL.total = BAL.plan.length;
   rsgT = 0; rsgGo = false; rsgTap = false; vy = 0; grace = 0; boost = 0; boostT = 99; trackOn = false; invuln = 0; spinT = 0; by = CFG.rsgY; bx = CFG.bananaX; washA = calmOn() ? 0.4 : 1;
@@ -4601,10 +4659,10 @@ function tickerStrip() {
   for (i = 0; i < TKLIST.length; i++) { g2.fillText(TKLIST[i] + TSEP, x, 17); x += tickW[i]; }
   TKS = c; TKK = kk;
 }
-function tickerBlit() {   // whole device pixels, 1:1, so nothing is resampled
+function tickerBlit() {   // scrolls by the smooth clock (the time plus the part of a physics step not yet run), at any fraction of a pixel: whole-pixel steps from an uneven clock made the words judder
   if (!TKS || TKK !== k) tickerStrip();
-  var vw = Math.round(250 * k), sw = Math.round(tickSum * k), sx = Math.round((((time * 52 - 8) % tickSum) + tickSum) % tickSum * k), dx = Math.round(88 * k) / k, dy = Math.round(12 * k) / k, h = TKS.height, a = Math.min(vw, sw - sx);
-  ctx.drawImage(TKS, sx, 0, a, h, dx, dy, a / k, h / k);
+  var vw = Math.round(250 * k), sw = Math.round(tickSum * k), tm = time + Math.min(acc, 0.05), sx = ((((tm * 52 - 8) % tickSum) + tickSum) % tickSum) * k, dx = Math.round(88 * k) / k, dy = Math.round(12 * k) / k, h = TKS.height, a = Math.min(vw, sw - sx);
+  ctx.imageSmoothingEnabled = true; ctx.drawImage(TKS, sx, 0, a, h, dx, dy, a / k, h / k);
   if (a < vw) ctx.drawImage(TKS, 0, 0, vw - a, h, dx + a / k, dy, (vw - a) / k, h / k);
 }
 function drawTicker() {
@@ -4893,7 +4951,22 @@ function letterPics() {
 }
 var TTK = 0.0;   // extra letter spacing on the title, as a share of the type size
 var LDIR = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+var TWB = null;   // the finished title word (letters, shadow, the lean) baked into one picture: 30 rotated stamps and a gradient every frame for a word that no longer moves
 function drawTitleWord() {
+  if (titleT > 2.3) {
+    var L0 = letterPics();
+    if (L0.length && (!TWB || TWB.k !== k || TWB.L !== L0)) {
+      var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, i, q, c, g2, old = ctx, ok;
+      for (i = 0; i < L0.length; i++) { q = L0[i]; x0 = Math.min(x0, q.x); y0 = Math.min(y0, q.y); x1 = Math.max(x1, q.x + q.w); y1 = Math.max(y1, q.y + q.h); }
+      x0 = Math.floor(Math.min(x0, 134) - 30); y0 = Math.floor(Math.min(y0, 232) - 30); x1 = Math.ceil(Math.max(x1, 358) + 30); y1 = Math.ceil(Math.max(y1, 270) + 30);
+      c = document.createElement('canvas'); c.width = Math.ceil((x1 - x0) * k); c.height = Math.ceil((y1 - y0) * k); g2 = c.getContext('2d', CRF);
+      if (g2) { g2.setTransform(k, 0, 0, k, -x0 * k, -y0 * k); ctx = g2; try { ok = titleWordLive(); } finally { ctx = old; } TWB = ok ? { c: c, x: x0, y: y0, w: x1 - x0, h: y1 - y0, k: k, L: L0 } : null; }
+    }
+    if (TWB && TWB.k === k && TWB.L === L0) { ctx.drawImage(TWB.c, TWB.x, TWB.y, TWB.w, TWB.h); return true; }
+  }
+  return titleWordLive();
+}
+function titleWordLive() {
   var L = letterPics(), i, q, t, u, e, dx, dy, rot, sx, sy, dir, n = L.length, landed = 0, cxp, cyp, sh;
   ctx.save(); ctx.translate(150, 236); ctx.rotate(-0.035); ctx.translate(-150, -236);   // the whole word leans -2 degrees from its lower left, like a sticker slapped on slightly crooked
   if (n) { sh = ctx.createRadialGradient(246, 252, 4, 246, 252, 112); sh.addColorStop(0, 'rgba(40,24,60,.38)'); sh.addColorStop(1, 'rgba(40,24,60,0)'); ctx.save(); ctx.globalAlpha = clamp((titleT - 0.5) / 1.5, 0, 1); ctx.translate(246, 252); ctx.scale(1, .16); ctx.translate(-246, -252); ctx.fillStyle = sh; ctx.beginPath(); ctx.arc(246, 252, 112, 0, 7); ctx.fill(); ctx.restore(); }   // a soft ground shadow under the word (the extruded sides give the hard edge)
@@ -4931,8 +5004,9 @@ function blinkOff() { return invuln > 0 && spinT <= 0 && !calmOn() && Math.floor
 var barTk = false;
 function render() {
   var tk = state === 'title' && !opt('noticker'); if (tk !== barTk) { barTk = tk; bar.classList.toggle('tk', tk); }   // the buttons on the title screen sit below the news ticker
-  TXF++; if (PR) prT = performance.now();
+  TXF++; if (PR) prT = performance.now(); if (TKS && state !== 'title') TKS = null;   // the news strip is a big picture only the title screen uses
   ctx.setTransform(k, 0, 0, k, 0, 0); ctx.globalAlpha = 1;
+  var cw = (FBforce ? FBforce === 'css' : FBff) && flipSX() === -1; if (cw !== cssF) { cssF = cw; cv.style.transform = cw ? 'scaleX(-1)' : ''; }
   if (state === 'mini' && MG) { renderMini(); return; }
   var i, pe = punchT > 0 && !calmOn() ? punchT / CFG.punchSecs : 0;
   if (pe > 0) { var sh = pe * pe * 6 * Math.sin(time * 90); ctx.save(); ctx.translate(Math.round(sh * k) / k, Math.round(sh * 0.6 * k) / k); }   // camera shake at the blast off: a plain slide (a zoom would re-scale every picture on screen, which stalled Firefox and phones)
@@ -4947,14 +5021,14 @@ function render() {
   if (BAL || shd.length) drawBalloons(); if (FT && FT.ph !== 'wait') drawFight();
   lap('obstacles'); drawCoins(); lap('coins'); if (ex) for (i = 0; i < obs.length; i++) obs[i].x += ex;
   var zm = zoomOn();
-  if (state === 'ready' || state === 'gift' || state === 'launch' || (state === 'play' && trackOn)) ART.track(ctx, trackX, calmOn() ? time * 0.15 : time, state === 'launch' ? Math.max(0, launchT) / CFG.launchSecs : 0, bgTheme);
+  if (state === 'ready' || state === 'gift' || state === 'launch' || (state === 'play' && trackOn)) ART.track(ctx, trackX, calmOn() ? time * 0.15 : time, state === 'launch' ? Math.max(0, launchT) / CFG.launchSecs : 0, bgTheme, state === 'ready');
   if (zm) ctx.restore();
   lap('track'); drawGround(); lap('ground'); if (fl1) flipBlit(); if (ex) dist -= ex;
   if (bgT < 1) { ctx.globalAlpha = Math.min(calmOn() ? 0.4 : 0.92, (bgT < 0.5 ? bgT : 1 - bgT) * 2.6); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }   // the fade through white washes the scene only: the card, Fancy and the confetti stay clear
   if (ftStill > 0 && ftStill < 1) { ctx.globalAlpha = Math.min(calmOn() ? 0.4 : 0.92, (ftStill < 0.5 ? ftStill : 1 - ftStill) * 2.6); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }   // the arena fades in through white, like a new stage
   if (state === 'title') { var fi = titleFancyIn(); if (fi > 0) { var fz = 1 + 2.6 * (1 - easeOutBack(fi)); ctx.globalAlpha = clamp(fi * 3, 0, 1); drawFancy(62 + 14 * easeOutBack(fi), 204 + TOFF + Math.sin(time * 4) * 6, -0.1 + Math.sin(time * 4) * 0.05 - (1 - fi) * 0.9 + Math.sin(time * 45) * 0.2 * museW, 1.25 * Math.max(.2, fz)); ctx.globalAlpha = 1; } }
   else {
-    if (cardT >= 0 && state === 'play') { if (mir) { ctx.save(); ctx.translate(0, H); ctx.scale(1, -1); } stageCard(); if (mir) ctx.restore(); lap('card'); }   // drawn before Fancy, so Fancy always stays in view
+    if (cardT >= 0 && state === 'play') { if (mir) { ctx.save(); ctx.translate(0, H); ctx.scale(1, -1); } hudM(1); stageCard(); hudM(0); if (mir) ctx.restore(); lap('card'); }   // drawn before Fancy, so Fancy always stays in view
     fl2 = flipB();   // ...and so are Fancy, his trail and the sparkles (the stage card, the counters and every word are not)
     zm = zoomOn(); drawTrail(); if ((state === 'play' || state === 'paused') && flagsOn()) drawFlags(); if ((state === 'play' || state === 'paused') && bunchOn()) drawBuddies(); lap('trail'); drawSpeedLines(); lap('speedlines');
     if (kEcho.length && !zm) kEchoes();
@@ -4965,11 +5039,12 @@ function render() {
   zm = zoomOn(); drawFx(); if (zm) ctx.restore();
   if (fl2) ctx.restore();
   if (mir) ctx.restore();
+  hudM(1);
   if (nightA > 0.01) drawNight();
   lap('fx'); drawHug(); drawPops(); drawCount(); drawRSG(); drawTaps(); lap('pops');
   if (state === 'gift') drawGift(); else if (state === 'play') { if (BAL) balIntro(); if (FT) ftCards(); if (BALR && rsgT >= 0 && rsgT < CFG.cardSecs) balResultCard(); }
   if (whooshT > 0) { ctx.globalAlpha = clamp(whooshT / 0.5, 0, 1); outlined('WHOOSH!', 190, mirY(by) - 52 - (0.9 - whooshT) * 40, 34, '#ffd93b'); ctx.globalAlpha = 1; }
-  if (pe > 0) ctx.restore();
+  hudM(0); if (pe > 0) ctx.restore(); hudM(1);
   if (flashT > 0) { ctx.globalAlpha = 0.6 * flashT / 0.25; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
   if (state === 'play' && by < 0) {   // Fancy is above the top edge: show where he is and that he is being called back
     var w = clamp(topT / CFG.topFreeSecs, 0, 1);
@@ -5013,6 +5088,7 @@ function render() {
   } else if (state === 'victory') {
     victoryCard(); drawFx();
   }
+  hudM(0);
 }
 
 
@@ -5021,7 +5097,7 @@ function resize() {
   var s = Math.min(aw / W, ah / H), cssW = Math.floor(W * s), cssH = Math.floor(H * s);
   stageEl.style.width = cssW + 'px'; stageEl.style.height = cssH + 'px'; stageEl.style.setProperty('--u', s + 'px');
   dpr = Math.min(devicePixelRatio || 1, dprMax || 2);   // dprMax is lowered by the quality governor
-  cv.width = Math.max(1, Math.round(cssW * dpr)); cv.height = Math.max(1, Math.round(cssH * dpr)); k = cv.width / W; TXC = {}; TXN = 0; FXS = {};
+  var nw = Math.max(1, Math.round(cssW * dpr)), nh = Math.max(1, Math.round(cssH * dpr)); if (nw !== cv.width || nh !== cv.height) { cv.width = nw; cv.height = nh; TXC = {}; TXN = 0; FXS = {}; } k = cv.width / W;   // a resize that changes nothing (a phone's address bar) must not throw away every word picture
   var ak = Math.min(k, CFG.artScaleMax);   // art pictures are built at most this sharp, to save memory on big screens
   if (ak !== artK) { artK = ak; ART.init(ak); }
 }
@@ -5036,7 +5112,7 @@ addEventListener('resize', function () {
 var PB = [326, 30];   // the pause button (top right while flying)
 cv.addEventListener('pointerdown', function (e) { e.preventDefault(); if (e.button === 0) kHeld.ptr = true; var pl = mgLogical(e); if (!panelOpen() && ((state === 'paused' && resT < 0) || (state === 'mini' && MG && MG.paused)) && mgIn(pl, PS_BT)) { refreshSet(); openPanel(pSet); return; } if (pracN && !panelOpen() && ((state === 'dead' && deadT >= CFG.retryDelay) || (state === 'paused' && resT < 0)) && mgIn(pl, MG_BT)) { practiceExit(); return; } if (state === 'play' && Math.abs(pl[0] - PB[0]) < PBR + 8 && Math.abs(pl[1] - PB[1]) < PBR + 8) { onHidden(); return; } if (state === 'title' && museHit(pl)) return; if (contCan() && stage > 1 && mgIn([pl[0], pl[1] - DOFF], DC_B)) { payContinue(); return; } if (state === 'mini') mgPointerDown(e); else { if (state === 'play' || state === 'ready' || state === 'launch' || state === 'paused') tapRipple(pl[0], pl[1], tapIgnored()); onAction(); } });
 cv.addEventListener('pointermove', function (e) { if (state === 'mini' && (e.pointerType === 'mouse' || e.buttons)) mgPoint(e); });
-addEventListener('pointerup', function () { kHeld.ptr = false; }); addEventListener('pointermove', function (e) { if (kHeld.ptr && !e.buttons) kHeld.ptr = false; }); addEventListener('pointercancel', function () { kHeld.ptr = false; }); addEventListener('blur', function () { kHeld.ptr = kHeld.key = kHeld.pad = false; });
+addEventListener('pointerup', function () { kHeld.ptr = false; if (mgDn && mgDn.tap && !mgDn.moved && state === 'mini' && MG && MG.ph === 'play' && !MG.paused && performance.now() - mgDn.t0 < 450) mgLeap(); mgDn = null; }); addEventListener('pointermove', function (e) { if (kHeld.ptr && !e.buttons) kHeld.ptr = false; }); addEventListener('pointercancel', function () { kHeld.ptr = false; mgDn = null; }); addEventListener('blur', function () { kHeld.ptr = kHeld.key = kHeld.pad = false; });
 addEventListener('keydown', function (e) {
   if (e.key === ' ') kHeld.key = true;
   if (e.key === 'Escape') { if (pracN && (state === 'dead' || state === 'paused') && !panelOpen()) { practiceExit(); return; } if (state === 'mini' && MG && MG.practice && (MG.paused || mgCard(MG))) practiceExit(); else closePanels(); return; }
@@ -5165,11 +5241,16 @@ function softFail(e) {   // a canvas could not be made (memory ran out): build t
   if (!/canvas-memory|null/.test(String(e && e.message)) || artDown >= 3 || CFG.artScaleMax <= 1) return;
   artDown++; CFG.artScaleMax = Math.max(1, CFG.artScaleMax * 0.75); artK = 0; try { resize(); } catch (e2) { }
 }
+function drawGap() {   // how long to leave the picture alone: under an opaque window nobody sees it change, and a settled Oops card hardly moves
+  var g = opt('saver') ? 28 : 0;
+  if (state !== 'play' && panelOpen()) g = Math.max(g, 120); else if (state === 'dead' && deadT > 1.5) g = Math.max(g, 66);
+  return g;
+}
 function frame(t) {
   requestAnimationFrame(frame);
   if (!autoRun) { last = t; return; }
   var fs = performance.now(), ri = t - last, dt = Math.min(0.05, evenDt(ri) / 1000 || 0), p0 = REC ? fs : 0; last = t; acc += dt; wlSync(); govStep(ri, t); if (padOn || padTest) padStep();
-  try { while (acc >= CFG.step) { update(CFG.step); acc -= CFG.step; } var p1 = REC ? performance.now() : 0, still = washA <= 0 && ((state === 'paused' && resT < 0) || (state === 'mini' && MG && MG.paused)); if (!(still && stillDrawn) && !(opt('saver') && t - lastDraw < 28)) { renders++; lastDraw = t; render(); stillDrawn = still; if (washA > 0) { ctx.globalAlpha = washA; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; } }   /* a paused game does not change: draw it once, then rest (saves battery and heat); the Battery saver draws at most every 28 ms */ if (TEXTQ.length) { var tq = TEXTQ.shift(); delete TXP[tq[3]]; textPic(tq[0], tq[1], tq[2]); }  if (renders > 1) pumpFrame(fs); /* background art building only when this frame was cheap (or every 4th frame at the latest), so a slow phone is not made slower right when it struggles */ if (REC) REC(t, dt, p1 - p0, performance.now() - p1); } catch (e) { logError('frame', e); acc = 0; softFail(e); }
+  try { while (acc >= CFG.step) { update(CFG.step); acc -= CFG.step; } var p1 = REC ? performance.now() : 0, still = washA <= 0 && ((state === 'paused' && resT < 0) || (state === 'mini' && MG && MG.paused)); if (!(still && stillDrawn) && !(t - lastDraw < drawGap())) { renders++; lastDraw = t; render(); stillDrawn = still; if (washA > 0) { ctx.globalAlpha = washA; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; } }   /* a paused game does not change: draw it once, then rest (saves battery and heat); the Battery saver draws at most every 28 ms */ if (TEXTQ.length) { var tq = TEXTQ.shift(); delete TXP[tq[3]]; textPic(tq[0], tq[1], tq[2]); }  if (renders > 1) pumpFrame(fs); /* background art building only when this frame was cheap (or every 4th frame at the latest), so a slow phone is not made slower right when it struggles */ if (REC) REC(t, dt, p1 - p0, performance.now() - p1); } catch (e) { logError('frame', e); acc = 0; softFail(e); }
 }
 requestAnimationFrame(frame);
 

@@ -1,8 +1,8 @@
-# Fancy, the Banana (alpha)
+# Fancy, the Banana (beta)
 
 A cartoony one-tap arcade game: guide a small flying banana through gaps without touching anything. Tap, click, or press Space to flap.
 
-**Alpha:** this is an early test version. Things will change, and progress may be reset between versions.
+**Beta:** the game is feature-complete and now being polished and tested. Small things will still change between versions.
 
 - Plays in any modern browser, on a laptop or a phone. One file, works offline, no sign-in, nothing leaves your device.
 - Fancy is a SuperBanana (a real 3D toy in the Apple Press look) with a hero mask, a scarf and two red-cuffed white gloves up front. Evil Prince Chimp has taken the banana friends; clear a stage (ten gates) and five of them escape.
