@@ -788,9 +788,12 @@ function hand(g, x, y, open, rot, flip) {   // flip: the hand on the other side 
 function boss(g, n, cx, cy, pose) {   // pose (optional): the gorilla's arm angles r, l; the Prince's scepter tilt s, flash f and free hand (tx, ty, open)
   var q = pose || {};
   if (n === 4 && q.tx !== undefined && Math.abs(q.tx - 46) + Math.abs(q.ty - 34) > 2) {   // the throwing arm comes out from behind his cape and over his head: a stretchy cartoon arm drawn behind the body
-    var ax = cx + 30, ay = cy + 10, hx = cx + q.tx, hy = cy + q.ty, qx = cx + 58, qy = Math.min(ay, hy) - 22;
-    g.save(); g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath(); g.moveTo(ax, ay); g.quadraticCurveTo(qx, qy, hx, hy);
-    g.strokeStyle = OUTK; g.lineWidth = 16; g.stroke(); g.strokeStyle = '#c28652'; g.lineWidth = 11; g.stroke(); g.strokeStyle = 'rgba(255,225,185,.55)'; g.lineWidth = 3.2; g.save(); g.translate(-1.5, -2); g.stroke(); g.restore(); g.restore();
+    var ax = cx + 30, ay = cy + 10, hx = cx + q.tx, hy = cy + q.ty, dx = hx - ax, dy = hy - ay, d = Math.sqrt(dx * dx + dy * dy) || 1, L = 42, hh = Math.sqrt(Math.max(0, L * L - Math.min(d, 2 * L - 2) * Math.min(d, 2 * L - 2) / 4)), mx = (ax + hx) / 2, my = (ay + hy) / 2, nx = dy / d, ny = -dx / d, ex, ey;
+    if (nx - ny * 0.5 < 0) { nx = -nx; ny = -ny; }   // the elbow bends out and up, away from the body
+    if (d > 2 * L - 2) { hx = ax + dx * (2 * L - 2) / d; hy = ay + dy * (2 * L - 2) / d; mx = (ax + hx) / 2; my = (ay + hy) / 2; }   // never longer than a real arm: the hand is kept within reach
+    ex = mx + nx * hh; ey = my + ny * hh;
+    g.save(); g.lineCap = 'round'; g.lineJoin = 'round'; g.beginPath(); g.moveTo(ax, ay); g.lineTo(ex, ey); g.lineTo(hx, hy);
+    g.strokeStyle = OUTK; g.lineWidth = 21; g.stroke(); g.strokeStyle = '#c28652'; g.lineWidth = 16; g.stroke(); g.strokeStyle = 'rgba(255,225,185,.5)'; g.lineWidth = 4; g.save(); g.translate(-2, -2.5); g.stroke(); g.restore(); g.restore();
   }
   put(g, bossPic(n).c, cx - 110, cy - 124);
   if (n === 3) { bossTurn(g, 3, 'l', cx + 30, cy + 10, q.l || 0); bossTurn(g, 3, 'r', cx - 33, cy + 8, q.r || 0); put(g, bossPart(3, 'head').c, cx - 110, cy - 124); }
@@ -946,9 +949,9 @@ function arenaLive(g, cr) {
       s = ARS[i]; if (s.t !== t) continue;
       md = cr.t >= s.d ? cr.m : cr.p; p = A.sp[s.c + '|' + md + '|' + t]; y = ARTY[t] + 1;
       bob = md === 1 ? -Math.abs(Math.sin(tm * 8.5 + s.j)) * (5 + t * 1.6) : md === 0 ? 0 : md === 2 ? 2 + Math.sin(tm * 1.4 + s.j) * .6 : 2 + Math.sin(tm * 17 + s.j) * .8;
-      putS(g, p.c, s.x - 43 * [.74, .88, 1][t], y + bob - 76 * [.74, .88, 1][t]);
+      put(g, p.c, s.x - 43 * [.74, .88, 1][t], y + bob - 76 * [.74, .88, 1][t]);   // whole device pixels: a picture at a fraction of a pixel is resampled, which costs several times more in Firefox
     }
-    g.drawImage(A.logs[t].c, -10, ARTY[t] - 14, A.logs[t].c.width / K, A.logs[t].c.height / K);
+    put(g, A.logs[t].c, -10, ARTY[t] - 14);
   }
   if (A.front) put(g, A.front.c, 0, 0); else { put(g, A.fl.c, 0, 0); put(g, A.fr.c, W - 140, 0); }
   return true;
@@ -2728,6 +2731,7 @@ var bar = $('bar'), toastEl = $('toast');
 var pWin = $('pWin'), pHelp = $('pHelp'), pWear = $('pWear'), pUp = $('pUp'), pSet = $('pSet'), pPrac = $('pPrac'), pMuse = $('pMuse'), pChal = $('pChal'), bar2 = $('bar2'), pSave = $('pSave'), codeEl = $('code'), saveMsg = $('saveMsg'), bConfirm = $('bConfirm'), fileEl = $('file');
 var toastTimer = 0;
 function toast(t, ms) { toastEl.textContent = t; toastEl.classList.add('on'); clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove('on'); }, ms || 3200); }
+function coverOpen() { return !pHelp.hidden || !pSave.hidden || !pWear.hidden || !pUp.hidden || !pSet.hidden || !pPrac.hidden || !pMuse.hidden || !pChal.hidden; }   // a window that hides the picture (the win window sits at the bottom and leaves the victory card in view)
 function panelOpen() { return !pWin.hidden || !pHelp.hidden || !pSave.hidden || !pWear.hidden || !pUp.hidden || !pSet.hidden || !pPrac.hidden || !pMuse.hidden || !pChal.hidden; }
 function closePanels() { pHelp.hidden = true; pSave.hidden = true; pWear.hidden = true; pUp.hidden = true; pSet.hidden = true; pPrac.hidden = true; pMuse.hidden = true; pChal.hidden = true; pending = null; bConfirm.hidden = true; }
 function fmtTime(s) { var m = Math.floor(s / 60); return m < 1 ? s + ' s' : m + ' min ' + (s % 60) + ' s'; }
@@ -3318,7 +3322,7 @@ function wearsCrown() { var u = save.unlocks; return !!u.crown && !u.crownOff; }
 function fightDue() { var gs = stageOfGate(spawned); return themeOf(gs) === CFG.finalTheme && spawned === gateStart(gs + 1) - 2; }
 function ftNew() { return { n: runFight, ph: 'wait', r: 0, rt: 0, t: 0, hold: 0, nx: 0, list: [], hits: 0, cc: 0, h0: 0, c0: 0, blast: null, lm: 2 * lvl('limes'), lt: 0, limes: [], zaps: 0, by: runFight === 3 ? GROUND_Y - 92 : 300, pc: 0, slide: 0, shake: 0, hop: 0, kick: 0, rc: 9, rw: 9, rf: 9, rcl: 9, rerun: runFight === 4 && pcBeaten(4), hp: null, pose: null }; }
 /* Where each boss lets its attacks out, relative to its center: the cannon barrel, the robot's arm and chest lamp, the gorilla's raised fist and feet, the Prince's scepter orb and hand. Nothing ever appears in mid air: an attack starts here, and the boss first lines itself up with where the attack will fly. */
-var FT_MZ = { 1: { waf: [-62, 25] }, 2: { fist: [-52, 30], lane: [-22, 28] }, 3: { coco: [-62, -41], wave: [-30, 90] }, 4: { waf: [-50, -36], lane: [-50, -36], coco: [-20, -99], cook: [0, 0] } };
+var FT_MZ = { 1: { waf: [-62, 25] }, 2: { fist: [-52, 30], lane: [-22, 28] }, 3: { coco: [-62, -41], wave: [-30, 90] }, 4: { waf: [-50, -36], lane: [-50, -36], coco: [-4, -73], cook: [0, 0] } };
 var FT_BMIN = 150, FT_BMAX = GROUND_Y - 95;
 function ftBoss(F) { return { x: FT_BX + (1 - ss(F.slide)) * 160 + F.kick * 5, y: F.by + (calmOn() || F.n === 3 ? 0 : Math.sin(time * 1.6) * 6) - F.hop }; }
 function ftMk(F, k, o) { var m = FT_MZ[F.n][k]; o.k = k; o.ox = m[0]; o.oy = m[1]; o.live = false; o.d0 = o.d; F.list.push(o); }
@@ -3535,7 +3539,7 @@ function ftPose(F) {   // how the gorilla's arms and the Prince's hands and scep
     q = { r: r, l: (s > 0 ? -2.6 * s : -0.1 * s) - 0.22 * w };
     F.hp = [-33 + -29 * Math.cos(r) + 49 * Math.sin(r), 8 + -29 * Math.sin(r) - 49 * Math.cos(r)];
   } else if (n === 4) {
-    u = ftU(F, 'coco', 0.5); var idle = [46, 34, 0], back = [64, -46, 0.55], rel = [-20, -84, -1.15], fol = [-62, -34, -1.9], hp, lerp3 = function (a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; };   // an overhand throw: the hand rises up behind his shoulder, whips over his head (fingers leading, thumb down) and follows through; the arm stays behind his head
+    u = ftU(F, 'coco', 0.5); var idle = [46, 34, 0], back = [60, -30, 0.55], rel = [-4, -58, -1.15], fol = [-46, -14, -1.9], hp, lerp3 = function (a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; };   // an overhand throw: the hand rises up behind his shoulder, whips over his head (fingers leading, thumb down) and follows through; the arm stays behind his head
     if (u >= 0) hp = u < 0.62 ? lerp3(idle, back, ss(u / 0.62)) : lerp3(back, rel, ss((u - 0.62) / 0.38));
     else if (F.rc < 0.35) hp = lerp3(rel, fol, ss(F.rc / 0.35)); else if (F.rc < 0.9) hp = lerp3(fol, idle, ss((F.rc - 0.35) / 0.55)); else hp = idle;
     var cu = ftU(F, 'cook', 0.7);   // the clap: the free hand rises, then sweeps across to meet the hand that holds the scepter
@@ -3613,9 +3617,10 @@ function drawPieces(g, cx, cy, s) {   // the three crown pieces (lit once earned
 function drawBlast(F) {   // the encouraging word: it pops in with a bounce, sits with slowly turning rays behind it, then fades
   var B = F.blast, t = B.t, cl = calmOn(), sc = cl ? 1 : easeOutBack(clamp(t / 0.4, 0, 1)), al = clamp((2.1 - t) / 0.5, 0, 1), i, an;
   ctx.save(); ctx.translate(W / 2, 250); ctx.globalAlpha = al * 0.9;
-  if (!cl) { ctx.rotate(t * 0.5); ctx.fillStyle = B.f ? 'rgba(255,236,140,0.2)' : 'rgba(255,255,255,0.13)'; for (i = 0; i < 12; i++) { an = i * 0.5236; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, 220 * sc, an, an + 0.13); ctx.closePath(); ctx.fill(); } ctx.rotate(-t * 0.5); }
-  ctx.globalAlpha = al; ctx.scale(sc, sc); if (!cl) ctx.rotate(-0.07);
-  outlined(B.w, 0, 0, B.f ? 46 : 40, B.c, 'center', B.f ? 46 : 40); outlined(B.s, 0, 36, 17, '#ffffff', 'center', 17);
+  if (!cl) { ctx.save(); ctx.rotate(t * 0.5); ctx.fillStyle = B.f ? 'rgba(255,236,140,0.2)' : 'rgba(255,255,255,0.13)'; ctx.beginPath(); for (i = 0; i < 12; i++) { an = i * 0.5236; ctx.moveTo(0, 0); ctx.lineTo(Math.cos(an) * 220 * sc, Math.sin(an) * 220 * sc); ctx.lineTo(Math.cos(an + 0.13) * 220 * sc, Math.sin(an + 0.13) * 220 * sc); ctx.closePath(); } ctx.fill(); ctx.restore(); }
+  ctx.globalAlpha = al;
+  if (sc === 1) stillDraw('blast' + B.f + '|' + B.w + '|' + B.s + '|' + B.c, -170, -70, 340, 140, function () { ctx.save(); if (!cl) ctx.rotate(-0.07); outlined(B.w, 0, 0, B.f ? 46 : 40, B.c, 'center', B.f ? 46 : 40); outlined(B.s, 0, 36, 17, '#ffffff', 'center', 17); ctx.restore(); });   // settled: the tilted word is one picture stamped on whole device pixels (a turned picture is resampled every frame)
+  else { ctx.scale(sc, sc); if (!cl) ctx.rotate(-0.07); outlined(B.w, 0, 0, B.f ? 46 : 40, B.c, 'center', B.f ? 46 : 40); outlined(B.s, 0, 36, 17, '#ffffff', 'center', 17); }
   ctx.restore(); ctx.globalAlpha = 1;
 }
 function drawFtHud() {   // three round segments, each with a star at its end that lights when that round is survived
@@ -5293,7 +5298,7 @@ function softFail(e) {   // a canvas could not be made (memory ran out): build t
 }
 function drawGap() {   // how long to leave the picture alone: under an opaque window nobody sees it change, and a settled Oops card hardly moves
   var g = opt('saver') ? 28 : 0;
-  if (state !== 'play' && panelOpen()) g = Math.max(g, 120); else if (state === 'dead' && deadT > 1.5) g = Math.max(g, 66);
+  if (state !== 'play' && coverOpen()) g = Math.max(g, 120); else if (state === 'dead' && deadT > 1.5) g = Math.max(g, 66);
   return g;
 }
 function frame(t) {
