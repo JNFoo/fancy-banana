@@ -2578,7 +2578,7 @@ return { get tlast() { return TLAST; }, tbmax: TBMAX, arena: { draw: arenaDraw, 
 (function () {
 'use strict';
 var PHASE = 'beta';
-var STAMP = '2026.10.10.2338';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.2346';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 JNFoo. All Rights Reserved.';
 
@@ -4946,26 +4946,34 @@ function easeOutBounce(x) { var n = 7.5625, d = 2.75; if (x < 1 / d) return n * 
 function easeOutBack(x) { var c1 = 1.9, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }
 function letterPics() {
   if (TTL && TTLK === k) return TTL;
-  var lines = [{ t: 'Fancy,', size: 54, x: 150, y: 168, face: ['#ffc21f', '#f2a10a', '#d17f06'], side: '#ffe680' }, { t: 'the Banana', size: 38, x: 150, y: 228, face: ['#ff8a80', '#f0483f', '#c81e36'], side: '#7a1224' }], out = [], kk = k, c0 = document.createElement('canvas').getContext('2d'), li, ln, i, n = 0, wd, sz, px, pad, w, h, c, g2, dep, d;
+  var lines = [{ t: 'Fancy,', size: 54, x: 150, y: 168, face: ['#ffc21f', '#f2a10a', '#d17f06'], side: '#ffe680' }, { t: 'the Banana', size: 38, x: 150, y: 228, face: ['#ff8a80', '#f0483f', '#c81e36'], side: '#7a1224' }], out = [], kk = k, c0 = document.createElement('canvas').getContext('2d'), li, ln, i, n = 0, wd, sz, px, pad, w, h, c, g2, dep, d, pass, xs, edge, m, o, gap, word;
   for (li = 0; li < lines.length; li++) {
-    ln = lines[li]; sz = ln.size; c0.font = '800 ' + sz + 'px ' + FONT; wd = c0.measureText(ln.t).width + sz * TTK * (ln.t.length - 1); if (wd > 198) { sz = Math.floor(sz * 198 / wd); c0.font = '800 ' + sz + 'px ' + FONT; }   // the letters sit shoulder to shoulder: their sticker edges touch and are drawn as one merged shape (all edges first, then all faces)
+    ln = lines[li]; sz = ln.size;
+    for (pass = 0; pass < 2; pass++) {   // lay the letters out by their painted shapes, not their font boxes: the same small gap between every pair of faces (the sticker edges still merge into one outline), the same wider gap between words; if the line is too wide, shrink it once and lay it out again
+      c0.font = '800 ' + sz + 'px ' + FONT; gap = sz * TTG; xs = []; edge = 0; word = false;
+      for (i = 0; i < ln.t.length; i++) {
+        if (ln.t[i] === ' ') { word = true; continue; }
+        m = c0.measureText(ln.t[i]); o = i === 0 ? 0 : edge + (word ? sz * .3 : gap) + m.actualBoundingBoxLeft; xs[i] = o; edge = o + m.actualBoundingBoxRight; word = false;
+      }
+      wd = edge; if (wd > 198 && pass === 0) sz = Math.floor(sz * 198 / wd); else break;
+    }
     for (i = 0; i < ln.t.length; i++) {
       if (ln.t[i] === ' ') continue;
-      px = c0.measureText(ln.t.slice(0, i)).width + i * sz * TTK; w = c0.measureText(ln.t[i]).width; pad = Math.ceil(sz * .3); dep = Math.max(3, Math.round(sz * .1)); h = Math.ceil(sz * 1.3) + pad * 2 + dep;
-      var cw = Math.ceil((w + pad * 2) * kk), ch = Math.ceil(h * kk), cy = pad + sz * .65, cf = document.createElement('canvas'), gf;
-      c = document.createElement('canvas'); c.width = cf.width = cw; c.height = cf.height = ch; g2 = c.getContext('2d', CRF); gf = cf.getContext('2d', CRF);
-      g2.scale(kk, kk); gf.scale(kk, kk); g2.font = gf.font = '800 ' + sz + 'px ' + FONT; g2.textBaseline = gf.textBaseline = 'middle'; g2.textAlign = gf.textAlign = 'left'; g2.lineJoin = gf.lineJoin = 'round';
-      for (d = dep; d >= 1; d--) { g2.lineWidth = sz * .23; g2.strokeStyle = d > dep - 1 ? INK : ln.side; g2.strokeText(ln.t[i], pad, cy + d); g2.fillStyle = ln.side; g2.fillText(ln.t[i], pad, cy + d); }
-      g2.lineWidth = sz * .23; g2.strokeStyle = '#fff6df'; g2.strokeText(ln.t[i], pad, cy);                                    // c: the deep side and the cream sticker edge
+      px = xs[i]; w = c0.measureText(ln.t[i]).width; pad = Math.ceil(sz * .3); dep = Math.max(3, Math.round(sz * .1)); h = Math.ceil(sz * 1.3) + pad * 2 + dep;
+      var cw = Math.ceil((w + pad * 2) * kk), ch = Math.ceil(h * kk), cy = pad + sz * .65, cf = document.createElement('canvas'), cd = document.createElement('canvas'), gf, gd;
+      c = document.createElement('canvas'); c.width = cf.width = cd.width = cw; c.height = cf.height = cd.height = ch; g2 = c.getContext('2d', CRF); gf = cf.getContext('2d', CRF); gd = cd.getContext('2d', CRF);
+      g2.scale(kk, kk); gf.scale(kk, kk); gd.scale(kk, kk); g2.font = gf.font = gd.font = '800 ' + sz + 'px ' + FONT; g2.textBaseline = gf.textBaseline = gd.textBaseline = 'middle'; g2.textAlign = gf.textAlign = gd.textAlign = 'left'; g2.lineJoin = gf.lineJoin = gd.lineJoin = 'round';
+      for (d = dep; d >= 1; d--) { gd.lineWidth = sz * .23; gd.strokeStyle = d > dep - 1 ? INK : ln.side; gd.strokeText(ln.t[i], pad, cy + d); gd.fillStyle = ln.side; gd.fillText(ln.t[i], pad, cy + d); }   // cd: the deep side (with its dark bottom line)
+      g2.lineWidth = sz * .23; g2.strokeStyle = '#fff6df'; g2.strokeText(ln.t[i], pad, cy);                                    // c: the cream sticker edge. Drawn in three passes for the whole word (all deep sides, then all edges, then all faces) so a neighbor's edge never cuts a notch in another letter's side
       var gr = gf.createLinearGradient(0, cy - sz * .5, 0, cy + sz * .5); gr.addColorStop(0, ln.face[0]); gr.addColorStop(.5, ln.face[1]); gr.addColorStop(1, ln.face[2]);
       gf.fillStyle = gr; gf.fillText(ln.t[i], pad, cy);
       gf.globalCompositeOperation = 'source-atop'; gf.fillStyle = 'rgba(255,255,255,.34)'; gf.fillRect(0, cy - sz * .56, w + pad * 2, sz * .3); gf.globalCompositeOperation = 'source-over';   // cf: the face, with gloss across the top (only on what is painted)
-      out.push({ c: c, f: cf, x: ln.x + px - pad, y: ln.y - cy, w: c.width / kk, h: c.height / kk, i: n++, ch: ln.t[i] });
+      out.push({ d: cd, c: c, f: cf, x: ln.x + px - pad, y: ln.y - cy, w: c.width / kk, h: c.height / kk, i: n++, ch: ln.t[i] });
     }
   }
   TTLK = k; TTL = out; return out;
 }
-var TTK = 0.0;   // extra letter spacing on the title, as a share of the type size
+var TTG = 0.05;   // the gap between neighboring letter faces on the title, as a share of the type size
 var LDIR = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 var TWB = null;   // the finished title word (letters, shadow, the lean) baked into one picture: 30 rotated stamps and a gradient every frame for a word that no longer moves
 function drawTitleWord() {
@@ -4986,14 +4994,15 @@ function titleWordLive() {
   var L = letterPics(), i, q, t, u, e, dx, dy, rot, sx, sy, dir, n = L.length, landed = 0, cxp, cyp, sh;
   ctx.save(); ctx.translate(150, 236); ctx.rotate(-0.035); ctx.translate(-150, -236);   // the whole word leans -2 degrees from its lower left, like a sticker slapped on slightly crooked
   if (n) { sh = ctx.createRadialGradient(246, 252, 4, 246, 252, 112); sh.addColorStop(0, 'rgba(40,24,60,.38)'); sh.addColorStop(1, 'rgba(40,24,60,0)'); ctx.save(); ctx.globalAlpha = clamp((titleT - 0.5) / 1.5, 0, 1); ctx.translate(246, 252); ctx.scale(1, .16); ctx.translate(-246, -252); ctx.fillStyle = sh; ctx.beginPath(); ctx.arc(246, 252, 112, 0, 7); ctx.fill(); ctx.restore(); }   // a soft ground shadow under the word (the extruded sides give the hard edge)
-  for (i = 0; i < n; i++) { q = L[i]; if (clamp((titleT - 0.12 - i * 0.075) / 0.8, 0, 1) >= 1) { landed++; put0(q.c, q.x, q.y, q.w, q.h); } }   // landed letters: every sticker edge first, so neighbors merge into one shape...
+  for (i = 0; i < n; i++) { q = L[i]; if (clamp((titleT - 0.12 - i * 0.075) / 0.8, 0, 1) >= 1) { landed++; put0(q.d, q.x, q.y, q.w, q.h); } }   // landed letters: every deep side first...
+  for (i = 0; i < n; i++) { q = L[i]; if (clamp((titleT - 0.12 - i * 0.075) / 0.8, 0, 1) >= 1) put0(q.c, q.x, q.y, q.w, q.h); }   // ...then every sticker edge, so neighbors merge into one outline that covers the sides evenly...
   for (i = 0; i < n; i++) { q = L[i]; if (clamp((titleT - 0.12 - i * 0.075) / 0.8, 0, 1) >= 1) put0(q.f, q.x, q.y, q.w, q.h); }   // ...then every face on top
   for (i = 0; i < n; i++) {
     q = L[i]; t = titleT - 0.12 - i * 0.075; u = clamp(t / 0.8, 0, 1); if (t < 0 || u >= 1) continue;
     dir = LDIR[i % 4]; e = easeOutBounce(u); var f = 1 - e;
     dx = dir[0] * 330 * f + (dir[0] ? 0 : (i % 8 < 4 ? -40 : 40) * f); dy = dir[1] * 420 * f; rot = ((i % 2) ? 1 : -1) * 2.4 * f; sx = 1 + .9 * f; sy = Math.max(.12, Math.cos(f * 1.35));
     cxp = q.x + q.w / 2 + dx; cyp = q.y + q.h / 2 + dy;
-    ctx.save(); ctx.translate(cxp, cyp); ctx.rotate(rot); ctx.scale(sx, sy); ctx.drawImage(q.c, -q.w / 2, -q.h / 2, q.w, q.h); ctx.drawImage(q.f, -q.w / 2, -q.h / 2, q.w, q.h); ctx.restore();
+    ctx.save(); ctx.translate(cxp, cyp); ctx.rotate(rot); ctx.scale(sx, sy); ctx.drawImage(q.d, -q.w / 2, -q.h / 2, q.w, q.h); ctx.drawImage(q.c, -q.w / 2, -q.h / 2, q.w, q.h); ctx.drawImage(q.f, -q.w / 2, -q.h / 2, q.w, q.h); ctx.restore();
   }
   ctx.restore();
   return landed === n && n > 0;
