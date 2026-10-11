@@ -766,22 +766,22 @@ function bossTurn(g, n, k, x, y, rot) {   // a part drawn turned by rot (radians
   g.save(); g.translate(x, y); g.rotate(rot); g.drawImage(p.c, -p.px, -p.py, p.c.width / K, p.c.height / K); g.restore();
 }
 var HNDP = {};
-function handDraw(g, open) {   // a chimp's hand, centered on 0,0: a relaxed fist, or an open palm with spread fingers (for holding a coconut up)
-  var O = OUTK, sk = function (x, y, r) { return rg(g, x - r * .3, y - r * .4, 1, x, y, r * 1.25, [[0, '#f0c090'], [.55, '#c88c5c'], [1, '#8a5a38']]); }, i, a;
+function handDraw(g, open, m) {   // a chimp's hand, centered on 0,0: a relaxed fist, or an open palm with spread fingers (for holding a coconut up). m = -1 draws the other hand (fingers, knuckles and thumb on the opposite side; the shading and light stay put)
+  m = m || 1; var O = OUTK, sk = function (x, y, r) { return rg(g, x - r * .3, y - r * .4, 1, x, y, r * 1.25, [[0, '#f0c090'], [.55, '#c88c5c'], [1, '#8a5a38']]); }, i, a;
   if (open) {
-    for (i = 0; i < 4; i++) { a = (-48 + i * 32) * Math.PI / 180; ell(g, Math.sin(a) * 12, 2 - Math.cos(a) * 12, 3.6, 7.2, a); fb(g, sk(Math.sin(a) * 12, 2 - Math.cos(a) * 12, 7), O, 2); }
-    ell(g, -11, 7, 3.6, 6.4, -1.15); fb(g, sk(-11, 7, 6), O, 2);
+    for (i = 0; i < 4; i++) { a = (-48 + i * 32) * Math.PI / 180; ell(g, Math.sin(a) * 12 * m, 2 - Math.cos(a) * 12, 3.6, 7.2, a * m); fb(g, sk(Math.sin(a) * 12 * m, 2 - Math.cos(a) * 12, 7), O, 2); }
+    ell(g, -11 * m, 7, 3.6, 6.4, -1.15 * m); fb(g, sk(-11 * m, 7, 6), O, 2);
     circ(g, 0, 3, 10.5); fb(g, sk(0, 3, 11), O, 2.4);
   } else {
     circ(g, 0, 0, 10.6); fb(g, sk(0, 0, 11), O, 2.4);
-    for (i = 0; i < 3; i++) { circ(g, -9 + (i === 1 ? -1 : 0), -6 + i * 6, 3.8); fb(g, sk(-9, -6 + i * 6, 4), O, 1.8); }
-    ell(g, 3, -8, 3.6, 5, .6); fb(g, sk(3, -8, 5), O, 1.8);
+    for (i = 0; i < 3; i++) { circ(g, (-9 + (i === 1 ? -1 : 0)) * m, -6 + i * 6, 3.8); fb(g, sk(-9 * m, -6 + i * 6, 4), O, 1.8); }
+    ell(g, 3 * m, -8, 3.6, 5, .6 * m); fb(g, sk(3 * m, -8, 5), O, 1.8);
   }
   g.fillStyle = 'rgba(255,255,255,.4)'; ell(g, -3.5, -2.6, 3.6, 2, -.6); g.fill();
 }
-function handPic(open) { var p = HNDP[open ? 1 : 0]; if (!p) { p = HNDP[open ? 1 : 0] = mk(44, 44); p.g.translate(22, 22); handDraw(p.g, open); rimLight(p); } return p; }
-function hand(g, x, y, open, rot) {
-  var p = handPic(open); x = px(x - 22); y = px(y - 22);
+function handPic(open, flip) { var key = (open ? 1 : 0) + (flip ? 2 : 0), p = HNDP[key]; if (!p) { p = HNDP[key] = mk(44, 44); p.g.translate(22, 22); handDraw(p.g, open, flip ? -1 : 1); rimLight(p); } return p; }
+function hand(g, x, y, open, rot, flip) {   // flip: the hand on the other side of the body (its own picture, so it is still a plain 1:1 copy)
+  var p = handPic(open, flip); x = px(x - 22); y = px(y - 22);
   if (!rot) { put(g, p.c, x, y); return; }
   g.save(); g.translate(x + 22, y + 22); g.rotate(rot); g.drawImage(p.c, -22, -22, 44, 44); g.restore();
 }
@@ -797,7 +797,7 @@ function boss(g, n, cx, cy, pose) {   // pose (optional): the gorilla's arm angl
   else if (n === 4) {
     bossTurn(g, 4, 'sc', cx - 56, cy + 22, q.s || 0);
     if (q.f > 0.02) { g.save(); g.globalCompositeOperation = 'lighter'; var ox = -56 + Math.sin(q.s || 0) * 0 , a = q.s || 0, dx = 6 * Math.cos(a) + 58 * Math.sin(a), dy = 6 * Math.sin(a) - 58 * Math.cos(a), gr = g.createRadialGradient(cx - 56 + dx, cy + 22 + dy, 2, cx - 56 + dx, cy + 22 + dy, 34); gr.addColorStop(0, 'rgba(255,230,240,' + (0.9 * q.f).toFixed(2) + ')'); gr.addColorStop(1, 'rgba(255,90,130,0)'); g.fillStyle = gr; g.fillRect(cx - 56 + dx - 36, cy + 22 + dy - 36, 72, 72); g.restore(); }
-    hand(g, cx - 56, cy + 22, false, (q.s || 0));
+    hand(g, cx - 56, cy + 22, false, (q.s || 0), true);   // his other hand holds the scepter: a mirror image of the free hand, so he does not have two right hands
     hand(g, cx + (q.tx === undefined ? 46 : q.tx), cy + (q.ty === undefined ? 34 : q.ty), q.open === undefined ? false : q.open, q.tr || 0);
   }
 }function fxPic(k) {   // 'coco': a coconut with a worried face; 'fist': a rocket fist (fingers point left)
@@ -2572,13 +2572,13 @@ function balBack(g, off) { var P = party(); put(g, P.sky.c, 0, 0); layer(g, P.cl
 function balGround(g, off) { var F = party().floor, x; for (x = px(-(off % 72)); x < W; x += 72) put(g, F.c, x, GY); }
 function balWarm() { var i; if (BALW) return; BALW = true; TASKQ.push(party); for (i = 0; i < BALC.length; i++) (function (i) { TASKQ.push(function () { balloonPic(i); }); })(i); TASKQ.push(waferPic); }
 
-return { get tlast() { return TLAST; }, tbmax: TBMAX, arena: { draw: arenaDraw, ready: function () { return !!ARN && ARN.ok >= ARN.n; } }, fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: crownDraw, setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { jungle: function (g, y) { if (!JTL) { g.fillStyle = '#17502a'; g.fillRect(0, 0, W, Math.max(0, y)); return; } for (var yy = y - 160; yy > -160; yy -= 160) put(g, JTL.c, 0, yy); }, draw: mgdraw, water: mgwater, caustic: mgcaustic, glints: mgglints, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, pend: pend, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
+return { get tlast() { return TLAST; },  tbmax: TBMAX, arena: { draw: arenaDraw, ready: function () { return !!ARN && ARN.ok >= ARN.n; } }, fightWarm: fightWarm, boss: boss, bossPic: bossPic, fxs: fxs, crown: crownDraw, setColors: setColors, pal: PAL, journeyTheme: JT, bal: { draw: balloon, back: balBack, ground: balGround, warm: balWarm, n: BALC.length, cols: BALC }, coin: coin, TK: TK, mg: { jungle: function (g, y) { if (!JTL) { g.fillStyle = '#17502a'; g.fillRect(0, 0, W, Math.max(0, y)); return; } for (var yy = y - 160; yy > -160; yy -= 160) put(g, JTL.c, 0, yy); }, draw: mgdraw, water: mgwater, caustic: mgcaustic, glints: mgglints, sea: mgsea, sprite: mgs, warm: mgwarm, done: mgdone }, life: life, warm: warm, pump: pump, spinPic: function (i) { return spinFrame(i).c; }, heroPic: function (e) { return heroPic(e).c; }, ready: function (th) { return !!SET[th]; }, pend: pend, track: track, order: ORDER, init: init, keep: keep, back: back, ground: ground, obstacle: obstacle, rects: rects, banana: banana, friend: friend, chimp: chimp, names: NAMES, groundP: GP, themes: DEF.length, kindsOf: function (th) { return DEF[th].kinds; }, nv: function (th) { return DEF[th].ts[0].nv; } };
 })();
 
 (function () {
 'use strict';
 var PHASE = 'beta';
-var STAMP = '2026.10.11.0020';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.11.1011';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 JNFoo. All Rights Reserved.';
 
@@ -3142,6 +3142,8 @@ function spawnOb(x) {
     if (kRunN > 0) { kRunN--; c = clamp(kRunC + (rng() * 2 - 1) * 13, lo, hi); }
     else if (rng() < 0.2) { kRunN = 2; kRunC = lastC; c = clamp(kRunC + (rng() * 2 - 1) * 13, lo, hi); }
   }
+  var fi = huntOn() && !runChal && !pracN && gs <= 6 && !frFound(gs - 1) ? spawned - gateStart(gs) : -1;
+  if (fi >= 4 && fi <= 6) c = clamp(clamp(gs % 2 ? lo + (fi > 4 ? rng() * 12 : 0) : hi - (fi > 4 ? rng() * 12 : 0), pc - CFG.maxShift, pc + CFG.maxShift), lo, hi);   // a lost friend hides in this stage: the two gates either side of his spot sit at the far edge on his side (high up for a top-corner friend, low down for a floor friend) and the gates before them step toward it. Tried with the game's own physics: from there he can be reached at six taps a second, even with the speed bonus
   lastC = c;
   var o = { x: x, gs: gs, th: themeOf(gs), gt: c - gap / 2, gb: c + gap / 2, kt: Math.floor(rng() * 4), kb: Math.floor(rng() * 4), col: Math.floor(rng() * 4), passed: false, after: CFG.spacing, cc: 1e9, mid: false, yAt: 0, coins: [{ dx: CFG.obW / 2, y: clamp(c + (rng() * 2 - 1) * gap * 0.2, o_lo(c, gap), c + gap * 0.3), got: false, ph: rng() * 3 }] };
   if (spawned > 0 && lastAfter === CFG.spacing) {
@@ -3763,7 +3765,8 @@ function pumpPlan() {   // [steps, ms] to build this frame when the next stage's
   if (tl < 3) { n = Math.max(n, 2); return [n, 6]; }   // nearly out of time: a bigger share every frame
   return n > 0 ? [n, 0] : null;
 }
-function pumpFrame(fs) { var pp = pumpPlan(); if (pp) ART.pump(pp[1], pp[0]); else if (performance.now() - fs < 6 || ++pumpSkip >= 4) { pumpSkip = 0; ART.pump(CFG.pumpMs); } }
+function pumpFrame(fs) { if (state === 'victory' && vicT < vicDone()) return; var pp = pumpPlan();   // the victory card plays without background building (one balloon or Chimp picture is 10 to 20 ms); the building carries on once the table is complete
+  if (pp) ART.pump(pp[1], pp[0]); else if (performance.now() - fs < 6 || ++pumpSkip >= 4) { pumpSkip = 0; ART.pump(CFG.pumpMs); } }
 function split(label) { if (!pracN) { clkSp.push([label, clk]); if (clkSp.length > 14) clkSp.shift(); } }
 function fmtClk(t) { var m = Math.floor(t / 60), s = t - m * 60; return m + ':' + (s < 10 ? '0' : '') + s.toFixed(1); }
 function drawClock(cx, ax) {   // the run timer under the pause button, with the last few split times under it
@@ -4118,7 +4121,7 @@ function mgBtn(b, label, col, sub, off) {   // a chunky plastic button (Apple Pr
   if (sub) { outlined(label, x + w / 2, y + h / 2 - 7, 21, '#ffffff'); outlinedC(sub, x + w / 2, y + h / 2 + 15, 12.5, '#ffffff'); } else outlined(label, x + w / 2, y + h / 2 + 2, 22, '#ffffff');
 }
 function star4(x, y, r, a) { ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x + r * .28, y - r * .28); ctx.lineTo(x + r, y); ctx.lineTo(x + r * .28, y + r * .28); ctx.lineTo(x, y + r); ctx.lineTo(x - r * .28, y + r * .28); ctx.lineTo(x - r, y); ctx.lineTo(x - r * .28, y - r * .28); ctx.closePath(); ctx.fill(); ctx.restore(); }
-var CFC = [], CFP = '';   // the card panels (shadow, cream paper, ribbon, shine, borders) baked into pictures once a card sits still; the paper's gradient fill is the slow part (about 1 ms a frame)
+var CFC = [], CFP = '', VSQ = 0, NOSTILL = false;   // the card panels (shadow, cream paper, ribbon, shine, borders) baked into pictures once a card sits still; the paper's gradient fill is the slow part (about 1 ms a frame)
 function cardPanel(x, y, w, h, col, rh) {
   var gr = ctx.createLinearGradient(0, y, 0, y + h);
   ctx.fillStyle = 'rgba(30,20,50,.28)'; rrect(x + 2, y + 9, w, h, 24); ctx.fill();
@@ -4129,6 +4132,18 @@ function cardPanel(x, y, w, h, col, rh) {
   ctx.restore();
   ctx.lineWidth = 3.5; ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(x, y + rh); ctx.lineTo(x + w, y + rh); ctx.stroke(); rrect(x, y, w, h, 24); ctx.stroke();
 }
+function stillDraw(tag, x, y, w, h, fn) {   // a part of the screen that sits still (the victory card's paper and table): the first time it is drawn into a picture, after that that picture is stamped on the very same device pixels the live drawing would cover. With any turn or skew in the transform it is drawn live.
+  var m = ctx.getTransform(), ox = m.e + x * m.a, oy = m.f + y * m.d, key = [tag, w, h, m.a, m.d, Math.round(ox * 100), Math.round(oy * 100)].join('|'), e = null, i, c, g2, old, px, py;
+  if (!NOSTILL && !m.b && !m.c) {
+    for (i = 0; i < CFC.length; i++) if (CFC[i].key === key) e = CFC[i];
+    if (!e) {
+      px = Math.floor(ox - 4 * m.a); py = Math.floor(oy - 4 * m.d); c = document.createElement('canvas'); c.width = Math.ceil((w + 8) * m.a) + 2; c.height = Math.ceil((h + 8) * m.d) + 2; g2 = c.getContext('2d', CRF);
+      if (g2) { old = ctx; ctx = g2; g2.setTransform(m.a, 0, 0, m.d, m.e - px, m.f - py); try { fn(); } finally { ctx = old; } e = { key: key, c: c, px: px, py: py, f: TXF }; CFC.push(e); if (CFC.length > 4) CFC.shift(); }
+    }
+    if (e) { e.f = TXF; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(e.c, e.px, e.py); ctx.restore(); return; }
+  }
+  fn();
+}
 function cardFrame(x, y, w, h, col, title, tsz, rh) {   // the shared look of every result card: a cream panel with a colored ribbon on top, a soft shadow, a glossy shine and a few twinkles
   rh = rh || 52;
   var m = ctx.getTransform(), ox = m.e + x * m.a, oy = m.f + y * m.d, key = [w, h, col, rh, m.a, m.d, Math.round(ox * 100), Math.round(oy * 100)].join('|'), e = null, i, c, g2, old, px, py;
@@ -4136,7 +4151,7 @@ function cardFrame(x, y, w, h, col, title, tsz, rh) {   // the shared look of ev
     for (i = 0; i < CFC.length; i++) if (CFC[i].key === key) e = CFC[i];
     if (!e && CFP === key) {   // the same spot two frames in a row: the card is at rest, bake it
       px = Math.floor(ox - 5 * m.a); py = Math.floor(oy - 5 * m.d); c = document.createElement('canvas'); c.width = Math.ceil((w + 12) * m.a) + 2; c.height = Math.ceil((h + 19) * m.d) + 2; g2 = c.getContext('2d', CRF);
-      if (g2) { old = ctx; ctx = g2; g2.setTransform(m.a, 0, 0, m.d, m.e - px, m.f - py); try { cardPanel(x, y, w, h, col, rh); } finally { ctx = old; } e = { key: key, c: c, px: px, py: py, f: TXF }; CFC.push(e); if (CFC.length > 2) CFC.shift(); }
+      if (g2) { old = ctx; ctx = g2; g2.setTransform(m.a, 0, 0, m.d, m.e - px, m.f - py); try { cardPanel(x, y, w, h, col, rh); } finally { ctx = old; } e = { key: key, c: c, px: px, py: py, f: TXF }; CFC.push(e); if (CFC.length > 4) CFC.shift(); }
     }
     CFP = key;
   }
@@ -4345,7 +4360,7 @@ function startVictory() {
   var s = save.stats, secs = Math.max(1, Math.round(runSecs)), pz = runPauses;
   if (fightNew) { toast(fightNew, 6000); fightNew = ''; }
   if (badgeNew) { toast('Challenge badge earned: ' + badgeNew + '! New scarf and mask colors are in Costume.', 7000); badgeNew = ''; }
-  split('Win'); state = 'victory'; setBar(false); vicT = 0; pendNext = ''; nextT = 0; cardT = -1; BAL = null; fwk.length = 0; fwkT = 0.4; recordRun();
+  split('Win'); state = 'victory'; VSQ++; setBar(false); vicT = 0; pendNext = ''; nextT = 0; cardT = -1; BAL = null; fwk.length = 0; fwkT = 0.4; recordRun();
   VS = { secs: secs, pauses: pz, flaps: runFlaps, coins: runCoins, hurts: runHurts, friends: s.friends - runFriends0, pops: runPops, popsOf: runPopsOf, prevTime: s.bestWin, prevPz: s.bestPz ? s.bestPz - 1 : -1, recT: !s.bestWin || secs < s.bestWin, recP: !s.bestPz || pz + 1 < s.bestPz };
   if (VS.recT) s.bestWin = secs; if (VS.recP) s.bestPz = pz + 1;
   persist(); ART.bal.warm(); burst(W / 2, 200, 50, ['#ffd93b', '#ff6b81', '#7ad8ff', '#8ae28a', '#ffffff'], 320, 400); }
@@ -4602,16 +4617,46 @@ function cryChimp(x, y, s) {   // Prince Chimp blubbering: sobbing shake, a stre
 function victoryCard() {
   var S = VS || { secs: 0, pauses: 0, flaps: 0, coins: 0, hurts: 0, friends: 0, pops: 0, popsOf: 0, prevTime: 0, prevPz: -1, recT: false, recP: false }, t = vicT, i, j, e, u, rows, sp, y, v, tx, shown, ep, cs = calmOn();
   ctx.fillStyle = 'rgba(58,42,77,0.5)'; ctx.fillRect(0, 0, W, H);
-  ctx.save(); ctx.translate(W / 2, 200); if (!cs) ctx.rotate(t * 0.22); ctx.fillStyle = 'rgba(255,236,140,0.2)';   // slowly turning sunburst
-  for (i = 0; i < 12; i++) { ctx.rotate(0.5236); ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, 560, -0.11, 0.11); ctx.closePath(); ctx.fill(); } ctx.restore();
+  ctx.save(); ctx.translate(W / 2, 200); if (!cs) ctx.rotate(t * 0.22); ctx.fillStyle = 'rgba(255,236,140,0.2)';   // slowly turning sunburst (twelve straight rays in one path; the far ends are well off the screen)
+  ctx.beginPath(); for (i = 0; i < 12; i++) { ctx.rotate(0.5236); ctx.moveTo(0, 0); ctx.lineTo(562.6, -62.1); ctx.lineTo(562.6, 62.1); ctx.closePath(); } ctx.fill(); ctx.restore();
   for (i = 0; i < fwk.length; i++) {   // fireworks
     var f = fwk[i], q = f.t / 1.1, r0 = q * 78, r1 = r0 + 22 * (1 - q) + 4; ctx.globalAlpha = 1 - q * q; ctx.strokeStyle = f.c; ctx.lineWidth = 3.2 * (1 - q) + 1; ctx.lineCap = 'round';
     ctx.beginPath(); for (j = 0; j < 16; j++) { var an = j * 0.3927 + f.o; ctx.moveTo(f.x + Math.cos(an) * r0, f.y + Math.sin(an) * r0); ctx.lineTo(f.x + Math.cos(an) * r1, f.y + Math.sin(an) * r1); } ctx.stroke();
   }
-  ctx.globalAlpha = 1;
+  ctx.globalAlpha = 1; var vc = VCLIP; if (vc) { ctx.restore(); VCLIP = false; }
   ep = easeOutBack(clamp(t / 0.55, 0, 1)); ctx.save(); ctx.translate(W / 2, 227); ctx.scale(0.55 + 0.45 * ep, 0.55 + 0.45 * ep); ctx.translate(-W / 2, -227);
-  ctx.lineWidth = 4; ctx.strokeStyle = INK; rrect(16, 18, 328, 418, 24); ctx.fillStyle = 'rgba(255,252,240,0.97)'; ctx.fill(); ctx.stroke();
-  ctx.lineWidth = 2.5; ctx.strokeStyle = '#ffd93b'; rrect(23, 25, 314, 404, 19); ctx.stroke();
+  rows = [['clock', 'Your time', S.secs, 'time', S.prevTime ? (S.recT ? 'NEW RECORD!' : 'best ' + fmtM(S.prevTime)) : 'First win!'],
+    ['pause', 'Pauses', S.pauses, 'n', S.pauses === 0 ? 'Never paused!' : S.prevPz < 0 ? '' : S.recP ? 'NEW RECORD!' : 'fewest ' + S.prevPz],
+    ['tap', 'Taps', S.flaps, 'n', ''], ['coin', 'Banana credits', S.coins, 'n', ''],
+    ['heart', 'Bonks', S.hurts, 'n', S.hurts === 0 ? 'Flawless!' : ''], ['friend', 'Friends freed', S.friends, 'plus', '']];
+  if (S.popsOf > 0) rows.push(['balloon', 'Balloons popped', S.pops, 'of', S.popsOf]);
+  sp = Math.min(31, 212 / (rows.length + 1));
+  var settled = t >= vicDone(), panel = function () {
+    ctx.lineWidth = 4; ctx.strokeStyle = INK; rrect(16, 18, 328, 418, 24); ctx.fillStyle = vc ? '#fffcf0' : 'rgba(255,252,240,0.97)'; ctx.fill(); ctx.stroke();
+    ctx.lineWidth = 2.5; ctx.strokeStyle = '#ffd93b'; rrect(23, 25, 314, 404, 19); ctx.stroke();
+  }, vrows = function (pass) {   // the table: pass 0 draws everything; once it has all arrived, pass 1 (the stripes, words and numbers, which sit still) is baked into the card's picture and pass 2 (the little pictures and the pulsing record notes) is drawn live
+    var i, y, u, e, j, r, rv, cu, pl, shown, uu, names, has, pul;
+    for (i = 0; i <= rows.length; i++) {
+      y = 206 + i * sp; u = clamp((t - 1.3 - i * 0.42) / 0.35, 0, 1); if (u <= 0) continue; e = easeOutBack(u);
+      ctx.save(); ctx.translate((1 - e) * 340, 0); ctx.globalAlpha = Math.min(1, u * 2.5);
+      if (i % 2 === 0 && pass !== 2) { ctx.fillStyle = 'rgba(58,42,77,0.12)'; rrect(30, y - sp / 2 + 1, 300, sp - 2, 11); ctx.fill(); }
+      if (i < rows.length) {
+        r = rows[i]; rv = r[2]; cu = clamp((t - 1.3 - i * 0.42 - 0.2) / 0.7, 0, 1); pl = /RECORD|Flawless|Never|First/.test(r[4]);
+        if (pass !== 1) drawIcon(r[0], 50, y, 1);   // the little pictures are always live: some are built in the background and may not be ready yet when the table is first drawn
+        if (pass !== 2) {
+          outlined(r[1], 72, y, 15, '#ffffff', 'left');
+          shown = r[3] === 'time' ? fmtM(rv * cu) : r[3] === 'plus' ? '+' + Math.round(rv * cu) : r[3] === 'of' ? Math.round(rv * cu) + ' / ' + r[4] : String(Math.round(rv * cu));
+          outlinedC(shown, 222, y, 17, '#ffffff', 'right');
+        }
+        if (r[3] !== 'of' && r[4] && cu >= 1 && (pass === 0 || (pass === 2) === (pl && !cs))) { pul = pl && !cs ? 1 + 0.08 * Math.sin(time * 7) : 1; outlined(r[4], 238, y, 12 * pul, pl ? '#ffd93b' : '#ffffff', 'left', 12); }
+      } else {
+        if (pass !== 1) { uu = save.unlocks; names = ['balloon', 'flag', 'wafer']; has = [uu.balloons, uu.flags, uu.wafers]; for (j = 0; j < 3; j++) { ctx.globalAlpha = Math.min(1, u * 2.5) * (has[j] ? 1 : 0.3); drawIcon(names[j], 196 + j * 34, y - (names[j] === 'balloon' ? 3 : 0), 1); if (!has[j]) { ctx.globalAlpha = Math.min(1, u * 2.5); outlined('?', 196 + j * 34, y + 1, 15, '#ffd93b'); } } }
+        if (pass !== 2) { ctx.globalAlpha = Math.min(1, u * 2.5); outlined('Secrets found', 72, y, 15, '#ffffff', 'left'); outlinedC(secretsFound() + '/3', 322, y, 14, '#ffffff', 'right'); }
+      }
+      ctx.restore();
+    }
+  };
+  if (settled) stillDraw('vic' + VSQ, 12, 14, 336, 426, function () { panel(); vrows(1); }); else panel();
   var word = 'YOU DID IT!', ws = [], tot = 0, c;
   for (i = 0; i < word.length; i++) { e = textPic(word[i], 36, '#ffd93b'); ws.push(e ? e.w : 16); tot += ws[i] + 1; }
   tx = W / 2 - tot / 2;
@@ -4623,29 +4668,7 @@ function victoryCard() {
   ART.coin(ctx, 44, 58, time); ART.coin(ctx, W - 44, 58, time + 0.5);
   u = clamp((t - 0.6) / 0.5, 0, 1); drawMedal(W / 2, 118, 0.8 * easeOutBack(u));
   if (u > 0) { ART.banana(ctx, 72, 128 - Math.abs(Math.sin(time * 5)) * 12, -0.12 + Math.sin(time * 5) * 0.08, 1.0, Math.sin(time * 5) > 0.6 ? 0.18 : 0, time, wearFlags(), -200, false, 0, -1); cryChimp(286, 140, 0.72); if (u >= 1) outlined('Boo hoo!', 288 + Math.sin(time * 9) * 2, 92, 14, '#8fdcff'); }
-  rows = [['clock', 'Your time', S.secs, 'time', S.prevTime ? (S.recT ? 'NEW RECORD!' : 'best ' + fmtM(S.prevTime)) : 'First win!'],
-    ['pause', 'Pauses', S.pauses, 'n', S.pauses === 0 ? 'Never paused!' : S.prevPz < 0 ? '' : S.recP ? 'NEW RECORD!' : 'fewest ' + S.prevPz],
-    ['tap', 'Taps', S.flaps, 'n', ''], ['coin', 'Banana credits', S.coins, 'n', ''],
-    ['heart', 'Bonks', S.hurts, 'n', S.hurts === 0 ? 'Flawless!' : ''], ['friend', 'Friends freed', S.friends, 'plus', '']];
-  if (S.popsOf > 0) rows.push(['balloon', 'Balloons popped', S.pops, 'of', S.popsOf]);
-  sp = Math.min(31, 212 / (rows.length + 1));
-  for (i = 0; i <= rows.length; i++) {
-    y = 206 + i * sp; u = clamp((t - 1.3 - i * 0.42) / 0.35, 0, 1); if (u <= 0) continue; e = easeOutBack(u);
-    ctx.save(); ctx.translate((1 - e) * 340, 0); ctx.globalAlpha = Math.min(1, u * 2.5);
-    if (i % 2 === 0) { ctx.fillStyle = 'rgba(58,42,77,0.12)'; rrect(30, y - sp / 2 + 1, 300, sp - 2, 11); ctx.fill(); }
-    if (i < rows.length) {
-      var r = rows[i], rv = r[2], cu = clamp((t - 1.3 - i * 0.42 - 0.2) / 0.7, 0, 1);
-      drawIcon(r[0], 50, y, 1); outlined(r[1], 72, y, 15, '#ffffff', 'left');
-      shown = r[3] === 'time' ? fmtM(rv * cu) : r[3] === 'plus' ? '+' + Math.round(rv * cu) : r[3] === 'of' ? Math.round(rv * cu) + ' / ' + r[4] : String(Math.round(rv * cu));
-      outlinedC(shown, 222, y, 17, '#ffffff', 'right');
-      if (r[3] !== 'of' && r[4] && cu >= 1) { var pul = /RECORD|Flawless|Never|First/.test(r[4]) && !cs ? 1 + 0.08 * Math.sin(time * 7) : 1; outlined(r[4], 238, y, 12 * pul, /RECORD|Flawless|Never|First/.test(r[4]) ? '#ffd93b' : '#ffffff', 'left', 12); }
-    } else {
-      outlined('Secrets found', 72, y, 15, '#ffffff', 'left'); var uu = save.unlocks, names = ['balloon', 'flag', 'wafer'], has = [uu.balloons, uu.flags, uu.wafers];
-      for (j = 0; j < 3; j++) { ctx.globalAlpha = Math.min(1, u * 2.5) * (has[j] ? 1 : 0.3); drawIcon(names[j], 196 + j * 34, y - (names[j] === 'balloon' ? 3 : 0), 1); if (!has[j]) { ctx.globalAlpha = Math.min(1, u * 2.5); outlined('?', 196 + j * 34, y + 1, 15, '#ffd93b'); } }
-      ctx.globalAlpha = Math.min(1, u * 2.5); outlinedC(secretsFound() + '/3', 322, y, 14, '#ffffff', 'right');
-    }
-    ctx.restore();
-  }
+  vrows(settled ? 2 : 0);
   ctx.restore();
   if (t > vicDone() - 0.2) { ctx.globalAlpha = 0.6 + 0.4 * Math.sin(time * 4); outlined('Tap for your prize!', W / 2, 452, 20, '#ffffff'); ctx.globalAlpha = 1; }
 }
@@ -5026,7 +5049,7 @@ function lap(n) { if (PR) { var t = performance.now(); PR[n] = (PR[n] || 0) + t 
 var PBR = 16;   // pause button radius (bigger with Large buttons)
 function drawPauseBtn(b, a) { var f = PBR / 16; ctx.beginPath(); ctx.arc(b[0], b[1], PBR, 0, 7); ctx.fillStyle = 'rgba(30,20,50,' + a + ')'; ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2.4; ctx.stroke(); ctx.fillStyle = '#ffffff'; rrect(b[0] - 6.5 * f, b[1] - 7 * f, 4.4 * f, 14 * f, 1.6); ctx.fill(); rrect(b[0] + 2.1 * f, b[1] - 7 * f, 4.4 * f, 14 * f, 1.6); ctx.fill(); }
 function blinkOff() { return invuln > 0 && spinT <= 0 && !calmOn() && Math.floor(time * 14) % 2; }   // after a bump Fancy blinks (Calm mode: steady and a little see-through instead)
-var barTk = false;
+var barTk = false, VCLIP = false;
 function render() {
   var tk = state === 'title' && !opt('noticker'); if (tk !== barTk) { barTk = tk; bar.classList.toggle('tk', tk); }   // the buttons on the title screen sit below the news ticker
   TXF++; if (PR) prT = performance.now(); if (TKS && state !== 'title') TKS = null; if (CFC.length && TXF - CFC[CFC.length - 1].f > 120) { CFC = []; CFP = ''; }   // the news strip is a big picture only the title screen uses
@@ -5039,6 +5062,8 @@ function render() {
   var ex = state === 'play' && !trackOn && !mir && curSpeed > 0 ? Math.min(curSpeed * acc, 30) : 0, ey = state === 'play' && !trackOn && !BAL && !FT ? clamp(vy * acc, -6, 6) : 0;   // the world is drawn where it will be at the moment the picture is shown: physics runs in fixed 1/120 s steps, so without this the scenery would jump by one, two or three steps from picture to picture
   if (ex) dist += ex;
   var fl1 = flipOff(), fl2 = false;   // the backward level: the scenery, the gates and the coins are drawn turned round...
+  VCLIP = state === 'victory' && vicT >= 0.55 && !pe && !mir;   // once the victory card has finished opening it covers most of the screen: the scene, the dim and the sunburst are only drawn outside it (the card's dark outline hides the join)
+  if (VCLIP) { ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.roundRect(17, 19, 326, 416, 23); ctx.clip('evenodd'); }
   drawBack(); lap('back'); drawLife(); lap('life'); drawWind(); lap('wind');
   drawVaultBack();
   if (ex) for (i = 0; i < obs.length; i++) obs[i].x -= ex;
@@ -5061,7 +5086,7 @@ function render() {
     lap('fancy'); drawShield();
     if (zm) { ctx.restore(); if (!blinkOff()) drawFancy(zoomX + (bx - zoomX) * zoomK, GROUND_Y + (by - GROUND_Y) * zoomK, angle, 1); }   // in the swoop-in Fancy follows the zoomed track but is stamped at his normal size (a scaled stamp was the costly one)
   }
-  zm = zoomOn(); drawFx(); if (zm) ctx.restore();
+  zm = zoomOn(); if (state !== 'victory') drawFx(); if (zm) ctx.restore();   // (the victory card draws the confetti itself, on top of the card)
   if (fl2) ctx.restore();
   if (mir) ctx.restore();
   hudM(1);
