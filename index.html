@@ -1351,6 +1351,7 @@ var TEXF = {   // the paint textures for the 3D obstacles: each is made once (th
   pillar: function () { return stripeTex(function (x, y) { return stripe01(y * 4 + x * 1); }); }
 };
 function tex3(k) { return T3[k] || (T3[k] = TEXF[k]()); }
+var TEXT = { 0: ['swirl', 'pillar'], 1: ['wood', 'gingham'], 2: ['sprk', 'chips'], 4: ['bark', 'vine'] };   // which paint textures each stage's obstacles use: built as small steps of that stage's own plan (so only the stages a player reaches pay for them), not all at page load
 function* tile1(g, side, v) {   // Jam Jar Pantry: a wooden post with a jam-coloured band
   var T = tex3('wood');
   yield* toy3(g, OW, TH, function (R, s) { cyl3(R, s, 29, 0, 29, TH, 19, 19, matFor('#d9a066'), T); ball3(R, s, 29, 35, 0, 21.5, 8.5, 21.5, matFor(JAMC[v]), 8, 24); ball3(R, s, 29, 16, 0, 20.4, 2.4, 20.4, 5, 4, 24); ball3(R, s, 29, 54, 0, 20.4, 2.4, 20.4, 5, 4, 24); });
@@ -1765,6 +1766,7 @@ function planFor(th) {
     chunkStrip(JGW, 0, 72, D.ground, 0, 0, 0, function (L) { s.ground = L; }).forEach(function (f) { st.push(f); });
   } else st.push(function () { s.ground = mk(GP[th], 72); D.ground(s.ground.g, GP[th]); var g = s.ground.g, q = g.createLinearGradient(0, 0, 0, 72); g.save(); g.globalCompositeOperation = 'source-atop'; q.addColorStop(0, 'rgba(255,255,255,.34)'); q.addColorStop(.08, 'rgba(255,255,255,0)'); q.addColorStop(.55, 'rgba(60,30,90,0)'); q.addColorStop(1, 'rgba(60,30,90,.22)'); g.fillStyle = q; g.fillRect(0, 0, GP[th], 72); g.restore(); var gc = s.ground.c, ex = Math.ceil(K), gw = document.createElement('canvas'), wg; gw.width = gc.width + ex; gw.height = gc.height; wg = gw.getContext('2d', RF); wg.drawImage(gc, 0, 0); wg.drawImage(gc, 0, 0, ex, gc.height, gc.width, 0, ex, gc.height); s.ground.c = gw; });   // the floor: a lit top edge and a deeper tone toward the bottom; one picture-pixel of the next tile is added on the right, so the floor can slide by fractions of a pixel without a hairline between tiles
   var sc = st.length;   // everything above is scenery (what the title screen shows); the obstacle pieces below are only needed once a run starts
+  (TEXT[th] || []).forEach(function (k) { st.push(function () { tex3(k); }); });
   for (side = 0; side < 2; side++) {
     for (v = 0; v < D.ts[side].nv; v++) (function (side, v) { st.push(slicer(function () { return boldG(OW, D.ts[side].h, function (g) { return D.tile(g, side, v); }, 0, th === 5 ? OLG : null); }, function (o) { if (!D.noCyl) cylShade(o); rimH(o); edgeRows(o); s.tiles[side][v] = o; })); })(side, v);
     for (i = 0; i < D.kinds; i++) (function (side, i) { st.push(slicer(function () { return boldG(OW, D.capH[side][i], function (g) { return D.cap(g, side, i); }, side ? 1 : 2, th === 5 ? OLG : null); }, function (o) { capFinish(o); rimH(o); s.caps[side][i] = o; })); })(side, i);
@@ -2310,7 +2312,7 @@ function mgglints(g, off, t, p) {   // sun sparkles twinkling on the water
 }
 function mgwater(g, off) { if (!MGW) { MGW = mk(W, 320); waterTile(MGW.g, 320); } var y = ((off % 320) + 320) % 320 - 320; for (; y < 640; y += 320) put(g, MGW.c, 0, y); }
 
-function init(k) { K = k; BOSSP = {}; FXP = {}; HNDP = {}; ARN = null; ARS = null; MGCA = null; MGCP = 0; JTL = null; CRP = null; CHP = {}; BALP = {}; WAFP = null; PARTY = null; BALW = false; SET = {}; PLAN = {}; QUEUE = []; MGQ = []; MGSH = null; TASKQ = []; MGC = {}; MGW = null; COIN = null; initBanana(); coinFrames(); [[.78, 0], [.42, 1], [.56, 2], [1.15, 2]].forEach(function (c) { TASKQ.push(function () { chimpPic(c[0], c[1]); }); }); Object.keys(TEXF).forEach(function (k) { TASKQ.push(function () { tex3(k); }); }); }   // the chimp pictures for the Oops and stage cards are built early, a few ms per frame
+function init(k) { K = k; BOSSP = {}; FXP = {}; HNDP = {}; ARN = null; ARS = null; MGCA = null; MGCP = 0; JTL = null; CRP = null; CHP = {}; BALP = {}; WAFP = null; PARTY = null; BALW = false; SET = {}; PLAN = {}; QUEUE = []; MGQ = []; MGSH = null; TASKQ = []; MGC = {}; MGW = null; COIN = null; initBanana(); coinFrames(); [[.78, 0], [.42, 1], [.56, 2], [1.15, 2]].forEach(function (c) { TASKQ.push(function () { chimpPic(c[0], c[1]); }); }); }   // the chimp pictures for the Oops and stage cards are built early, a few ms per frame
 function keep(list) { for (var key in SET) if (list.indexOf(+key) < 0) delete SET[key]; }
 
 /* ---------- the launch track: a huge loop-de-loop, drawn live as vectors (so it is big and sharp, and costs no memory) ----------
@@ -2576,7 +2578,7 @@ return { get tlast() { return TLAST; }, tbmax: TBMAX, arena: { draw: arenaDraw, 
 (function () {
 'use strict';
 var PHASE = 'beta';
-var STAMP = '2026.10.10.2320';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
+var STAMP = '2026.10.10.2338';   // set by build.py: date plus Eastern time, YYYY.MM.DD.HHMM
 var NAME = 'Fancy, the Banana';
 var COPYRIGHT = 'Copyright \u00a9 2026 JNFoo. All Rights Reserved.';
 
@@ -3493,7 +3495,7 @@ function drawFlare(x, y, len, cl, wd) {   // a rocket jet under a nozzle at (x, 
   var ph = x * 0.37, L = len * (cl ? 1 : 1 + 0.07 * Math.sin(time * 52 + ph) + 0.04 * Math.sin(time * 31 + ph * 2)), w = 10 * wd, rip = cl ? 0 : 0.16, gr, k, j, u, dh, dw, yc, a, sx, sy;
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  gr = ctx.createRadialGradient(x, y + L * 0.35, 2, x, y + L * 0.35, 48 * wd); gr.addColorStop(0, 'rgba(255,150,40,0.42)'); gr.addColorStop(1, 'rgba(255,90,20,0)'); ctx.fillStyle = gr; ctx.fillRect(x - 50 * wd, y - 10, 100 * wd, L + 84 * wd);
+  gr = ctx.createRadialGradient(x, y + L * 0.35, 2, x, y + L * 0.35, 48 * wd); gr.addColorStop(0, 'rgba(255,150,40,0.42)'); gr.addColorStop(1, 'rgba(255,90,20,0)'); ctx.fillStyle = gr; var gy = y + L * 0.35, gt = Math.max(y - 10, gy - 48 * wd); ctx.fillRect(x - 48 * wd, gt, 96 * wd, Math.min(y + L + 74 * wd, gy + 48 * wd) - gt);   // only the part of the old rectangle the glow actually reaches (the same pixels, about half the fill)
   if (y + L > GROUND_Y - 10) { gr = ctx.createRadialGradient(x, GROUND_Y - 2, 2, x, GROUND_Y - 2, 70 * wd); gr.addColorStop(0, 'rgba(255,210,120,0.55)'); gr.addColorStop(1, 'rgba(255,120,30,0)'); ctx.fillStyle = gr; ctx.save(); ctx.translate(x, GROUND_Y - 2); ctx.scale(1, 0.28); ctx.translate(-x, -(GROUND_Y - 2)); ctx.fillRect(x - 72 * wd, GROUND_Y - 74 * wd, 144 * wd, 148 * wd); ctx.restore(); }
   ctx.globalCompositeOperation = 'source-over';
   gr = ctx.createLinearGradient(0, y, 0, y + L); gr.addColorStop(0, '#ff7a1a'); gr.addColorStop(0.55, 'rgba(255,70,20,0.9)'); gr.addColorStop(1, 'rgba(255,40,20,0)'); ctx.fillStyle = gr; flamePath(x, y, L, w, rip, ph); ctx.fill();
@@ -4116,8 +4118,9 @@ function mgBtn(b, label, col, sub, off) {   // a chunky plastic button (Apple Pr
   if (sub) { outlined(label, x + w / 2, y + h / 2 - 7, 21, '#ffffff'); outlinedC(sub, x + w / 2, y + h / 2 + 15, 12.5, '#ffffff'); } else outlined(label, x + w / 2, y + h / 2 + 2, 22, '#ffffff');
 }
 function star4(x, y, r, a) { ctx.save(); ctx.globalAlpha *= a; ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x + r * .28, y - r * .28); ctx.lineTo(x + r, y); ctx.lineTo(x + r * .28, y + r * .28); ctx.lineTo(x, y + r); ctx.lineTo(x - r * .28, y + r * .28); ctx.lineTo(x - r, y); ctx.lineTo(x - r * .28, y - r * .28); ctx.closePath(); ctx.fill(); ctx.restore(); }
-function cardFrame(x, y, w, h, col, title, tsz, rh) {   // the shared look of every result card: a cream panel with a colored ribbon on top, a soft shadow, a glossy shine and a few twinkles
-  rh = rh || 52; var gr = ctx.createLinearGradient(0, y, 0, y + h);
+var CFC = [], CFP = '';   // the card panels (shadow, cream paper, ribbon, shine, borders) baked into pictures once a card sits still; the paper's gradient fill is the slow part (about 1 ms a frame)
+function cardPanel(x, y, w, h, col, rh) {
+  var gr = ctx.createLinearGradient(0, y, 0, y + h);
   ctx.fillStyle = 'rgba(30,20,50,.28)'; rrect(x + 2, y + 9, w, h, 24); ctx.fill();
   ctx.lineWidth = 3.5; ctx.strokeStyle = INK; gr.addColorStop(0, '#fffdf3'); gr.addColorStop(1, '#ffeec2'); rrect(x, y, w, h, 24); fs(gr);
   ctx.save(); rrect(x, y, w, h, 24); ctx.clip();
@@ -4125,6 +4128,19 @@ function cardFrame(x, y, w, h, col, title, tsz, rh) {   // the shared look of ev
   ctx.fillStyle = 'rgba(255,255,255,.3)'; ctx.fillRect(x, y + 4, w, rh * .3);
   ctx.restore();
   ctx.lineWidth = 3.5; ctx.strokeStyle = INK; ctx.beginPath(); ctx.moveTo(x, y + rh); ctx.lineTo(x + w, y + rh); ctx.stroke(); rrect(x, y, w, h, 24); ctx.stroke();
+}
+function cardFrame(x, y, w, h, col, title, tsz, rh) {   // the shared look of every result card: a cream panel with a colored ribbon on top, a soft shadow, a glossy shine and a few twinkles
+  rh = rh || 52;
+  var m = ctx.getTransform(), ox = m.e + x * m.a, oy = m.f + y * m.d, key = [w, h, col, rh, m.a, m.d, Math.round(ox * 100), Math.round(oy * 100)].join('|'), e = null, i, c, g2, old, px, py;
+  if (!m.b && !m.c) {   // a plain move and scale only: a still card can be one picture, stamped on the very same device pixels the live drawing would cover
+    for (i = 0; i < CFC.length; i++) if (CFC[i].key === key) e = CFC[i];
+    if (!e && CFP === key) {   // the same spot two frames in a row: the card is at rest, bake it
+      px = Math.floor(ox - 5 * m.a); py = Math.floor(oy - 5 * m.d); c = document.createElement('canvas'); c.width = Math.ceil((w + 12) * m.a) + 2; c.height = Math.ceil((h + 19) * m.d) + 2; g2 = c.getContext('2d', CRF);
+      if (g2) { old = ctx; ctx = g2; g2.setTransform(m.a, 0, 0, m.d, m.e - px, m.f - py); try { cardPanel(x, y, w, h, col, rh); } finally { ctx = old; } e = { key: key, c: c, px: px, py: py, f: TXF }; CFC.push(e); if (CFC.length > 2) CFC.shift(); }
+    }
+    CFP = key;
+  }
+  if (e) { e.f = TXF; ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(e.c, e.px, e.py); ctx.restore(); } else cardPanel(x, y, w, h, col, rh);
   star4(x + 24, y + rh / 2 - 6, 7, .6 + .4 * Math.sin(time * 4)); star4(x + w - 26, y + rh / 2 + 6, 6, .6 + .4 * Math.sin(time * 4 + 2)); star4(x + w - 50, y + 12, 4, .5 + .5 * Math.sin(time * 5 + 1));
   outlined(title, x + w / 2, y + rh / 2 + 2, tsz, '#ffffff');
 }
@@ -5004,7 +5020,7 @@ function blinkOff() { return invuln > 0 && spinT <= 0 && !calmOn() && Math.floor
 var barTk = false;
 function render() {
   var tk = state === 'title' && !opt('noticker'); if (tk !== barTk) { barTk = tk; bar.classList.toggle('tk', tk); }   // the buttons on the title screen sit below the news ticker
-  TXF++; if (PR) prT = performance.now(); if (TKS && state !== 'title') TKS = null;   // the news strip is a big picture only the title screen uses
+  TXF++; if (PR) prT = performance.now(); if (TKS && state !== 'title') TKS = null; if (CFC.length && TXF - CFC[CFC.length - 1].f > 120) { CFC = []; CFP = ''; }   // the news strip is a big picture only the title screen uses
   ctx.setTransform(k, 0, 0, k, 0, 0); ctx.globalAlpha = 1;
   var cw = (FBforce ? FBforce === 'css' : FBff) && flipSX() === -1; if (cw !== cssF) { cssF = cw; cv.style.transform = cw ? 'scaleX(-1)' : ''; }
   if (state === 'mini' && MG) { renderMini(); return; }
@@ -5097,7 +5113,7 @@ function resize() {
   var s = Math.min(aw / W, ah / H), cssW = Math.floor(W * s), cssH = Math.floor(H * s);
   stageEl.style.width = cssW + 'px'; stageEl.style.height = cssH + 'px'; stageEl.style.setProperty('--u', s + 'px');
   dpr = Math.min(devicePixelRatio || 1, dprMax || 2);   // dprMax is lowered by the quality governor
-  var nw = Math.max(1, Math.round(cssW * dpr)), nh = Math.max(1, Math.round(cssH * dpr)); if (nw !== cv.width || nh !== cv.height) { cv.width = nw; cv.height = nh; TXC = {}; TXN = 0; FXS = {}; } k = cv.width / W;   // a resize that changes nothing (a phone's address bar) must not throw away every word picture
+  var nw = Math.max(1, Math.round(cssW * dpr)), nh = Math.max(1, Math.round(cssH * dpr)); if (nw !== cv.width || nh !== cv.height) { cv.width = nw; cv.height = nh; TXC = {}; TXN = 0; FXS = {}; CFC = []; CFP = ''; } k = cv.width / W;   // a resize that changes nothing (a phone's address bar) must not throw away every word picture
   var ak = Math.min(k, CFG.artScaleMax);   // art pictures are built at most this sharp, to save memory on big screens
   if (ak !== artK) { artK = ak; ART.init(ak); }
 }
